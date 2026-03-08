@@ -1,7 +1,0 @@
-{
-  "dependencies": {
-    "antd": "^6.2.2",
-    "axios": "^1.13.3",
-    "react-router-dom": "^7.13.0"
-  }
-}
