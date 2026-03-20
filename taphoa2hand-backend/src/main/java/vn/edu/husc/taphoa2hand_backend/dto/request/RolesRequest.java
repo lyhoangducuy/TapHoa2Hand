@@ -1,4 +1,6 @@
-package vn.edu.husc.taphoa2hand_backend.dto.response;
+package vn.edu.husc.taphoa2hand_backend.dto.request;
+
+import java.util.Set;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,8 +13,8 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
-public class AuthenticationResponse {
-    String token;
-    String refreshToken;
-    boolean authenticated;
+public class RolesRequest {
+    String name;
+    String description;
+    Set<String> permissions; // Một Role có nhiều quyền
 }

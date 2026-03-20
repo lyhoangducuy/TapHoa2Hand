@@ -1,6 +1,8 @@
 package vn.edu.husc.taphoa2hand_backend.entity;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -9,6 +11,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import vn.edu.husc.taphoa2hand_backend.validator.DobConstraint;
 
 @Entity
 @Getter
@@ -46,6 +49,8 @@ public class Users {
     private String avatar;
     private String address;
 
+    private LocalDate dob;
+
     @Builder.Default
     private boolean active = true; // Gán mặc định là true
 
@@ -55,4 +60,11 @@ public class Users {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "users_roles",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<Roles> roles;
 }

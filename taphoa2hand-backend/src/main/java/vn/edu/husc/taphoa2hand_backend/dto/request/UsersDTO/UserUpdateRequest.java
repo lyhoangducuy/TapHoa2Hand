@@ -1,5 +1,8 @@
 package vn.edu.husc.taphoa2hand_backend.dto.request.UsersDTO;
 
+import java.time.LocalDate;
+import java.util.List;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -8,6 +11,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import vn.edu.husc.taphoa2hand_backend.validator.DobConstraint;
 
 @Data
 @AllArgsConstructor
@@ -30,4 +34,7 @@ public class UserUpdateRequest {
     String password;
     String avatar;
     String address;
+    @DobConstraint(min = 15, message = "INVALID_DOB")
+    LocalDate Dob;
+    List<String> roles;
 }
