@@ -1,4 +1,4 @@
-package vn.edu.husc.taphoa2hand_backend.dto.request.AuthenDTO;
+package vn.edu.husc.taphoa2hand_backend.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,7 +11,7 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
-public class IntrospectRequest {
+public class RefreshRequest {
     String token;
-    String tokenType;
 }
+

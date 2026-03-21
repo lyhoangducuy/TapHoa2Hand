@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import vn.edu.husc.taphoa2hand_backend.dto.request.LogoutRequest;
+import vn.edu.husc.taphoa2hand_backend.dto.request.RefreshRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.AuthenDTO.AuthenticationRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.AuthenDTO.IntrospectRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.response.ApiResponse;
@@ -51,5 +52,13 @@ public class AuthenticationController {
                 .build();
 
     }
+    @PostMapping("/refresh")
+    public ApiResponse<AuthenticationResponse> refreshToken(@RequestBody RefreshRequest request) throws ParseException, JOSEException {
+        var result = authenticationService.refreshToken(request);
+        return ApiResponse.<AuthenticationResponse>builder()
+                .result(result)
+                .build();
+    }
+    
     
 }

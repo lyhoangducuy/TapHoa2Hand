@@ -29,7 +29,8 @@ public class SecurityConfig {
         "/user/create",
         "/auth/introspect",
         "/auth/log-in",
-        "/auth/logout"
+        "/auth/logout",
+        "/auth/refresh"
     };
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
