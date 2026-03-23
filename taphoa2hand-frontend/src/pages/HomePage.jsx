@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../app/AuthProvider';
+import PostList from '../features/posts/components/PostList';
 
 const HomePage = () => {
     const { isAuthenticated, user } = useAuth();
@@ -11,11 +12,12 @@ const HomePage = () => {
             {isAuthenticated ? (
                 <div>
                     <p>Chào bạn <strong>{user?.fullName || user?.username}</strong>, chúc bạn mua sắm vui vẻ!</p>
-                    {/* Ở đây sau này bạn sẽ render danh sách sản phẩm */}
+                    <PostList />
                 </div>
             ) : (
                 <div>
                     <p>Vui lòng đăng nhập để xem thông tin chi tiết và đặt hàng.</p>
+                    <PostList />
                 </div>
             )}
         </div>

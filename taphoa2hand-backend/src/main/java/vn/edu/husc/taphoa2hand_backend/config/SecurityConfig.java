@@ -28,19 +28,24 @@ public class SecurityConfig {
     @Autowired
     private CustomJwtDecoder jwtDecoder;
 
-    private static final String[] PUBLIC_ENDPOINTS = {
+    private static final String[] POST_PUBLIC_ENDPOINTS = {
             "/user/create",
             "/auth/introspect",
             "/auth/log-in",
             "/auth/logout",
-            "/auth/refresh"
+            "/auth/refresh",
+            "/posts/getAll"
+    };
+    private static final String[] GET_PUBLIC_ENDPOINTS = {
+            "/posts/getAll"
     };
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.cors(cors -> cors.configurationSource(corsConfigurationSource()));
         httpSecurity
-                .authorizeHttpRequests(request -> request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
+                .authorizeHttpRequests(request -> request.requestMatchers(HttpMethod.POST, POST_PUBLIC_ENDPOINTS).permitAll())
+                .authorizeHttpRequests(request -> request.requestMatchers(HttpMethod.GET, GET_PUBLIC_ENDPOINTS).permitAll()
                         .anyRequest().authenticated());
         httpSecurity.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder)
                 .jwtAuthenticationConverter(jwtAuthenticationConverter()))

@@ -11,7 +11,6 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-import vn.edu.husc.taphoa2hand_backend.validator.DobConstraint;
 
 @Entity
 @Getter
@@ -54,7 +53,7 @@ public class Users {
     @Builder.Default
     private boolean active = true; // Gán mặc định là true
 
-    @CreationTimestamp
+    
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
@@ -67,4 +66,11 @@ public class Users {
         inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<Roles> roles;
+    @ManyToMany(fetch = FetchType.LAZY)
+     @JoinTable(
+        name = "users_posts",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "post_id")
+    )
+    private Set<Posts> posts;
 }
