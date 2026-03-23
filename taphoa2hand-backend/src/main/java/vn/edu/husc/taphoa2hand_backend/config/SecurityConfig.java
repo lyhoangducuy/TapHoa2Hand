@@ -1,6 +1,5 @@
 package vn.edu.husc.taphoa2hand_backend.config;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,38 +13,59 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
+import io.netty.handler.codec.http.cors.CorsConfig;
 
 @Configuration
-@EnableWebSecurity 
+@EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
-
 
     @Autowired
     private CustomJwtDecoder jwtDecoder;
 
     private static final String[] PUBLIC_ENDPOINTS = {
-        "/user/create",
-        "/auth/introspect",
-        "/auth/log-in",
-        "/auth/logout",
-        "/auth/refresh"
+            "/user/create",
+            "/auth/introspect",
+            "/auth/log-in",
+            "/auth/logout",
+            "/auth/refresh"
     };
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity.authorizeHttpRequests(request->
-            request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
-            .anyRequest().authenticated()
-        );
-        httpSecurity.oauth2ResourceServer(oauth2->
-            oauth2.jwt(jwtConfigurer->jwtConfigurer.decoder(jwtDecoder)
-                    .jwtAuthenticationConverter(jwtAuthenticationConverter()))  
-                    .authenticationEntryPoint(new JwtAuthenticationEntryPoint()) 
-        );
+        httpSecurity.cors(cors -> cors.configurationSource(corsConfigurationSource()));
+        httpSecurity
+                .authorizeHttpRequests(request -> request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
+                        .anyRequest().authenticated());
+        httpSecurity.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder)
+                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                .authenticationEntryPoint(new JwtAuthenticationEntryPoint()));
         httpSecurity.csrf(AbstractHttpConfigurer::disable);
         return httpSecurity.build();
     };
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration corsConfiguration = new CorsConfiguration();
+        
+        // Cấu hình origin của Frontend
+        corsConfiguration.addAllowedOrigin("http://localhost:5173");
+        corsConfiguration.addAllowedMethod("*");
+        corsConfiguration.addAllowedHeader("*");
+        
+        // Rất quan trọng khi làm việc với Token/Authentication
+        corsConfiguration.setAllowCredentials(true); 
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", corsConfiguration);
+
+        return source;
+    }
+
     @Bean
     JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
@@ -56,9 +76,10 @@ public class SecurityConfig {
     }
     // @Bean
     // JwtDecoder jwtDecoder() {
-    //     SecretKeySpec secretKeySpec = new SecretKeySpec(signedKey.getBytes(), "HS512");
-    //     return NimbusJwtDecoder.withSecretKey(secretKeySpec)
-    //                             .macAlgorithm(MacAlgorithm.HS512)
-    //                             .build();
+    // SecretKeySpec secretKeySpec = new SecretKeySpec(signedKey.getBytes(),
+    // "HS512");
+    // return NimbusJwtDecoder.withSecretKey(secretKeySpec)
+    // .macAlgorithm(MacAlgorithm.HS512)
+    // .build();
     // };
 }
