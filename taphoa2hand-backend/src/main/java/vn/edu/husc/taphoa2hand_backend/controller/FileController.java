@@ -1,5 +1,7 @@
 package vn.edu.husc.taphoa2hand_backend.controller;
 
+import java.io.IOException;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,7 +19,7 @@ public class FileController {
     FileService fileService;
 
     @PostMapping("media/upload")
-    ApiResponse<Object> uploadMedia(@RequestParam("file") MultipartFile file){
+    ApiResponse<Object> uploadMedia(@RequestParam("file") MultipartFile file) throws IOException{
         return ApiResponse.builder()
             .result(fileService.uploadMedia(file))
             .build();
