@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import vn.edu.husc.taphoa2hand_backend.dto.response.ApiResponse;
+import vn.edu.husc.taphoa2hand_backend.dto.response.FilesResponse;
 import vn.edu.husc.taphoa2hand_backend.service.FileService;
 
 @RestController
@@ -19,9 +20,9 @@ public class FileController {
     FileService fileService;
 
     @PostMapping("media/upload")
-    ApiResponse<Object> uploadMedia(@RequestParam("file") MultipartFile file) throws IOException{
-        return ApiResponse.builder()
-            .result(fileService.uploadMedia(file))
+    ApiResponse<FilesResponse> uploadMedia(@RequestParam("file") MultipartFile file,@RequestParam("targetType") String targetType, @RequestParam("targetId") String targetId) throws IOException{
+        return ApiResponse.<FilesResponse>builder()
+            .result(fileService.uploadMedia(file,targetType,targetId))
             .build();
     }
 }
