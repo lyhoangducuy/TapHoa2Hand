@@ -29,7 +29,8 @@ public enum ErrorCode {
     PERMISSION_NOT_FOUND(4001, "Permission not found",HttpStatus.NOT_FOUND),
     INVALID_DOB(4002, "Your age must be at least {min} years old",HttpStatus.BAD_REQUEST),
     CANNOT_CREATE_REFRESH_TOKEN(4003, "Cannot create refresh token",HttpStatus.BAD_REQUEST),
-    LOG_OUT_SUCCESS(4004, "Log out successfully",HttpStatus.OK)
+    LOG_OUT_SUCCESS(4004, "Log out successfully",HttpStatus.OK),
+    FILE_NOT_FOUND(5001, "File not found",HttpStatus.NOT_FOUND)
 
     ;
     private int code;

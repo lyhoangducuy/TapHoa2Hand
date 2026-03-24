@@ -2,12 +2,16 @@ package vn.edu.husc.taphoa2hand_backend.service;
 
 import java.io.IOException;
 
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import vn.edu.husc.taphoa2hand_backend.dto.response.FileData;
 import vn.edu.husc.taphoa2hand_backend.dto.response.FilesResponse;
+import vn.edu.husc.taphoa2hand_backend.exception.AppException;
+import vn.edu.husc.taphoa2hand_backend.exception.ErrorCode;
 import vn.edu.husc.taphoa2hand_backend.mapper.FileMgmtMapper;
 import vn.edu.husc.taphoa2hand_backend.repository.FileMgmtRepository;
 import vn.edu.husc.taphoa2hand_backend.repository.FileRepository;
@@ -33,5 +37,10 @@ public class FileService {
             .originalFileName(file.getOriginalFilename())
             .url(fileInfo.getUrl())
             .build();
+    }
+    public FileData downloadMedia(String fileName) throws IOException {
+        var fileMgmt = fileMgmtRepository.findById(fileName).orElseThrow(()->new AppException(ErrorCode.FILE_NOT_FOUND));
+        var resource = fileRepository.read(fileMgmt);
+        return new FileData(fileMgmt.getContentType(), resource);
     }
 }
