@@ -55,8 +55,11 @@ public class UsersController {
     }
     
     @PutMapping("/{userId}")
-    public Users updateUser(@PathVariable("userId") String userId, @RequestBody UserUpdateRequest request) {
-        return usersService.updateUser(userId, request);
+    public ApiResponse<UserResponse> updateUser(@PathVariable("userId") String userId, @RequestBody UserUpdateRequest request) {
+        System.out.println("User ID: " + userId);
+        return ApiResponse.<UserResponse>builder()
+            .result(usersService.updateUser(userId, request))
+            .build();
     }
     @DeleteMapping("/{userId}")
     public String deleteUser(@PathVariable("userId") String userId) {

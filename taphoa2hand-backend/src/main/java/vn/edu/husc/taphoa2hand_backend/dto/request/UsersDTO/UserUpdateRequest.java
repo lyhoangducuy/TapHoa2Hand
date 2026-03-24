@@ -29,12 +29,9 @@ public class UserUpdateRequest {
     @NotBlank(message = "EMAIL_BLANK")
     @Email(message = "EMAIL_INVALID")
     String email;
-    @NotBlank(message = "PASSWORD_BLANK")
-    @Size(min = 6, max = 100, message = "PASSWORD_SIZE")
-    String password;
     String avatar;
     String address;
     @DobConstraint(min = 15, message = "INVALID_DOB")
-    LocalDate Dob;
+    LocalDate dob;
     List<String> roles;
 }

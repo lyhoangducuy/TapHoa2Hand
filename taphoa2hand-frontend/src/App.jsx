@@ -1,22 +1,32 @@
-import React from 'react';
-import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from './app/AuthProvider';
-import AppRoutes from './routes/routes';
-import Header from './components/layout/Header'; // <-- Import Header vừa tạo
-
+import React, { Fragment } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { publicRoutes } from './routes/AppRoutes';
+import { HeaderOnly,DefaultLayout } from './components/Layout';
 function App() {
     return (
-        <BrowserRouter>
-            <AuthProvider>
-                {/* Header được đặt ở đây để hiển thị trên mọi trang */}
-                <Header />
-                
-                {/* Phần nội dung chính (các Pages) sẽ render bên dưới Header */}
-                <main style={{ minHeight: '80vh', padding: '20px' }}>
-                    <AppRoutes />
-                </main>
-            </AuthProvider>
-        </BrowserRouter>
+        <Router>
+            <div className="App">
+                <Routes>
+                    {publicRoutes.map((route, index) => {
+                        let Layout=DefaultLayout;
+                        if (route.layout) {
+                            Layout=route.layout;
+                        } else  if (route.layout===null){
+                            Layout=Fragment;
+                        }
+                        const Page = route.component;
+                        return (<Route
+                            key={index}
+                            path={route.path}
+                            element={
+                                <Layout>
+                                    <Page />
+                                </Layout>}
+                        />);
+                    })}
+                </Routes>
+            </div>
+        </Router>
     );
 }
 

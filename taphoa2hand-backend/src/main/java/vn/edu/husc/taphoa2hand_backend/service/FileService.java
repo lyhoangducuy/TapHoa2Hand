@@ -26,20 +26,22 @@ public class FileService {
     // Trong FileMgmtService.java
 
     public FilesResponse uploadMedia(MultipartFile file, String targetType, String targetId) throws IOException {
-        //Lưu file
+        // Lưu file
         var fileInfo = fileRepository.store(file);
-        //Lưu vào Database
+        // Lưu vào Database
         var fileMgmt = fileMgmtMapper.toFileMgmt(fileInfo);
         fileMgmt.setTargetType(targetType);
         fileMgmt.setTargetId(targetId);
         fileMgmt = fileMgmtRepository.save(fileMgmt);
         return FilesResponse.builder()
-            .originalFileName(file.getOriginalFilename())
-            .url(fileInfo.getUrl())
-            .build();
+                .originalFileName(file.getOriginalFilename())
+                .url(fileInfo.getUrl())
+                .build();
     }
+
     public FileData downloadMedia(String fileName) throws IOException {
-        var fileMgmt = fileMgmtRepository.findById(fileName).orElseThrow(()->new AppException(ErrorCode.FILE_NOT_FOUND));
+        var fileMgmt = fileMgmtRepository.findById(fileName)
+                .orElseThrow(() -> new AppException(ErrorCode.FILE_NOT_FOUND));
         var resource = fileRepository.read(fileMgmt);
         return new FileData(fileMgmt.getContentType(), resource);
     }

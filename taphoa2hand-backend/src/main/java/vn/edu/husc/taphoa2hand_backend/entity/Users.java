@@ -6,6 +6,9 @@ import java.util.Set;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -37,7 +40,7 @@ public class Users {
 
     @Email(message = "Email không hợp lệ")
     @NotBlank(message = "Email không được để trống")
-    @Column(nullable = false, unique = true)   
+    @Column(nullable = false, unique = true)
     private String email;
 
     @NotBlank(message = "Password không được để trống")
@@ -53,24 +56,16 @@ public class Users {
     @Builder.Default
     private boolean active = true; // Gán mặc định là true
 
-    
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-        name = "users_roles",
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
+    @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Roles> roles;
+    @JsonIgnore
     @ManyToMany(fetch = FetchType.LAZY)
-     @JoinTable(
-        name = "users_posts",
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "post_id")
-    )
+    @JoinTable(name = "users_posts", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "post_id"))
     private Set<Posts> posts;
 }
