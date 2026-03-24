@@ -5,7 +5,9 @@ export const CONFIG = {
 
 export const API = {
     LOGIN: "/auth/login",
-    MY_INFO: "/users/myInfo",
+    MY_INFO: "/user/myInfo",
     // Nếu bạn muốn lấy sẵn cái hàm update user hồi nãy:
     UPDATE_USER: (userId) => `/users/${userId}`,
+
+    GET_POST:"/posts/getAll"
 };

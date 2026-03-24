@@ -31,7 +31,7 @@ public class SecurityConfig {
     private static final String[] POST_PUBLIC_ENDPOINTS = {
             "/user/create",
             "/auth/introspect",
-            "/auth/log-in",
+            "/auth/login",
             "/auth/logout",
             "/auth/refresh",
             "/posts/getAll",

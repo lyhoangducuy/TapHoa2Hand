@@ -1,0 +1,211 @@
+/* =========================================
+   1. NÚT BẤM MỞ SIDEBAR (Viền bo tròn giống nút Đăng tin)
+   ========================================= */
+.toggle-btn {
+    display: flex;
+    flex-direction: row; /* Đặt icon và chữ nằm ngang cho đẹp với viền bo tròn */
+    align-items: center;
+    justify-content: center;
+    background-color: transparent; 
+    border: 1px solid rgba(255, 255, 255, 0.4); /* Viền trắng mờ tinh tế */
+    border-radius: 999px; /* Bo góc tròn vo y hệt nút Đăng tin */
+    height: 40px; /* Chiều cao vừa vặn với Header */
+    padding: 0 16px; /* Khoảng cách 2 bên chữ */
+    gap: 8px;
+    cursor: pointer;
+     font-size: 10px;
+        font-weight: 700;
+    color: #ffffff; 
+    transition: all 0.3s ease;
+
+    .menu-icon {
+        font-size: 18px; 
+    }
+
+    /* Hiệu ứng khi đưa chuột vào: Sáng bừng lên màu Vàng Hoàng Kim */
+    &:hover {
+        background-color: #F1C40F; /* Nền vàng */
+        color: #5B2C6F; /* Chữ chuyển sang tím để tạo tương phản */
+        border-color: #F1C40F; /* Viền cũng đổi sang vàng */
+        transform: translateY(-2px); 
+        box-shadow: 0 4px 10px rgba(241, 196, 15, 0.3); /* Tỏa sáng nhẹ */
+    }
+    @media (max-width: 767px) {
+        border: none;
+        padding: 0;
+        height: auto;
+        
+        span {
+            display: none; /* Ẩn chữ "Danh mục" đi */
+        }
+        
+        .menu-icon {
+            font-size: 26px; /* Phóng to icon 3 gạch lên cho dễ bấm */
+        }
+
+        &:hover {
+            background-color: transparent;
+            box-shadow: none;
+        }
+    }
+}
+
+/* =========================================
+   2. LỚP PHỦ MÀN ĐEN (OVERLAY)
+   ========================================= */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease-in-out;
+    backdrop-filter: blur(2px);
+
+    &.show {
+        opacity: 1;
+        visibility: visible;
+    }
+}
+
+/* =========================================
+   3. SIDEBAR PANEL (NGĂN KÉO)
+   ========================================= */
+.sidebar-panel {
+    position: fixed;
+    top: 0;
+    left: -320px;
+    width: 300px;
+    max-width: 85vw;
+    height: 100vh;
+    background-color: #ffffff;
+    z-index: 999;
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &.open {
+        left: 0;
+    }
+}
+
+/* =========================================
+   4. NỘI DUNG BÊN TRONG SIDEBAR
+   ========================================= */
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border-bottom: 1px solid #f0f0f0;
+    background: linear-gradient(135deg, #5B2C6F 0%, #8E44AD 100%);
+
+    .logo {
+        .logo-text {
+            font-size: 22px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+        }
+        .highlight {
+            color: #F1C40F;
+        }
+    }
+
+    .close-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        font-size: 20px;
+        cursor: pointer;
+        transition: background 0.2s;
+
+        &:hover {
+            background: #F1C40F;
+            color: #5B2C6F;
+        }
+    }
+}
+
+.sidebar-content {
+    padding: 24px 16px;
+    overflow-y: auto;
+    flex: 1;
+
+    .title {
+        font-size: 14px;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 16px;
+        padding-left: 8px;
+    }
+}
+
+.category-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .category-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px;
+        border-radius: 12px;
+        cursor: pointer;
+        color: #444;
+        transition: all 0.2s ease;
+
+        .item-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+
+            .icon {
+                font-size: 22px;
+                color: #888;
+                transition: color 0.2s;
+            }
+
+            .text {
+                font-size: 15px;
+                font-weight: 500;
+            }
+        }
+
+        .arrow-icon {
+            color: #ccc;
+            font-size: 18px;
+            transition: transform 0.2s;
+        }
+
+        &:hover {
+            background-color: rgba(91, 44, 111, 0.05);
+            color: #5B2C6F;
+
+            .icon {
+                color: #F1C40F;
+            }
+
+            .arrow-icon {
+                color: #5B2C6F;
+                transform: translateX(4px);
+            }
+        }
+    }
+}

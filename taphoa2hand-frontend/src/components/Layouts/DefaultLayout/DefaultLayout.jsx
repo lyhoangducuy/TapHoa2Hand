@@ -1,17 +1,25 @@
 import React from 'react';
-import { Header,Footer } from '../Components';
-import { Sidebar } from '../Components/Sidebar';
-function DefaultLayout({children}) {
+// // Trỏ đến file BottomNav vừa tạo
+import classNames from "classnames/bind";
+import styles from "./DefaultLayout.module.scss";
+import { BottomNav, Footer, Header } from '../Components';
+
+const cx = classNames.bind(styles);
+
+function DefaultLayout({ children }) {
     return (  
-        <div>
+        <div className={cx("app-wrapper")}>
             <Header />
-            <div className="container">
-                <Sidebar/>
-                <div className="content">
-                    {children}
-                </div>
-            </div>
+            
+            {/* Phần thân chứa danh sách sản phẩm / nội dung thay đổi */}
+            <main className={cx("main-container")}>
+                {children}
+            </main>
+
             <Footer />
+            
+            {/* Thanh điều hướng đáy (Chỉ hiện trên Mobile nhờ CSS) */}
+            <BottomNav />
         </div>
     );
 }
