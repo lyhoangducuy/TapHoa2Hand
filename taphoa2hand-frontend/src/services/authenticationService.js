@@ -25,3 +25,23 @@ export const register = async (userData) => {
         body: JSON.stringify(userData),
     });
 };
+export const sendCode = async (email, code) => { // Thêm tham số code
+    const url = `${CONFIG.API_GATEWAY}${API.CODE}`;
+    return await fetch(url, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, code }), // Truyền cả email và code xuống Backend
+    });
+};
+export const reSendCode = async (email) => {
+    const url = `${CONFIG.API_GATEWAY}${API.RECODE}`;
+    return await fetch(url, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+    });
+};

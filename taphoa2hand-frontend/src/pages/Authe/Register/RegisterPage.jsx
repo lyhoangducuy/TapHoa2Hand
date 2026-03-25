@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './RegisterPage.module.scss';
-import { 
-    FiUser, FiMail, FiLock, FiPhone, 
-    FiCalendar, FiEye, FiEyeOff, FiArrowLeft, FiCheckCircle 
+import {
+    FiUser, FiMail, FiLock, FiPhone,
+    FiCalendar, FiEye, FiEyeOff, FiArrowLeft, FiCheckCircle
 } from 'react-icons/fi';
 
 const cx = classNames.bind(styles);
@@ -34,23 +34,52 @@ function RegisterPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        // Validate sương sương ở Frontend trước khi gọi API
+
+        // 1. Validate sương sương ở Frontend
         if (formData.password !== formData.confirmPassword) {
             setErrorMsg('Mật khẩu xác nhận không khớp!');
             return;
         }
 
         setLoading(true);
-        // Chỗ này gọi API đăng ký (truyền formData)
-        console.log("Payload gửi lên API:", formData);
-        
-        // Giả lập API
-        setTimeout(() => {
+        setErrorMsg(''); // Reset lỗi trước khi gọi
+
+        try {
+            // 2. GỌI API THẬT XUỐNG BACKEND
+            const response = await fetch('http://localhost:8080/auth/register', { // Sửa lại URL cho đúng với config của ông
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: formData.username,
+                    password: formData.password,
+                    confirmPassword: formData.confirmPassword, // Tùy backend của ông có cần gửi không
+                    email: formData.email,
+                    fullName: formData.fullName,
+                    phone: formData.phone,
+                    dob: formData.dob // type="date" sẽ trả về "YYYY-MM-DD", Spring Boot nhận tốt
+                }),
+            });
+
+            const data = await response.json();
+
+            // 3. Xử lý kết quả trả về
+            if (response.ok) { // Status 200 - 299
+                setLoading(false);
+                // Đăng ký thành công, đẩy qua trang nhập code và truyền email theo state
+                navigate('/send-code', { state: { email: formData.email } }); 
+            } else {
+                // Backend báo lỗi (Trùng email, trùng username...)
+                setLoading(false);
+                setErrorMsg(data.message || 'Đăng ký thất bại. Vui lòng kiểm tra lại!');
+            }
+
+        } catch (error) {
             setLoading(false);
-            alert('Đăng ký thành công!');
-            navigate('/login'); // Đăng ký xong đẩy qua trang đăng nhập
-        }, 1500);
+            console.error('Lỗi khi gọi API:', error);
+            setErrorMsg('Không thể kết nối đến máy chủ!');
+        }
     };
 
     return (
@@ -67,15 +96,15 @@ function RegisterPage() {
                 {errorMsg && <div className={cx('error-message')}>{errorMsg}</div>}
 
                 <form className={cx('form')} onSubmit={handleSubmit}>
-                    
+
                     {/* HÀNG 1: Họ tên + Username */}
                     <div className={cx('input-row')}>
                         <div className={cx('input-group')}>
                             <label>Họ và Tên</label>
                             <div className={cx('input-wrapper')}>
                                 <FiUser className={cx('input-icon')} />
-                                <input 
-                                    type="text" name="fullName" placeholder="VD: Nguyễn Văn A" 
+                                <input
+                                    type="text" name="fullName" placeholder="VD: Nguyễn Văn A"
                                     value={formData.fullName} onChange={handleChange} required minLength={3} maxLength={50}
                                 />
                             </div>
@@ -85,8 +114,8 @@ function RegisterPage() {
                             <label>Tên đăng nhập</label>
                             <div className={cx('input-wrapper')}>
                                 <FiCheckCircle className={cx('input-icon')} />
-                                <input 
-                                    type="text" name="username" placeholder="VD: nguyenvana123" 
+                                <input
+                                    type="text" name="username" placeholder="VD: nguyenvana123"
                                     value={formData.username} onChange={handleChange} required minLength={3} maxLength={50}
                                 />
                             </div>
@@ -98,9 +127,9 @@ function RegisterPage() {
                         <label>Email</label>
                         <div className={cx('input-wrapper')}>
                             <FiMail className={cx('input-icon')} />
-                            <input 
-                                type="email" name="email" placeholder="Nhập địa chỉ email" 
-                                value={formData.email} onChange={handleChange} required 
+                            <input
+                                type="email" name="email" placeholder="Nhập địa chỉ email"
+                                value={formData.email} onChange={handleChange} required
                             />
                         </div>
                     </div>
@@ -111,8 +140,8 @@ function RegisterPage() {
                             <label>Số điện thoại</label>
                             <div className={cx('input-wrapper')}>
                                 <FiPhone className={cx('input-icon')} />
-                                <input 
-                                    type="tel" name="phone" placeholder="Nhập số điện thoại" 
+                                <input
+                                    type="tel" name="phone" placeholder="Nhập số điện thoại"
                                     value={formData.phone} onChange={handleChange} required
                                 />
                             </div>
@@ -122,8 +151,8 @@ function RegisterPage() {
                             <label>Ngày sinh (Trên 15 tuổi)</label>
                             <div className={cx('input-wrapper')}>
                                 <FiCalendar className={cx('input-icon')} />
-                                <input 
-                                    type="date" name="dob" 
+                                <input
+                                    type="date" name="dob"
                                     value={formData.dob} onChange={handleChange} required
                                 />
                             </div>
@@ -136,8 +165,8 @@ function RegisterPage() {
                             <label>Mật khẩu</label>
                             <div className={cx('input-wrapper')}>
                                 <FiLock className={cx('input-icon')} />
-                                <input 
-                                    type={showPassword ? "text" : "password"} name="password" placeholder="Tối thiểu 6 ký tự" 
+                                <input
+                                    type={showPassword ? "text" : "password"} name="password" placeholder="Tối thiểu 6 ký tự"
                                     value={formData.password} onChange={handleChange} required minLength={6}
                                 />
                                 <button type="button" className={cx('toggle-pw-btn')} onClick={() => setShowPassword(!showPassword)}>
@@ -150,8 +179,8 @@ function RegisterPage() {
                             <label>Xác nhận mật khẩu</label>
                             <div className={cx('input-wrapper')}>
                                 <FiLock className={cx('input-icon')} />
-                                <input 
-                                    type={showConfirmPassword ? "text" : "password"} name="confirmPassword" placeholder="Nhập lại mật khẩu" 
+                                <input
+                                    type={showConfirmPassword ? "text" : "password"} name="confirmPassword" placeholder="Nhập lại mật khẩu"
                                     value={formData.confirmPassword} onChange={handleChange} required minLength={6}
                                 />
                                 <button type="button" className={cx('toggle-pw-btn')} onClick={() => setShowConfirmPassword(!showConfirmPassword)}>

@@ -10,5 +10,7 @@ export const API = {
     UPDATE_USER: (userId) => `/users/${userId}`,
     REGISTER_USER: "/auth/register",
 
-    GET_POST:"/posts/getAll"
+    GET_POST:"/posts/getAll",
+    CODE:"/auth/send-code",
+    RECODE:"/auth/re-send-code",
 };

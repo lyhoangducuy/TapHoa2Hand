@@ -32,7 +32,15 @@ public enum ErrorCode {
     LOG_OUT_SUCCESS(4004, "Log out successfully",HttpStatus.OK),
     FILE_NOT_FOUND(5001, "File not found",HttpStatus.NOT_FOUND),
     PASSWORD_CONFIRM_NOT_MATCH(5002, "Password and confirm password do not match",HttpStatus.BAD_REQUEST),
-    ROLE_NOT_FOUND(5003, "Role not found",HttpStatus.NOT_FOUND)
+    ROLE_NOT_FOUND(5003, "Role not found",HttpStatus.NOT_FOUND),
+    CODE_NOT_FOUND(5004, "Code not found",HttpStatus.NOT_FOUND),
+    OTP_INVALID(5005, "OTP is invalid",HttpStatus.BAD_REQUEST),
+    OTP_EXPIRED(5006, "OTP is expired",HttpStatus.BAD_REQUEST),
+    OTP_EXPIRED_OR_NOT_FOUND(5007, "OTP is expired or not found",HttpStatus.BAD_REQUEST),
+    EMAIL_PENDING_VERIFICATION(5008, "Email is pending verification",HttpStatus.BAD_REQUEST),
+    USERNAME_PENDING_VERIFICATION(5009, "Username is pending verification",HttpStatus.BAD_REQUEST),
+    REGISTER_SESSION_EXPIRED(5010, "Register session is expired",HttpStatus.BAD_REQUEST),
+    OTP_RESEND_TOO_FREQUENTLY(5011, "OTP resend too frequently. Please wait before requesting a new OTP.",HttpStatus.BAD_REQUEST)
     ;
     private int code;
     private String message;

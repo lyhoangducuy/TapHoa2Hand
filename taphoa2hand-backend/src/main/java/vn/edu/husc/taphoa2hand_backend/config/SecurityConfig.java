@@ -36,7 +36,9 @@ public class SecurityConfig {
             "/auth/refresh",
             "/posts/getAll",
             "/media/upload",
-            "/auth/register"
+            "/auth/register",
+            "/auth/send-code",
+            "/auth/re-send-code"
     };
     private static final String[] GET_PUBLIC_ENDPOINTS = {
             "/posts/getAll"

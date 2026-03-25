@@ -1,4 +1,6 @@
-package vn.edu.husc.taphoa2hand_backend.dto.response;
+package vn.edu.husc.taphoa2hand_backend.dto;
+
+import java.util.Map;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,7 +13,9 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
-public class RegisterResponse {
-    @Builder.Default
-    Boolean success=false;
+public class NotificationEvent {
+    String channel;
+    String recipient;
+    String templateCode;
+    Map<String, Object> param;
 }

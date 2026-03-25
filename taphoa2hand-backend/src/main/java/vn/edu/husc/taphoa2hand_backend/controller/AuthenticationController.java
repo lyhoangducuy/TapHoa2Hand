@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import vn.edu.husc.taphoa2hand_backend.dto.request.LogoutRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.RefreshRequest;
+import vn.edu.husc.taphoa2hand_backend.dto.request.UserRedisCodeRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.AuthenDTO.AuthenticationRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.AuthenDTO.IntrospectRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.AuthenDTO.RegisterRequest;
@@ -17,6 +18,7 @@ import vn.edu.husc.taphoa2hand_backend.dto.response.ApiResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.AuthenticationResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.IntrospectResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.RegisterResponse;
+import vn.edu.husc.taphoa2hand_backend.dto.response.ResultCodeResponse;
 import vn.edu.husc.taphoa2hand_backend.service.AuthenticationService;
 
 import java.text.ParseException;
@@ -68,6 +70,22 @@ public class AuthenticationController {
                 .result(result)
                 .build();
     }
+    @PostMapping("/send-code")
+    public ApiResponse<RegisterResponse> sendCode(@RequestBody String email) {
+        RegisterResponse result = authenticationService.verifyOtpAndSaveUser(email);
+        return ApiResponse.<RegisterResponse>builder()
+                .result( result)
+                .build();
+    }
+    @PostMapping("/re-send-code")
+    public ApiResponse<RegisterResponse> reSendCode(@RequestBody @Valid UserRedisCodeRequest request) {
+        RegisterResponse result = authenticationService.resendOtp(request.getEmail());
+        return ApiResponse.<RegisterResponse>builder()
+                .result( result)
+                .build();
+    }
+    
+    
     
     
 }

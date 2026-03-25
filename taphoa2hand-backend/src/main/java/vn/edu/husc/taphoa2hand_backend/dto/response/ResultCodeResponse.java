@@ -11,7 +11,7 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
-public class RegisterResponse {
-    @Builder.Default
-    Boolean success=false;
+public class ResultCodeResponse {
+    Boolean success;
+    String message;
 }
