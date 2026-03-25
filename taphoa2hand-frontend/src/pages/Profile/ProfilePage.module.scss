@@ -1,0 +1,291 @@
+/* =========================================
+   WRAPPER & CARD CHUNG
+   ========================================= */
+.wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    padding-top: 40px; /* Thêm padding top cho PC đỡ bị sát Header */
+    margin-top: 0;
+    min-height: 60vh;
+
+    @media (max-width: 767px) {
+        padding: 20px 10px;
+        padding-top: 0;
+    }
+}
+
+.profile-card {
+    background: #fff;
+    width: 100%;
+    max-width: 800px; /* PC nới rộng ra một chút nhìn cho thoáng */
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    padding: 40px; /* PC padding to hơn */
+
+    @media (max-width: 767px) {
+        max-width: 600px;
+        padding: 25px 20px; /* Mobile padding nhỏ lại */
+        margin-top: -20px; /* Trừ hao nếu có phần nền nào bên trên */
+    }
+}
+
+/* =========================================
+   1. HEADER SECTION (AVATAR + THÔNG TIN CƠ BẢN)
+   ========================================= */
+.header-section {
+    display: flex;
+    align-items: center;
+    gap: 30px; /* Khoảng cách PC rộng hơn */
+
+    @media (max-width: 767px) {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+}
+
+.avatar-container {
+    position: relative;
+    .avatar {
+        width: 130px;
+        height: 130px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #f1c40f1f;
+    }
+    
+    .edit-avatar-btn {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        background: #5B2C6F;
+        color: white;
+        border: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.3s;
+        &:hover { background: #4a235a; transform: scale(1.1); }
+    }
+}
+
+.basic-info {
+    .full-name {
+        font-size: 26px;
+        color: #5B2C6F;
+        margin-bottom: 5px;
+    }
+    .username {
+        color: #888;
+        font-size: 15px;
+        margin-bottom: 15px;
+    }
+    .role-tags {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        @media (max-width: 767px) { justify-content: center; }
+    }
+    .role-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #f1c40f;
+        color: #5B2C6F;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 6px 12px;
+        border-radius: 20px;
+        text-transform: uppercase;
+    }
+}
+
+.divider {
+    margin: 35px 0;
+    border: 0;
+    border-top: 1px solid #eee;
+    
+    @media (max-width: 767px) { margin: 25px 0; }
+}
+
+/* =========================================
+   2. TIỆN ÍCH CỦA TÔI (MENU LIST)
+   ========================================= */
+.section-title {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 20px;
+    font-weight: 700;
+    text-align: left;
+}
+
+.menu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* PC khoảng cách thưa ra */
+
+    @media (max-width: 767px) { gap: 8px; }
+
+    .menu-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 20px; /* PC padding bự hơn */
+        background: #f9f9f9;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+
+        /* PC hover xịn xò */
+        &:hover {
+            background: #fff;
+            border-color: #eee;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            transform: translateX(5px); /* Di chuyển nhẹ sang phải */
+        }
+
+        @media (max-width: 767px) {
+            padding: 14px 16px;
+            &:hover { transform: none; } /* Mobile bỏ hiệu ứng di chuyển */
+            &:active { background: #f0f0f0; transform: scale(0.98); }
+        }
+
+        .item-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #444;
+
+            svg { font-size: 22px; }
+            .icon-heart { color: #e74c3c; }
+            .icon-package { color: #3498db; }
+        }
+
+        .chevron { color: #ccc; font-size: 18px; }
+    }
+}
+
+/* =========================================
+   3. THÔNG TIN CÁ NHÂN (GRID)
+   ========================================= */
+.details-section {
+    /* Mặc định trên PC là 2 cột */
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+
+    /* Thêm div để ôm .section-title chiếm cả 2 cột */
+    & > h3 {
+        grid-column: 1 / -1; 
+        margin-bottom: -10px; /* Ép nó gần lại với lưới thông tin */
+    }
+
+    @media (max-width: 767px) {
+        grid-template-columns: 1fr; /* Mobile rớt xuống 1 cột */
+        gap: 20px;
+    }
+
+    .info-item {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+
+        .icon {
+            color: #5B2C6F;
+            font-size: 22px;
+            background: #f4ecf7;
+            padding: 12px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .content {
+            label {
+                display: block;
+                font-size: 13px;
+                color: #aaa;
+                text-transform: uppercase;
+                margin-bottom: 2px;
+            }
+            p {
+                font-size: 16px;
+                color: #333;
+                font-weight: 500;
+                margin: 0;
+            }
+        }
+    }
+}
+
+/* =========================================
+   4. FOOTER (NÚT BẤM)
+   ========================================= */
+.footer-section {
+    margin-top: 50px;
+    display: flex;
+    justify-content: center; /* PC canh giữa */
+    gap: 20px; /* PC khoảng cách 2 nút */
+
+    @media (max-width: 767px) {
+        flex-direction: column; /* Mobile xếp dọc */
+        gap: 12px;
+        margin-top: 35px;
+    }
+    
+    .edit-profile-btn {
+        background: #5B2C6F;
+        color: white;
+        padding: 14px 40px; /* PC rộng vừa phải */
+        border-radius: 10px;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        transition: 0.3s;
+        
+        &:hover {
+            background: #4a235a;
+            box-shadow: 0 4px 15px rgba(91, 44, 111, 0.3);
+        }
+
+        @media (max-width: 767px) { width: 100%; } /* Mobile 100% */
+    }
+
+    .logout-btn {
+        background: transparent;
+        color: #e74c3c;
+        padding: 14px 40px; /* PC rộng vừa phải */
+        border-radius: 10px;
+        font-weight: 700;
+        border: 1.5px solid #e74c3c;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: 0.3s;
+        
+        &:hover { 
+            background: #fff5f5; 
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.1);
+        }
+
+        @media (max-width: 767px) { width: 100%; } /* Mobile 100% */
+    }
+}
+
+.loading, .error {
+    text-align: center;
+    padding: 100px;
+    font-size: 18px;
+    color: #5B2C6F;
+}

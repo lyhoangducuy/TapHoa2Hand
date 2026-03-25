@@ -1,0 +1,352 @@
+/* =========================================
+   VARIABLES & MIXINS
+   ========================================= */
+$primary-purple: #5B2C6F;
+$secondary-purple: #8E44AD;
+$accent-yellow: #F1C40F;
+$text-dark: #333;
+$text-light: #f8f9fa;
+$bg-white: #ffffff;
+$danger-red: #e74c3c;
+
+@mixin flex-center {
+    display: flex;
+    align-items: center;
+}
+
+/* =========================================
+   STYLE CHUNG TỔNG THỂ 
+   ========================================= */
+.wrapper {
+    background: linear-gradient(135deg, $primary-purple 0%, $secondary-purple 100%);
+    @include flex-center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(91, 44, 111, 0.2); 
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.header-left {
+    @include flex-center;
+    gap: 24px; 
+}
+
+.logo {
+    @include flex-center;
+    cursor: pointer;
+    user-select: none;
+
+    .logo-text {
+        font-size: 24px;
+        font-weight: 800;
+        color: $bg-white;
+        letter-spacing: -0.5px;
+    }
+
+    .highlight {
+        color: $accent-yellow; 
+    }
+}
+
+/* Thanh tìm kiếm */
+.search-wrapper {
+    @include flex-center;
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 999px; 
+    height: 44px; 
+    border: 2px solid transparent;
+    transition: all 0.2s ease-in-out;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+
+    &:focus-within {
+        background-color: $bg-white;
+        border-color: $accent-yellow;
+        box-shadow: 0 0 0 3px rgba(241, 196, 15, 0.3);
+    }
+
+    .search-input {
+        flex: 1;
+        height: 100%;
+        border: none;
+        padding: 0 20px; 
+        font-size: 14px;
+        outline: none;
+        color: #333;
+        background: transparent;
+    }
+
+    .search-btn {
+        width: 50px;
+        height: 100%;
+        background-color: transparent;
+        border: none;
+        @include flex-center;
+        justify-content: center;
+        color: $primary-purple; 
+        cursor: pointer;
+        font-size: 20px;
+
+        &:hover { color: $accent-yellow; }
+    }
+}
+
+/* =========================================
+   STYLE BẢN PC (MÁY TÍNH)
+   ========================================= */
+.wrapper:not(.wrapper-mobile) {
+    height: 72px; 
+
+    .inner-desktop {
+        width: 100%;
+        max-width: 1440px; 
+        padding: 0 40px; 
+        @include flex-center;
+        justify-content: space-between;
+
+        .search-wrapper {
+            flex: 1;
+            max-width: 600px; 
+            margin: 0 32px;
+        }
+    }
+}
+
+.actions {
+    @include flex-center;
+    gap: 28px; 
+
+    .action-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: $text-light; 
+        cursor: pointer;
+        font-size: 10px;
+        font-weight: 700;
+        transition: all 0.2s;
+
+        .icon {
+            font-size: 22px;
+            margin-bottom: 4px;
+        }
+
+        &:hover {
+            color: $accent-yellow;
+            transform: translateY(-2px); 
+        }
+    }
+}
+
+/* --- NHÓM NÚT BÊN PHẢI --- */
+.btn-group {
+    @include flex-center;
+    gap: 12px; // Khoảng cách giữa các nút bằng nhau
+    margin-left: 20px;
+}
+
+/* --- STYLE CHUNG CHO NÚT (Login, Post, User Trigger) --- */
+.login-btn, .post-btn, .user-trigger {
+    height: 44px; // Tất cả cao bằng nhau
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Nút Đăng Nhập */
+.login-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #fff;
+    gap: 8px;
+
+    &:hover {
+        background: $accent-yellow;
+        color: $primary-purple;
+        border-color: $accent-yellow;
+    }
+}
+
+/* Nút Đăng Tin */
+.post-btn {
+    background-color: $accent-yellow;
+    color: $primary-purple;
+    border: none;
+    gap: 8px;
+    box-shadow: 0 4px 10px rgba(241, 196, 15, 0.3);
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 14px rgba(241, 196, 15, 0.5);
+    }
+}
+
+/* Nút User (Avatar + Chevron) - BÂY GIỜ SẼ TO BẰNG NÚT ĐĂNG TIN */
+.user-dropdown-container {
+    position: relative;
+    @include flex-center;
+
+    .user-trigger {
+        background: rgba(255, 255, 255, 0.1); // Nền mờ cho giống một cái nút
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 0 10px 0 6px; // Padding trái nhỏ để avatar sát lề, padding phải rộng cho chevron
+        gap: 8px;
+        color: #fff;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: $accent-yellow;
+            transform: translateY(-2px);
+        }
+
+        .avatar-circle {
+            width: 32px; // Giảm nhẹ size để nằm gọn trong nút cao 44px
+            height: 32px;
+            background: #fff;
+            border-radius: 50%;
+            @include flex-center;
+            justify-content: center;
+            overflow: hidden;
+            border: 2px solid $accent-yellow;
+
+            img { width: 100%; height: 100%; object-fit: cover; }
+            svg { color: $primary-purple; font-size: 18px; }
+        }
+
+        .chevron {
+            font-size: 16px;
+            color: $accent-yellow;
+            transition: transform 0.3s;
+            &.open { transform: rotate(180deg); }
+        }
+    }
+}
+
+/* Dropdown Menu (Giữ nguyên logic cũ nhưng chỉnh top lại cho khít) */
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 250px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    padding: 10px 0;
+    z-index: 1001;
+    animation: slideDown 0.3s ease;
+
+    &::before {
+        content: "";
+        position: absolute;
+        top: -6px;
+        right: 20px;
+        width: 12px;
+        height: 12px;
+        background: #fff;
+        transform: rotate(45deg);
+    }
+}
+
+.user-header {
+    @include flex-center;
+    gap: 12px;
+    padding: 8px 16px 16px;
+
+    .avatar-large {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        overflow: hidden;
+        background: #f0f0f0;
+        img { width: 100%; height: 100%; object-fit: cover; }
+    }
+
+    .user-info {
+        display: flex;
+        flex-direction: column;
+        .user-name { font-weight: 700; color: $text-dark; font-size: 15px; margin: 0; }
+        .user-email { font-size: 12px; color: #777; margin: 2px 0 0 0; }
+    }
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: #f0f0f0;
+    margin: 4px 0;
+}
+
+.dropdown-item {
+    @include flex-center;
+    gap: 12px;
+    padding: 12px 18px;
+    font-size: 14px;
+    color: #444;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.2s;
+
+    .item-icon { font-size: 18px; color: #666; }
+
+    &:hover {
+        background: #f8f4fb;
+        color: $primary-purple;
+        .item-icon { color: $primary-purple; }
+    }
+
+    &.logout {
+        color: $danger-red;
+        &:hover { 
+            background: #fff5f5; 
+            .item-icon { color: $danger-red; } 
+        }
+    }
+}
+
+/* =========================================
+   STYLE BẢN ĐIỆN THOẠI (MOBILE)
+   ========================================= */
+.wrapper-mobile {
+    padding: 12px 16px;
+
+    .inner-mobile {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 12px; 
+    }
+
+    .mobile-top-row {
+        @include flex-center;
+        justify-content: space-between;
+    }
+
+    .mobile-actions {
+        @include flex-center;
+        gap: 16px;
+
+        .icon-mobile {
+            font-size: 24px;
+            color: $bg-white;
+        }
+    }
+
+    .mobile-search {
+        width: 100%; 
+        height: 40px;
+    }
+}
+
+/* =========================================
+   ANIMATIONS
+   ========================================= */
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

@@ -1,0 +1,218 @@
+$primary: #5B2C6F;
+$accent: #F1C40F;
+$text-main: #333;
+$text-light: #888;
+$bg-light: #f4f6f9;
+$error: #e74c3c;
+
+.wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: $bg-light;
+    padding: 20px;
+    margin-top: -30px; /* Của PC */
+
+    @media (max-width: 767px) {
+        background-color: #fff;
+        padding: 0;
+        align-items: flex-start;
+        margin-top: 0; /* SỬA: Xóa margin âm để mobile không bị lẹm lên trên */
+    }
+}
+
+.register-card {
+    position: relative;
+    background: #fff;
+    width: 100%;
+    max-width: 750px; 
+    padding: 20px 35px; /* Tôi nhích lên 20px thay vì 0px để PC nhìn đỡ cụt */
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    margin-top: -60px; /* Của PC */
+
+    @media (max-width: 767px) {
+        max-width: 100%;
+        padding: 50px 20px 40px; /* SỬA: Đẩy padding top xuống 50px nhường chỗ cho nút Back */
+        border-radius: 0;
+        box-shadow: none;
+        min-height: 100vh;
+        margin-top: 0; /* SỬA: Bỏ margin âm trên mobile */
+    }
+}
+
+.back-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    color: $text-main;
+    cursor: pointer;
+    display: none; 
+
+    @media (max-width: 767px) {
+        display: block; 
+        top: 15px; /* SỬA: Canh nút back trên mobile cho vừa mắt */
+    }
+}
+
+.header {
+    text-align: center;
+    margin-bottom: -10px;
+
+    @media (max-width: 767px) {
+        margin-top: 10px; /* SỬA: Ép lại khoảng cách header mobile */
+        margin-bottom: 20px; /* Trả lại khoảng cách chuẩn cho mobile */
+    }
+
+    .logo-text {
+        font-size: 24px;
+        font-weight: 800;
+        color: $primary;
+        margin-bottom: 5px;
+        .highlight { color: $accent; }
+    }
+
+    .title {
+        font-size: 20px;
+        color: $text-main;
+        margin-bottom: 30px;
+        
+        @media (max-width: 767px) {
+            margin-bottom: 15px; /* Mobile thì tiêu đề gần form hơn xíu */
+        }
+    }
+}
+
+.error-message {
+    background: #fdf0ed;
+    color: $error;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid #fadbd8;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; 
+}
+
+/* LƯỚI CHIA 2 CỘT CHO PC */
+.input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+
+    @media (max-width: 767px) {
+        grid-template-columns: 1fr; 
+        gap: 12px;
+    }
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px; 
+
+    label {
+        font-size: 12px;
+        font-weight: 600;
+        color: $text-main;
+    }
+
+    .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+
+        .input-icon {
+            position: absolute;
+            left: 12px;
+            color: #aaa;
+            font-size: 16px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px 15px 10px 38px; 
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 13px;
+            outline: none;
+            transition: 0.3s;
+            background: #fafafa;
+            font-family: inherit;
+
+            &:focus {
+                border-color: $primary;
+                background: #fff;
+                box-shadow: 0 0 0 3px rgba(91, 44, 111, 0.1);
+            }
+            
+            &[type="date"] {
+                color: #555;
+            }
+        }
+
+        .toggle-pw-btn {
+            position: absolute;
+            right: 12px;
+            background: transparent;
+            border: none;
+            color: #aaa;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+
+            &:hover { color: $primary; }
+        }
+    }
+}
+
+.submit-btn {
+    background: $primary;
+    color: #fff;
+    border: none;
+    padding: 12px; 
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-top: 5px; 
+
+    &:hover {
+        background: #4a235a;
+        box-shadow: 0 4px 15px rgba(91, 44, 111, 0.3);
+    }
+    
+    &:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+}
+
+.login-hint {
+    text-align: center;
+    margin-top: 15px; 
+    font-size: 14px;
+    color: $text-light;
+
+    .login-link {
+        color: $primary;
+        font-weight: 700;
+        cursor: pointer;
+        &:hover { text-decoration: underline; }
+    }
+}
