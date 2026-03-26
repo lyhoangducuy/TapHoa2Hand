@@ -59,7 +59,7 @@ function CodePage() {
                 setSuccessMsg('Xác nhận thành công! Đang chuyển hướng...');
                 setTimeout(() => {
                     navigate('/login'); // Xác nhận xong đẩy qua đăng nhập
-                }, 1500);
+                }, 2000);
             } else {
                 setErrorMsg('Mã xác nhận không hợp lệ hoặc đã hết hạn.');
             }

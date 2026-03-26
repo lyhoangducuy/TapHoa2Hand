@@ -11,6 +11,7 @@ import lombok.experimental.FieldDefaults;
 import vn.edu.husc.taphoa2hand_backend.dto.request.LogoutRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.RefreshRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.UserRedisCodeRequest;
+import vn.edu.husc.taphoa2hand_backend.dto.request.VerifyCodeRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.AuthenDTO.AuthenticationRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.AuthenDTO.IntrospectRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.AuthenDTO.RegisterRequest;
@@ -71,8 +72,8 @@ public class AuthenticationController {
                 .build();
     }
     @PostMapping("/send-code")
-    public ApiResponse<RegisterResponse> sendCode(@RequestBody String email) {
-        RegisterResponse result = authenticationService.verifyOtpAndSaveUser(email);
+    public ApiResponse<RegisterResponse> sendCode(@RequestBody VerifyCodeRequest request) {
+        RegisterResponse result = authenticationService.verifyOtpAndSaveUser(request.getEmail(), request.getCode());
         return ApiResponse.<RegisterResponse>builder()
                 .result( result)
                 .build();

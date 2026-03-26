@@ -25,14 +25,15 @@ export const register = async (userData) => {
         body: JSON.stringify(userData),
     });
 };
-export const sendCode = async (email, code) => { // Thêm tham số code
-    const url = `${CONFIG.API_GATEWAY}${API.CODE}`;
+export const sendCode = async (email, code) => { 
+    const url = `${CONFIG.API_GATEWAY}/auth/send-code`; // CHÚ Ý: Chỗ này thường là một URL khác, ví dụ /verify-code chứ không phải /send-code
     return await fetch(url, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, code }), // Truyền cả email và code xuống Backend
+        // Lúc này mới cần gửi cả 2 lên để Backend so sánh với Redis
+        body: JSON.stringify({ email: email, code: code }), 
     });
 };
 export const reSendCode = async (email) => {
@@ -42,6 +43,6 @@ export const reSendCode = async (email) => {
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email}), // Truyền cả email và code xuống Backend
     });
 };

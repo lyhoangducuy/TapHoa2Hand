@@ -193,13 +193,13 @@ public class AuthenticationService {
                 .success(true)
                 .build();
     }
-    public RegisterResponse verifyOtpAndSaveUser(String email) {
+    public RegisterResponse verifyOtpAndSaveUser(String email, String code) {
         // 1. Tìm thông tin trong Redis bằng email
         UserRedisCodeRequest redisData = userRedisCodeRequestRepository.findById(email)
                 .orElseThrow(() -> new AppException(ErrorCode.OTP_EXPIRED_OR_NOT_FOUND)); // Thông báo: OTP hết hạn hoặc email chưa đăng ký
 
         // 2. Kiểm tra mã OTP có khớp không
-        if (!redisData.getCode().equals(redisData.getCode())) {
+        if (!redisData.getCode().equals(code)) {
             throw new AppException(ErrorCode.OTP_INVALID); // Thông báo: Mã OTP không chính xác
         }
 
@@ -224,6 +224,7 @@ public class AuthenticationService {
 
         // 6. Xoá dữ liệu tạm trong Redis để dọn rác và tránh dùng lại OTP
         userRedisCodeRequestRepository.deleteById(email);
+        userRedisCodeRequestRepository.deleteById(user.getUsername());
 
         return RegisterResponse.builder()
                 .success(true)
