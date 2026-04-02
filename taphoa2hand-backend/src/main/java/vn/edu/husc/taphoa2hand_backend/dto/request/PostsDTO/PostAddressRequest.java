@@ -14,9 +14,6 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PostAddressRequest {
     String city;
-    String district;
     String ward;
     String street;
-    Double latitude;
-    Double longitude;
 }

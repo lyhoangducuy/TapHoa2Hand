@@ -1,14 +1,9 @@
 package vn.edu.husc.taphoa2hand_backend.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
+import org.hibernate.annotations.CreationTimestamp;
+import jakarta.persistence.*;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Entity
@@ -18,11 +13,15 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 @Table(name = "categories")
-
 public class Categories {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
+    
+    @Column(unique = true, nullable = false) // Tên danh mục nên duy nhất
     String name;
-    String createdAt;
+
+    @CreationTimestamp // Tự động điền thời gian khi tạo mới, không cần truyền từ FE
+    @Column(updatable = false)
+    LocalDateTime createdAt;
 }

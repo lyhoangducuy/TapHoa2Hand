@@ -1,0 +1,164 @@
+/* =========================================
+   WRAPPER & CARD CHUNG
+   ========================================= */
+.wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
+    min-height: 60vh;
+    background-color: #f8f9fa;
+
+    @media (max-width: 767px) {
+        padding: 20px 10px;
+    }
+}
+
+.form-card {
+    background: #fff;
+    width: 100%;
+    max-width: 600px; /* Form nhập liệu không nên để quá to, 600px là đẹp */
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    padding: 40px;
+
+    @media (max-width: 767px) {
+        padding: 25px 20px;
+    }
+}
+
+.form-header {
+    text-align: center;
+    margin-bottom: 30px;
+
+    h2 {
+        font-size: 24px;
+        color: #5B2C6F;
+        margin-bottom: 8px;
+    }
+
+    p {
+        color: #888;
+        font-size: 14px;
+    }
+}
+
+/* =========================================
+   FORM THÔNG TIN
+   ========================================= */
+.edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #444;
+
+        .icon {
+            color: #5B2C6F;
+            font-size: 16px;
+        }
+    }
+
+    input, textarea {
+        width: 100%;
+        padding: 14px 16px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        font-size: 15px;
+        color: #333;
+        background: #fdfdfd;
+        transition: all 0.3s ease;
+        outline: none;
+
+        &::placeholder {
+            color: #bbb;
+        }
+
+        /* Hiệu ứng khi click vào input */
+        &:focus {
+            border-color: #5B2C6F;
+            box-shadow: 0 0 0 4px rgba(91, 44, 111, 0.1);
+            background: #fff;
+        }
+    }
+
+    textarea {
+        resize: vertical; /* Cho phép kéo giãn chiều dọc */
+        font-family: inherit;
+    }
+}
+
+/* =========================================
+   ACTION BUTTONS (LƯU & HỦY)
+   ========================================= */
+.action-buttons {
+    display: flex;
+    justify-content: flex-end; /* PC dạt sang phải */
+    gap: 15px;
+    margin-top: 20px;
+
+    @media (max-width: 767px) {
+        flex-direction: column-reverse; /* Mobile Hủy ở dưới, Lưu ở trên */
+        gap: 12px;
+    }
+
+    button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 14px 24px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 15px;
+        cursor: pointer;
+        transition: 0.3s;
+        border: none;
+
+        &:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 767px) {
+            width: 100%; /* Mobile nút full viền */
+        }
+    }
+
+    .btn-cancel {
+        background: #f1f2f6;
+        color: #555;
+        
+        &:hover:not(:disabled) {
+            background: #e1e2e6;
+        }
+    }
+
+    .btn-save {
+        background: #5B2C6F;
+        color: white;
+        
+        &:hover:not(:disabled) {
+            background: #4a235a;
+            box-shadow: 0 4px 15px rgba(91, 44, 111, 0.3);
+        }
+    }
+}
+
+.loading {
+    text-align: center;
+    padding: 100px;
+    color: #5B2C6F;
+    font-weight: 600;
+}

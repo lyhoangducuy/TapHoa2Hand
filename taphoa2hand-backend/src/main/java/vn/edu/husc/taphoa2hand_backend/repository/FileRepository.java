@@ -27,6 +27,20 @@ public class FileRepository {
     private String downloadPrefix;
 
     public FileInfo store(MultipartFile multipartFile) throws IOException{
+        if (multipartFile == null || multipartFile.isEmpty()) {
+            String defaultFileName = "noimage.jpg";
+            Path folder = Paths.get(storagePath);
+            Path defaultFilePath = folder.resolve(defaultFileName).normalize().toAbsolutePath();
+            
+            return FileInfo.builder()
+                .name(defaultFileName)
+                .contentType("image/jpeg")
+                .size(0L) 
+                .md5Checksum("") // Có thể để rỗng hoặc tính sẵn mã MD5 của file noimage.jpg nhét vào đây
+                .path(defaultFilePath.toString())
+                .url(downloadPrefix + defaultFileName)
+                .build();
+        }
         Path folder=Paths.get(storagePath);
         String fileExtension=StringUtils.getFilenameExtension(multipartFile.getOriginalFilename());
         String fileName= Objects.isNull(fileExtension)

@@ -1,0 +1,365 @@
+.wrapper {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 15px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+    // --- CẬP NHẬT BREADCRUMB ---
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 20px;
+        font-size: 0.95rem;
+
+        .breadcrumb-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #0077ed;
+            text-decoration: none;
+            font-weight: 500;
+            transition: 0.2s;
+
+            &:hover:not(.active) {
+                text-decoration: underline;
+            }
+
+            &.active {
+                color: #666;
+                cursor: default;
+            }
+        }
+
+        .separator {
+            color: #999;
+            font-size: 1.1rem;
+            margin-top: 2px; // Cân bằng độ cao với text
+        }
+    }
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 1.8fr 1.2fr;
+    gap: 25px;
+
+    @media (max-width: 992px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+// --- CỘT TRÁI ---
+.left-column {
+    .image-section {
+        background: #fff;
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+
+        .main-img-box {
+            position: relative;
+            width: 100%;
+            height: 450px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+            }
+
+            .status-tag {
+                position: absolute;
+                top: 15px;
+                left: 15px;
+                padding: 6px 14px;
+                border-radius: 20px;
+                background: #ff8a00;
+                color: #fff;
+                font-size: 0.85rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+
+                &.available { background: #28a745; }
+                &.sold { background: #dc3545; }
+                &.hidden { background: #6c757d; }
+            }
+        }
+
+        .thumb-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+
+            // Tùy chỉnh thanh cuộn cho đẹp
+            &::-webkit-scrollbar {
+                height: 6px;
+            }
+            &::-webkit-scrollbar-thumb {
+                background: #ddd;
+                border-radius: 10px;
+            }
+
+            img {
+                width: 80px;
+                height: 80px;
+                border-radius: 6px;
+                object-fit: cover;
+                cursor: pointer;
+                border: 2px solid transparent;
+                transition: 0.2s;
+                flex-shrink: 0;
+
+                &:hover { border-color: #ff8a00; }
+                &.active { border-color: #ff8a00; transform: scale(1.05); }
+            }
+        }
+    }
+
+    .info-block {
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+
+        h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .desc {
+            line-height: 1.6;
+            color: #555;
+            white-space: pre-wrap;
+            font-size: 1rem;
+        }
+
+        .spec-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+
+            @media (max-width: 576px) {
+                grid-template-columns: 1fr; // Mobile thành 1 cột
+            }
+
+            .spec-row {
+                display: flex;
+                justify-content: space-between;
+                padding: 12px;
+                background: #f9f9f9;
+                border-radius: 6px;
+                font-size: 0.95rem;
+
+                span { color: #777; }
+                strong { color: #333; text-align: right; }
+            }
+        }
+    }
+}
+
+// --- CỘT PHẢI ---
+.right-column {
+    .price-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+
+        .post-title {
+            font-size: 1.4rem;
+            line-height: 1.4;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .price-tag {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #d0021b;
+            margin-bottom: 15px;
+        }
+
+        .meta {
+            display: flex;
+            gap: 20px;
+            color: #777;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            
+            span { display: flex; align-items: center; gap: 5px; }
+        }
+
+        .location {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            color: #333;
+            padding: 15px 0;
+            border-top: 1px solid #eee;
+            font-weight: 500;
+            line-height: 1.4;
+            
+            svg { flex-shrink: 0; margin-top: 3px; color: #555; }
+        }
+
+        // --- CẬP NHẬT PHƯƠNG THỨC THANH TOÁN ---
+        .payments {
+            display: flex;
+            align-items: center;
+            color: #555;
+            padding-top: 15px;
+            border-top: 1px dashed #eee;
+            font-size: 0.95rem;
+
+            strong { color: #28a745; margin-left: 5px; }
+        }
+    }
+
+    .seller-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+
+        .seller-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+
+            .avatar {
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background: #eef1f5;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.5rem;
+                color: #aaa;
+                flex-shrink: 0;
+
+                img { width: 100%; height: 100%; object-fit: cover; }
+            }
+
+            .name-box {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+
+                strong { font-size: 1.1rem; color: #333; }
+                .verify { 
+                    font-size: 0.85rem; 
+                    color: #28a745; 
+                    display: flex; 
+                    align-items: center; 
+                    gap: 4px; 
+                    font-weight: 500;
+                }
+            }
+        }
+
+        .btns {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+
+            button {
+                width: 100%;
+                padding: 12px;
+                border-radius: 8px;
+                border: none;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                cursor: pointer;
+                transition: 0.3s;
+                font-size: 1rem;
+            }
+
+            // --- CẬP NHẬT TRẠNG THÁI HIỂN THỊ SĐT ---
+            .btn-phone {
+                background: #28a745;
+                color: #fff;
+                border: 1px solid #28a745;
+
+                &:hover { background: #218838; }
+
+                &.showing { 
+                    background: #f8f9fa; 
+                    color: #28a745;
+                    font-size: 1.1rem;
+                    letter-spacing: 1px;
+                }
+            }
+
+            .btn-chat {
+                background: #fff;
+                border: 1px solid #0077ed;
+                color: #0077ed;
+                &:hover { background: #eef6ff; }
+            }
+        }
+    }
+
+    // --- CẬP NHẬT MẸO AN TOÀN ---
+    .safety-tips {
+        background: #fff8e1;
+        border-left: 4px solid #ffc107;
+        border-radius: 8px;
+        padding: 18px;
+        margin-top: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+
+        strong {
+            display: block;
+            color: #b28900;
+            margin-bottom: 12px;
+            font-size: 1.05rem;
+        }
+
+        ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.6;
+
+            li { margin-bottom: 8px; }
+            li:last-child { margin-bottom: 0; }
+        }
+    }
+}
+
+.loading, .error {
+    text-align: center;
+    padding: 80px 20px;
+    font-size: 1.2rem;
+    color: #666;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    margin: 40px auto;
+    max-width: 800px;
+}

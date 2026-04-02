@@ -20,10 +20,6 @@ public class FileMgmt {
     @Id
     String id;
     String contentType;
-    //post, user
-    String targetType;
-    //id of post or user
-    String targetId;
     long size;
     String md5Checksum;
     String path;

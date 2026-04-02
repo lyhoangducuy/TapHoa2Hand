@@ -1,0 +1,152 @@
+// Variables
+$primary: #4CAF50;
+$primary-hover: #43a047;
+$border: #e0e0e0;
+$text-main: #333;
+$text-light: #757575;
+
+.wrapper {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 30px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.pageTitle {
+  text-align: center;
+  color: $primary;
+  margin-bottom: 30px;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.fieldset {
+  border: 1px solid $border;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+  background-color: #fafafa;
+}
+
+.legend {
+  background-color: $primary;
+  color: white;
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.formGroup {
+  margin-bottom: 16px;
+
+  label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: $text-main;
+  }
+}
+
+.grid2Cols {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.inputControl,
+.textareaControl {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid $border;
+  border-radius: 6px;
+  font-size: 15px;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: $primary;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+  }
+}
+
+.textareaControl {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.checkboxGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border: 1px solid $border;
+  border-radius: 20px;
+  background-color: white;
+  user-select: none;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: $primary;
+    background-color: #f1f8e9;
+  }
+
+  input[type="checkbox"] {
+    cursor: pointer;
+  }
+}
+
+.fileInput {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border: 1px dashed $primary;
+  border-radius: 6px;
+  background-color: white;
+  cursor: pointer;
+}
+
+.helperText {
+  display: block;
+  margin-top: 8px;
+  color: $text-light;
+  font-size: 13px;
+  font-style: italic;
+}
+
+.submitBtn {
+  width: 100%;
+  padding: 14px 20px;
+  background-color: $primary;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 10px;
+
+  &:hover:not(:disabled) {
+    background-color: $primary-hover;
+  }
+
+  &:disabled {
+    background-color: #a5d6a7;
+    cursor: not-allowed;
+  }
+}

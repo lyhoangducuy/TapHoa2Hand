@@ -2,6 +2,7 @@ package vn.edu.husc.taphoa2hand_backend.entity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -65,8 +66,7 @@ public class Users {
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Roles> roles;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "users_posts", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "post_id"))
-    private Set<Posts> posts;
+    private List<Posts> posts;
 }

@@ -1,5 +1,7 @@
 package vn.edu.husc.taphoa2hand_backend.service;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -8,11 +10,14 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import vn.edu.husc.taphoa2hand_backend.dto.request.UsersDTO.UserCreateRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.UsersDTO.UserUpdateRequest;
+import vn.edu.husc.taphoa2hand_backend.dto.response.ApiResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.UserResponse;
 import vn.edu.husc.taphoa2hand_backend.entity.Users;
 import vn.edu.husc.taphoa2hand_backend.exception.AppException;
@@ -29,6 +34,7 @@ public class UsersService {
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
     RolesRepository rolesRepository;
+    FileService fileService;
 
     public UserResponse getMyInfo() {
         var context = SecurityContextHolder.getContext();
@@ -81,5 +87,17 @@ public class UsersService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         usersRepository.delete(existingUser);
         return "User deleted successfully";
+    }
+    public UserResponse updateAvatar(MultipartFile file) throws IOException {
+        var user=SecurityContextHolder.getContext().getAuthentication();
+        String username=user.getName();
+
+        var existingUser = usersRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        var storedFile = fileService.uploadMedia(file);
+        
+        existingUser.setAvatar(storedFile.getUrl());
+        usersRepository.save(existingUser);
+        return userMapper.toUserResponse(existingUser);
     }
 }

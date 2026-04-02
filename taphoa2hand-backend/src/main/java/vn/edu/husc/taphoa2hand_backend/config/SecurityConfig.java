@@ -38,10 +38,14 @@ public class SecurityConfig {
             "/media/upload",
             "/auth/register",
             "/auth/send-code",
-            "/auth/re-send-code"
+            "/auth/re-send-code",
+            "/media/download/**"
     };
     private static final String[] GET_PUBLIC_ENDPOINTS = {
-            "/posts/getAll"
+            "/posts/getAll",
+            "/media/download/**",
+            "/posts/{postId}",
+            "/categories/getAll",
     };
 
     @Bean

@@ -7,10 +7,15 @@ export const API = {
     LOGIN: "/auth/login",
     MY_INFO: "/user/myInfo",
     // Nếu bạn muốn lấy sẵn cái hàm update user hồi nãy:
-    UPDATE_USER: (userId) => `/users/${userId}`,
+    UPDATE_USER: (userId) => `/user/${userId}`,
     REGISTER_USER: "/auth/register",
 
     GET_POST:"/posts/getAll",
     CODE:"/auth/send-code",
     RECODE:"/auth/re-send-code",
+    UPDATE_AVATAR:"/user/update-avatar",
+    DETAIL_POST:(postId) => `/posts/${postId}`,
+    CREATE_POST:"/posts/create",
+    CATEGORY:"/categories/getAll",
+    PAYMENT:"/payments/getAll"
 };

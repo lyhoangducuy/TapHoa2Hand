@@ -40,7 +40,11 @@ public enum ErrorCode {
     EMAIL_PENDING_VERIFICATION(5008, "Email is pending verification",HttpStatus.BAD_REQUEST),
     USERNAME_PENDING_VERIFICATION(5009, "Username is pending verification",HttpStatus.BAD_REQUEST),
     REGISTER_SESSION_EXPIRED(5010, "Register session is expired",HttpStatus.BAD_REQUEST),
-    OTP_RESEND_TOO_FREQUENTLY(5011, "OTP resend too frequently. Please wait before requesting a new OTP.",HttpStatus.BAD_REQUEST)
+    OTP_RESEND_TOO_FREQUENTLY(5011, "OTP resend too frequently. Please wait before requesting a new OTP.",HttpStatus.BAD_REQUEST),
+    POST_NOT_FOUND(6001, "Post not found",HttpStatus.NOT_FOUND),
+    CATEGORY_EXISTS(7001, "Category already exists",HttpStatus.BAD_REQUEST),
+    CATEGORY_NOT_FOUND(7002, "Category not found",HttpStatus.NOT_FOUND)
+    
     ;
     private int code;
     private String message;

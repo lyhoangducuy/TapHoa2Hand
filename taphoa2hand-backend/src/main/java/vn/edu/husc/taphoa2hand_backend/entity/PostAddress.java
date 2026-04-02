@@ -26,11 +26,8 @@ public class PostAddress {
     String id;
 
     String city;
-    String district;
     String ward;
     String street;
-    Double latitude;
-    Double longitude;
 
     @OneToOne
     @JoinColumn(name = "post_id", unique = true)

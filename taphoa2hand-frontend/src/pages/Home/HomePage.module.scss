@@ -127,7 +127,10 @@
         margin-top: auto; /* Đẩy xuống đáy info-wrapper */
     }
 }
-
+.status-badge {
+    &.available { background: green; }
+    &.sold { background: red; }
+}
 /* Trạng thái đang tải */
 .loading {
     text-align: center;

@@ -27,9 +27,9 @@ public class FileController {
     FileService fileService;
 
     @PostMapping("/upload")
-    ApiResponse<FilesResponse> uploadMedia(@RequestParam("file") MultipartFile file,@RequestParam("targetType") String targetType, @RequestParam("targetId") String targetId) throws IOException{
+    ApiResponse<FilesResponse> uploadMedia(@RequestParam("file") MultipartFile file) throws IOException{
         return ApiResponse.<FilesResponse>builder()
-            .result(fileService.uploadMedia(file,targetType,targetId))
+            .result(fileService.uploadMedia(file))
             .build();
     }
     @GetMapping("/download/{fileName}")

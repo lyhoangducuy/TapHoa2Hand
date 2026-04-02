@@ -25,13 +25,11 @@ public class FileService {
     FileMgmtMapper fileMgmtMapper;
     // Trong FileMgmtService.java
 
-    public FilesResponse uploadMedia(MultipartFile file, String targetType, String targetId) throws IOException {
+    public FilesResponse uploadMedia(MultipartFile file) throws IOException {
         // Lưu file
         var fileInfo = fileRepository.store(file);
         // Lưu vào Database
         var fileMgmt = fileMgmtMapper.toFileMgmt(fileInfo);
-        fileMgmt.setTargetType(targetType);
-        fileMgmt.setTargetId(targetId);
         fileMgmt = fileMgmtRepository.save(fileMgmt);
         return FilesResponse.builder()
                 .originalFileName(file.getOriginalFilename())

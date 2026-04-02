@@ -2,7 +2,6 @@ package vn.edu.husc.taphoa2hand_backend.validator;
 
 import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
-import vn.edu.husc.taphoa2hand_backend.dto.request.UserRedisCodeRequest;
 import vn.edu.husc.taphoa2hand_backend.exception.AppException;
 import vn.edu.husc.taphoa2hand_backend.exception.ErrorCode;
 import vn.edu.husc.taphoa2hand_backend.repository.UserRedisCodeRequestRepository;

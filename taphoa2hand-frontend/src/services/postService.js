@@ -12,3 +12,45 @@ export const getAllPosts = async () => {
         throw error;
     }
 };
+export const getPostDetail = async (postId) => {
+    try {
+        // Sử dụng hàm DETAIL_POST từ configuration của bạn
+        const response = await httpClient.get(API.DETAIL_POST(postId));
+        return response.data; 
+    } catch (error) {
+        console.error(`Error fetching post detail for ID ${postId}:`, error);
+        throw error;
+    }
+};
+
+export const createPost = async (postData, images) => {
+    try {
+        const token = localStorage.getItem('token');
+        const formData = new FormData();
+
+        // Ép kiểu JSON thành Blob để Spring Boot @RequestPart có thể đọc được
+        formData.append(
+            "request", 
+            new Blob([JSON.stringify(postData)], { type: "application/json" })
+        );
+
+        if (images && images.length > 0) {
+            Array.from(images).forEach((image) => {
+                formData.append("images", image);
+            });
+        }
+
+        const response = await httpClient.post(API.CREATE_POST, formData, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                // Ép Axios gửi dưới dạng Form Data
+                "Content-Type": "multipart/form-data" 
+            }
+        });
+        
+        return response.data;
+    } catch (error) {
+        console.error("Error creating post:", error);
+        throw error;
+    }
+};

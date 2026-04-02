@@ -9,6 +9,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.cglib.core.Local;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -16,10 +18,13 @@ import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
@@ -47,7 +52,7 @@ public class Posts {
     @CollectionTable(name = "post_payment_methods", joinColumns = @JoinColumn(name = "post_id"))
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method")
-    Set<PaymentMethodEnum> acceptedPaymentMethods;
+    List<PaymentMethodEnum> acceptedPaymentMethods;
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     PostStatusEnum status;
@@ -62,15 +67,22 @@ public class Posts {
     @OneToOne(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-     PostDetail postDetail;
+    PostDetail postDetail;
 
     @OneToOne(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-     PostAddress postAddress;
+    PostAddress postAddress;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-     List<PostImage> postImages;
+    List<PostImage> postImages;
+
+    @JsonIgnore
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "posts_category", 
+        joinColumns = @JoinColumn(name = "post_id"), 
+        inverseJoinColumns = @JoinColumn(name = "category_id"))
+    private Set<Categories> categories;
 }

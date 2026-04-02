@@ -131,7 +131,7 @@ function Header() {
                                 <FiLogIn /> <span>Đăng nhập</span>
                             </button>
                         )}
-                        <button className={cx("post-btn")} onClick={() => navigate('/post')}>
+                        <button className={cx("post-btn")} onClick={() => navigate('/create-post')}>
                             <FiPlusCircle /> <span>ĐĂNG TIN</span>
                         </button>
                         {user && <UserDropdown user={user} onLogout={handleLogout} onNavigate={navigate} />}

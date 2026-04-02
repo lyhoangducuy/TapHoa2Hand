@@ -1,16 +1,15 @@
 package vn.edu.husc.taphoa2hand_backend.dto.request.PostsDTO;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import vn.edu.husc.taphoa2hand_backend.entity.PaymentMethodEnum;
 
 @Data
 @AllArgsConstructor
@@ -18,16 +17,18 @@ import vn.edu.husc.taphoa2hand_backend.entity.PaymentMethodEnum;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PostCreateRequest {
-    @NotBlank(message = "TITLE_BLANK")
     String title;
-    
-    @NotNull(message = "PRICE_NULL")
     Long price;
-    
-    Set<PaymentMethodEnum> acceptedPaymentMethods;
 
-    // NHỮNG TRƯỜNG MỚI THÊM
-    PostDetailRequest postDetail;
+    List<String> listCategoriesId; // Tên danh mục
+    
+    // Phương thức thanh toán (chuyển Enum thành String cho FE dễ xài)
+    List<String> listAcceptedPaymentMethodsValue;
+    
+    
+    // Chi tiết (từ PostDetail)
+    PostDetailInfoRequest postDetail;
+    
+    // Địa chỉ (từ PostAddress)
     PostAddressRequest postAddress;
-    Set<PostImageRequest> postImages;
 }
