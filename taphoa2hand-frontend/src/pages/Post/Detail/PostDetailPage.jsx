@@ -1,24 +1,45 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './PostDetailPage.module.scss';
-import { getPostDetail } from '../../../services/postService'; // Đảm bảo đường dẫn đúng
 import { 
-    FiMapPin, FiClock, FiEye, FiPhone, FiMessageCircle, 
-    FiChevronRight, FiBox, FiInfo, FiUser, FiCheckCircle, FiHome, FiCreditCard 
+    deletePost, 
+    getPostDetail
+} from '../../../services/postService';
+import {
+    FiMapPin, FiClock, FiEye, FiPhone, FiMessageCircle,
+    FiChevronRight, FiBox, FiInfo, FiUser, FiCheckCircle, FiHome, FiCreditCard,
+    FiMoreHorizontal, FiHeart
 } from 'react-icons/fi';
+import { addPostToFavorites, isFavoritePost, removePostFromFavorites } from '../../../services/favoriteService';
 
 const cx = classNames.bind(styles);
 const DEFAULT_IMAGE = 'https://via.placeholder.com/600x400?text=No+Image';
 
 function PostDetailPage() {
-    const { postId } = useParams(); 
-    
+    const { postId } = useParams();
+    const navigate = useNavigate();
     const [post, setPost] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeImage, setActiveImage] = useState('');
-    const [showPhone, setShowPhone] = useState(false);
+    const [showProduct, setShowProduct] = useState(false);
 
+    const menuRef = useRef(null);
+    const [showMenu, setShowMenu] = useState(false);
+    const [isFavorite, setIsFavorite] = useState(false);
+
+    // --- LOGIC CLICK RA NGOÀI ĐỂ ĐÓNG MENU ---
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setShowMenu(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    // --- FETCH DATA & CHECK YÊU THÍCH ---
     useEffect(() => {
         const fetchDetail = async () => {
             if (!postId || postId === 'undefined') {
@@ -31,10 +52,8 @@ function PostDetailPage() {
                 if (response.code === 1000) {
                     const data = response.result;
                     setPost(data);
-                    
-                    // Xử lý lấy ảnh chính (Dựa vào postImages là mảng Object)
+
                     if (data.postImages && data.postImages.length > 0) {
-                        // Ưu tiên ảnh thumbnail, nếu không có thì lấy ảnh đầu tiên
                         const thumbnail = data.postImages.find(img => img.isThumbnail);
                         setActiveImage(thumbnail ? thumbnail.imageUrl : data.postImages[0].imageUrl);
                     }
@@ -46,7 +65,24 @@ function PostDetailPage() {
             }
         };
 
+        const checkFavoriteStatus = async () => {
+            const token = localStorage.getItem('token');
+            if (!token) return; // Chưa đăng nhập thì bỏ qua
+
+            try {
+                const response = await isFavoritePost(postId);
+                if (response.code === 1000) {
+                    setIsFavorite(response.result.success);
+                } else if (response === true || response === false) {
+                    setIsFavorite(response); 
+                }
+            } catch (error) {
+                console.error("Lỗi kiểm tra trạng thái yêu thích:", error);
+            }
+        };
+
         fetchDetail();
+        checkFavoriteStatus();
         window.scrollTo(0, 0);
     }, [postId]);
 
@@ -57,21 +93,70 @@ function PostDetailPage() {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
     };
 
-    // Bóc tách dữ liệu từ JSON lồng nhau cho code gọn gàng
     const detail = post.postDetail || {};
     const address = post.postAddress || {};
     const seller = post.user || {};
     const payments = post.acceptedPaymentMethods || [];
     const images = post.postImages || [];
-    
-    // Giả định categories là mảng chuỗi hoặc đối tượng (an toàn)
-    const categoryName = post.categories?.length > 0 
-        ? (post.categories[0].name || post.categories[0]) 
+
+    const categoryName = post.categories?.length > 0
+        ? (post.categories[0].name || post.categories[0])
         : null;
 
+    // --- PHẦN PHÂN QUYỀN & CHỨC NĂNG ---
+    const currentUser = localStorage.getItem('token') || null;
+    const isOwner = currentUser?.username === seller.username;
+    const isAdmin = currentUser?.roles?.some(role => role.name === 'ADMIN' || role === 'ADMIN');
+
+    const canDelete = isOwner || isAdmin;
+    const canReport = currentUser && !isOwner && !isAdmin;
+
+    const handleDeletePost = async () => {
+        setShowMenu(false);
+        if (window.confirm("Bạn có chắc chắn muốn xóa bài viết này không? Hành động này không thể hoàn tác!")) {
+            try {
+                const response = await deletePost(postId);
+                if (response.code === 1000) {
+                    alert("Đã xóa bài viết thành công!");
+                    navigate('/'); 
+                } else {
+                    alert("Không thể xóa: " + (response.message || "Lỗi không xác định"));
+                }
+            } catch (error) {
+                console.error("Lỗi khi xóa bài:", error);
+                alert("Đã xảy ra lỗi hệ thống khi xóa bài. Vui lòng thử lại sau!");
+            }
+        }
+    };
+
+    const handleReportPost = () => {
+        setShowMenu(false);
+        alert("Hiện popup báo cáo bài viết!");
+    };
+
+    const handleToggleFavorite = async () => {
+        if (!currentUser) {
+            alert("Bạn cần đăng nhập để lưu tin!");
+            return;
+        }
+
+        try {
+            if (isFavorite) {
+                await removePostFromFavorites(postId);
+                setIsFavorite(false);
+            } else {
+                await addPostToFavorites(postId);
+                setIsFavorite(true);
+            }
+        } catch (error) {
+            console.error("Lỗi thao tác lưu tin:", error);
+            alert("Không thể thực hiện thao tác. Vui lòng thử lại sau!");
+        }
+    };
+
+    // --- GIAO DIỆN ---
     return (
         <div className={cx('wrapper')}>
-            {/* --- BREADCRUMB --- */}
             <nav className={cx('breadcrumb')}>
                 <Link to="/" className={cx('breadcrumb-item')}>
                     <FiHome /> Trang chủ
@@ -89,13 +174,12 @@ function PostDetailPage() {
             </nav>
 
             <div className={cx('container')}>
-                {/* --- CỘT TRÁI: HÌNH ẢNH & CHI TIẾT --- */}
                 <div className={cx('left-column')}>
                     <div className={cx('image-section')}>
                         <div className={cx('main-img-box')}>
-                            <img 
-                                src={activeImage || DEFAULT_IMAGE} 
-                                alt="Main" 
+                            <img
+                                src={activeImage || DEFAULT_IMAGE}
+                                alt="Main"
                                 onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
                             />
                             <span className={cx('status-tag', post.status?.toLowerCase())}>
@@ -104,7 +188,7 @@ function PostDetailPage() {
                         </div>
                         <div className={cx('thumb-row')}>
                             {images.map((img) => (
-                                <img 
+                                <img
                                     key={img.id}
                                     src={img.imageUrl}
                                     className={cx({ active: activeImage === img.imageUrl })}
@@ -124,43 +208,71 @@ function PostDetailPage() {
                     <div className={cx('info-block')}>
                         <h3><FiBox /> Thông số chi tiết</h3>
                         <div className={cx('spec-list')}>
-                            <div className={cx('spec-row')}>
-                                <span>Thương hiệu</span>
-                                <strong>{detail.brand || 'Đang cập nhật'}</strong>
-                            </div>
-                            <div className={cx('spec-row')}>
-                                <span>Dòng máy</span>
-                                <strong>{detail.model || 'Đang cập nhật'}</strong>
-                            </div>
-                            <div className={cx('spec-row')}>
-                                <span>Tình trạng</span>
-                                <strong>{detail.itemCondition || 'Đang cập nhật'}</strong>
-                            </div>
-                            <div className={cx('spec-row')}>
-                                <span>Thời gian sử dụng</span>
-                                <strong>{detail.usedDuration || 'Không rõ'}</strong>
-                            </div>
-                            <div className={cx('spec-row')}>
-                                <span>Lý do bán</span>
-                                <strong>{detail.reasonForSelling || 'Không rõ'}</strong>
-                            </div>
+                            <div className={cx('spec-row')}><span>Thương hiệu</span><strong>{detail.brand || 'Đang cập nhật'}</strong></div>
+                            <div className={cx('spec-row')}><span>Dòng máy</span><strong>{detail.model || 'Đang cập nhật'}</strong></div>
+                            <div className={cx('spec-row')}><span>Tình trạng</span><strong>{detail.itemCondition || 'Đang cập nhật'}</strong></div>
+                            <div className={cx('spec-row')}><span>Thời gian sử dụng</span><strong>{detail.usedDuration || 'Không rõ'}</strong></div>
+                            <div className={cx('spec-row')}><span>Lý do bán</span><strong>{detail.reasonForSelling || 'Không rõ'}</strong></div>
                         </div>
                     </div>
                 </div>
 
-                {/* --- CỘT PHẢI: GIÁ & THÔNG TIN NGƯỜI BÁN --- */}
                 <div className={cx('right-column')}>
                     <div className={cx('price-card')}>
-                        <h1 className={cx('post-title')}>{post.title}</h1>
+                        <div className={cx('title-action-wrapper')}>
+                            <h1 className={cx('post-title')}>{post.title}</h1>
+
+                            <div className={cx('action-buttons')}>
+                                {/* Nút Lưu tin (Đã thêm logic đổi màu vàng) */}
+                                <button
+                                    className={cx('action-btn', 'heart-btn', { active: isFavorite })}
+                                    onClick={handleToggleFavorite}
+                                    title={isFavorite ? "Bỏ lưu tin" : "Lưu tin"}
+                                >
+                                    <FiHeart 
+                                        fill={isFavorite ? "#FFC107" : "none"} 
+                                        color={isFavorite ? "#FFC107" : "currentColor"} 
+                                    />
+                                </button>
+
+                                {/* Dropdown 3 chấm */}
+                                {(canDelete || canReport) && (
+                                    <div className={cx('dropdown-container')} ref={menuRef}>
+                                        <button
+                                            className={cx('action-btn')}
+                                            onClick={() => setShowMenu(!showMenu)}
+                                        >
+                                            <FiMoreHorizontal />
+                                        </button>
+
+                                        {showMenu && (
+                                            <ul className={cx('dropdown-menu')}>
+                                                {canDelete && (
+                                                    <li className={cx('danger-item')} onClick={handleDeletePost}>
+                                                        Xóa bài viết
+                                                    </li>
+                                                )}
+                                                {canReport && (
+                                                    <li onClick={handleReportPost}>
+                                                        Báo cáo tin
+                                                    </li>
+                                                )}
+                                            </ul>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
                         <div className={cx('price-tag')}>{formatPrice(post.price)}</div>
-                        
+
                         <div className={cx('meta')}>
                             <span><FiClock /> {new Date(post.createdAt).toLocaleDateString('vi-VN')}</span>
                             <span><FiEye /> {post.viewCount || 0} lượt xem</span>
                         </div>
 
                         <div className={cx('location')}>
-                            <FiMapPin /> 
+                            <FiMapPin />
                             <span>
                                 {address.street ? `${address.street}, ` : ''}
                                 {address.ward ? `${address.ward}, ` : ''}
@@ -168,10 +280,9 @@ function PostDetailPage() {
                             </span>
                         </div>
 
-                        {/* Thêm phần hiển thị phương thức thanh toán */}
                         {payments.length > 0 && (
                             <div className={cx('payments')}>
-                                <FiCreditCard style={{marginRight: '8px'}}/> 
+                                <FiCreditCard style={{ marginRight: '8px' }} />
                                 <span>Thanh toán: <strong>{payments.map(p => p.label).join(' - ')}</strong></span>
                             </div>
                         )}
@@ -181,11 +292,7 @@ function PostDetailPage() {
                         <div className={cx('seller-info')}>
                             <div className={cx('avatar')}>
                                 {seller.avatar ? (
-                                    <img 
-                                        src={seller.avatar} 
-                                        alt="Avatar" 
-                                        onError={(e) => e.target.src = DEFAULT_IMAGE} 
-                                    />
+                                    <img src={seller.avatar} alt="Avatar" onError={(e) => e.target.src = DEFAULT_IMAGE} />
                                 ) : (
                                     <FiUser />
                                 )}
@@ -197,14 +304,14 @@ function PostDetailPage() {
                                 </span>
                             </div>
                         </div>
-                        
+
                         <div className={cx('btns')}>
-                            <button 
-                                className={cx('btn-phone', { showing: showPhone })} 
-                                onClick={() => setShowPhone(!showPhone)}
+                            <button
+                                className={cx('btn-phone', { showing: showProduct })}
+                                onClick={() => setShowProduct(!showProduct)}
                             >
-                                <FiPhone /> 
-                                {showPhone ? (seller.phone || 'Chưa có SĐT') : 'Bấm để hiện số điện thoại'}
+                                <FiPhone />
+                                {showProduct ? (seller.phone || 'Chưa có SĐT') : 'Bấm để hiện số điện thoại'}
                             </button>
                             <button className={cx('btn-chat')}>
                                 <FiMessageCircle /> Chat với người bán

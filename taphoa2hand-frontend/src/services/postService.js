@@ -54,3 +54,17 @@ export const createPost = async (postData, images) => {
         throw error;
     }
 };
+export const deletePost = async (postId) => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await httpClient.delete(API.DELETE_POST(postId), {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error(`Error deleting post with ID ${postId}:`, error);
+        throw error;
+    }
+};

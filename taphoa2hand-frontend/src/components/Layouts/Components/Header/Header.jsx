@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import classNames from "classnames/bind";
 import styles from "./Header.module.scss";
-import { FiSearch, FiBell, FiMessageSquare, FiUser, FiPlusCircle, FiLogIn, FiChevronDown, FiSettings, FiPackage, FiLogOut } from 'react-icons/fi';
+import { FiSearch, FiBell, FiMessageSquare, FiUser, FiPlusCircle, FiLogIn, FiChevronDown, FiSettings, FiPackage, FiLogOut, FiHeart } from 'react-icons/fi';
 
 import Sidebar from "../Sidebar/Sidebar";
 import { getMyInfo } from "../../../../services/userService";
-import { getToken, removeToken } from "../../../../services/localStorageService";
+import { getToken, removeToken } from "../../../../services/localstorageService";
 
 const cx = classNames.bind(styles);
 
@@ -48,6 +48,9 @@ const UserDropdown = ({ user, onLogout, onNavigate }) => {
                     </div>
                     <div className={cx("dropdown-item")} onClick={() => onNavigate('/my-orders')}>
                         <FiPackage className={cx("item-icon")} /> <span>Đơn hàng</span>
+                    </div>
+                    <div className={cx("dropdown-item")} onClick={() => onNavigate('/my-favorites')}>
+                        <FiHeart className={cx("item-icon")} /> <span>Tin đã lưu</span>
                     </div>
                     <div className={cx("dropdown-divider")}></div>
                     <div className={cx("dropdown-item", "logout")} onClick={onLogout}>

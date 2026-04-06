@@ -17,5 +17,10 @@ export const API = {
     DETAIL_POST:(postId) => `/posts/${postId}`,
     CREATE_POST:"/posts/create",
     CATEGORY:"/categories/getAll",
-    PAYMENT:"/payments/getAll"
+    PAYMENT:"/payments/getAll",
+    DELETE_POST:(postId) => `/posts/delete/${postId}`,
+    ADD_FAVORITE:(postId) => `/favorites/add/${postId}`,
+    REMOVE_FAVORITE:(postId) => `/favorites/remove/${postId}`,
+    GET_MYFAVORITES:"/favorites/my-favorites",
+    CHECK_FAVORITE:(postId) => `/favorites/check/${postId}`,
 };

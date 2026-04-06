@@ -43,8 +43,9 @@ public enum ErrorCode {
     OTP_RESEND_TOO_FREQUENTLY(5011, "OTP resend too frequently. Please wait before requesting a new OTP.",HttpStatus.BAD_REQUEST),
     POST_NOT_FOUND(6001, "Post not found",HttpStatus.NOT_FOUND),
     CATEGORY_EXISTS(7001, "Category already exists",HttpStatus.BAD_REQUEST),
-    CATEGORY_NOT_FOUND(7002, "Category not found",HttpStatus.NOT_FOUND)
-    
+    CATEGORY_NOT_FOUND(7002, "Category not found",HttpStatus.NOT_FOUND),
+    POST_CANNOT_DELETE(7003, "Cannot delete post because it is associated with other resources",HttpStatus.BAD_REQUEST),
+    FAVORITE_NOT_FOUND(8001, "Favorite not found",HttpStatus.NOT_FOUND)
     ;
     private int code;
     private String message;

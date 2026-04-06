@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import vn.edu.husc.taphoa2hand_backend.dto.request.PostsDTO.PostCreateRequest;
+import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostDeleteResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostDetailResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostImageResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostsResponse;
@@ -142,5 +144,19 @@ public class PostsService {
         Posts savedPost = postsRepository.save(newPost);
 
         return postsMapper.toPostDetailResponse(savedPost);
+    }
+    @Transactional
+    @PreAuthorize("@postValidationHelper.canEditPost(#postId) or hasRole('ADMIN')")
+    public PostDeleteResponse deletePost(String postId) {
+        var post = postsRepository.findById(postId).orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+        var user = SecurityContextHolder.getContext().getAuthentication();
+        if (!post.getUser().getUsername().equals(user.getName())) {
+            throw new AppException(ErrorCode.POST_CANNOT_DELETE);
+        }
+        postsRepository.delete(post);
+        return PostDeleteResponse.builder()
+                .postId(postId)
+                .result("Post deleted successfully")
+                .build();
     }
 }

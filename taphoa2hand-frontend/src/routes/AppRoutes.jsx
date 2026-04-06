@@ -8,6 +8,7 @@ import CodePage from '../pages/Authe/Register/Code/CodePage';
 import { UpdateInfoPage } from '../pages/Profile/UpdateInfo';
 import { PostDetailPage } from '../pages/Post/Detail';
 import { CreatePostPage } from '../pages/Post/Create';
+import FavoritePage from '../pages/Favorite/FavoritePage';
 const publicRoutes = [
     {path:'/',component:HomePage},
     {path:'/login',component:LoginPage,layout: NoSidebarLayout},
@@ -18,6 +19,7 @@ const publicRoutes = [
     {path:'/edit-profile',component:UpdateInfoPage},
     {path:'/post-detail/:postId',component:PostDetailPage},
     {path:'/create-post',component:CreatePostPage, layout: NoSidebarLayout},
+    {path:'/my-favorites',component:FavoritePage},
 ]
 const privateRoutes = []
 export { publicRoutes, privateRoutes }
