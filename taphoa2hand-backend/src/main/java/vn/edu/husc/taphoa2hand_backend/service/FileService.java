@@ -43,4 +43,10 @@ public class FileService {
         var resource = fileRepository.read(fileMgmt);
         return new FileData(fileMgmt.getContentType(), resource);
     }
+    public void deleteMedia(String fileName) throws IOException {
+        var fileMgmt = fileMgmtRepository.findById(fileName)
+                .orElseThrow(() -> new AppException(ErrorCode.FILE_NOT_FOUND));
+        fileRepository.delete(fileMgmt);
+        fileMgmtRepository.delete(fileMgmt);
+    }
 }

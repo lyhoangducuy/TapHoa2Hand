@@ -2,10 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './PostDetailPage.module.scss';
-import { 
-    deletePost, 
-    getPostDetail
-} from '../../../services/postService';
+import { deletePost, getPostDetail } from '../../../services/postService';
 import {
     FiMapPin, FiClock, FiEye, FiPhone, FiMessageCircle,
     FiChevronRight, FiBox, FiInfo, FiUser, FiCheckCircle, FiHome, FiCreditCard,
@@ -28,7 +25,7 @@ function PostDetailPage() {
     const [showMenu, setShowMenu] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
 
-    // --- LOGIC CLICK RA NGOÀI ĐỂ ĐÓNG MENU ---
+    // Click ra ngoài để đóng menu
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -39,14 +36,13 @@ function PostDetailPage() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // --- FETCH DATA & CHECK YÊU THÍCH ---
+    // Lấy dữ liệu & Check yêu thích
     useEffect(() => {
         const fetchDetail = async () => {
             if (!postId || postId === 'undefined') {
                 setLoading(false);
                 return;
             }
-
             try {
                 const response = await getPostDetail(postId);
                 if (response.code === 1000) {
@@ -67,7 +63,7 @@ function PostDetailPage() {
 
         const checkFavoriteStatus = async () => {
             const token = localStorage.getItem('token');
-            if (!token) return; // Chưa đăng nhập thì bỏ qua
+            if (!token) return; 
 
             try {
                 const response = await isFavoritePost(postId);
@@ -98,16 +94,16 @@ function PostDetailPage() {
     const seller = post.user || {};
     const payments = post.acceptedPaymentMethods || [];
     const images = post.postImages || [];
-
-    const categoryName = post.categories?.length > 0
-        ? (post.categories[0].name || post.categories[0])
-        : null;
+    const categoryName = post.categories?.length > 0 ? (post.categories[0].name || post.categories[0]) : null;
 
     // --- PHẦN PHÂN QUYỀN & CHỨC NĂNG ---
-    const currentUser = localStorage.getItem('token') || null;
-    const isOwner = currentUser?.username === seller.username;
-    const isAdmin = currentUser?.roles?.some(role => role.name === 'ADMIN' || role === 'ADMIN');
+    const token = localStorage.getItem('token');
+    const currentUser = token ? JSON.parse(atob(token.split('.')[1])) : null;
 
+    const isOwner = currentUser?.sub === seller.username || currentUser?.username === seller.username;
+    const isAdmin = currentUser?.scope?.includes('ROLE_ADMIN') || false; // Chỉnh lại theo cách Spring Boot lưu role trong JWT (thường là mảng scope)
+
+    const canEdit = isOwner || isAdmin;
     const canDelete = isOwner || isAdmin;
     const canReport = currentUser && !isOwner && !isAdmin;
 
@@ -139,7 +135,6 @@ function PostDetailPage() {
             alert("Bạn cần đăng nhập để lưu tin!");
             return;
         }
-
         try {
             if (isFavorite) {
                 await removePostFromFavorites(postId);
@@ -154,19 +149,14 @@ function PostDetailPage() {
         }
     };
 
-    // --- GIAO DIỆN ---
     return (
         <div className={cx('wrapper')}>
             <nav className={cx('breadcrumb')}>
-                <Link to="/" className={cx('breadcrumb-item')}>
-                    <FiHome /> Trang chủ
-                </Link>
+                <Link to="/" className={cx('breadcrumb-item')}><FiHome /> Trang chủ</Link>
                 <FiChevronRight className={cx('separator')} />
                 {categoryName && (
                     <>
-                        <Link to={`/search?category=${categoryName}`} className={cx('breadcrumb-item')}>
-                            {categoryName}
-                        </Link>
+                        <Link to={`/search?category=${categoryName}`} className={cx('breadcrumb-item')}>{categoryName}</Link>
                         <FiChevronRight className={cx('separator')} />
                     </>
                 )}
@@ -177,11 +167,7 @@ function PostDetailPage() {
                 <div className={cx('left-column')}>
                     <div className={cx('image-section')}>
                         <div className={cx('main-img-box')}>
-                            <img
-                                src={activeImage || DEFAULT_IMAGE}
-                                alt="Main"
-                                onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
-                            />
+                            <img src={activeImage || DEFAULT_IMAGE} alt="Main" onError={(e) => { e.target.src = DEFAULT_IMAGE; }} />
                             <span className={cx('status-tag', post.status?.toLowerCase())}>
                                 {post.status === 'AVAILABLE' ? 'Đang bán' : post.status}
                             </span>
@@ -223,39 +209,30 @@ function PostDetailPage() {
                             <h1 className={cx('post-title')}>{post.title}</h1>
 
                             <div className={cx('action-buttons')}>
-                                {/* Nút Lưu tin (Đã thêm logic đổi màu vàng) */}
                                 <button
                                     className={cx('action-btn', 'heart-btn', { active: isFavorite })}
                                     onClick={handleToggleFavorite}
                                     title={isFavorite ? "Bỏ lưu tin" : "Lưu tin"}
                                 >
-                                    <FiHeart 
-                                        fill={isFavorite ? "#FFC107" : "none"} 
-                                        color={isFavorite ? "#FFC107" : "currentColor"} 
-                                    />
+                                    <FiHeart fill={isFavorite ? "#FFC107" : "none"} color={isFavorite ? "#FFC107" : "currentColor"} />
                                 </button>
 
-                                {/* Dropdown 3 chấm */}
-                                {(canDelete || canReport) && (
+                                {(canEdit || canDelete || canReport) && (
                                     <div className={cx('dropdown-container')} ref={menuRef}>
-                                        <button
-                                            className={cx('action-btn')}
-                                            onClick={() => setShowMenu(!showMenu)}
-                                        >
+                                        <button className={cx('action-btn')} onClick={() => setShowMenu(!showMenu)}>
                                             <FiMoreHorizontal />
                                         </button>
 
                                         {showMenu && (
                                             <ul className={cx('dropdown-menu')}>
+                                                {canEdit && (
+                                                    <li onClick={() => navigate(`/edit-post/${postId}`)}>Chỉnh sửa bài viết</li>
+                                                )}
                                                 {canDelete && (
-                                                    <li className={cx('danger-item')} onClick={handleDeletePost}>
-                                                        Xóa bài viết
-                                                    </li>
+                                                    <li className={cx('danger-item')} onClick={handleDeletePost}>Xóa bài viết</li>
                                                 )}
                                                 {canReport && (
-                                                    <li onClick={handleReportPost}>
-                                                        Báo cáo tin
-                                                    </li>
+                                                    <li onClick={handleReportPost}>Báo cáo tin</li>
                                                 )}
                                             </ul>
                                         )}
@@ -293,39 +270,22 @@ function PostDetailPage() {
                             <div className={cx('avatar')}>
                                 {seller.avatar ? (
                                     <img src={seller.avatar} alt="Avatar" onError={(e) => e.target.src = DEFAULT_IMAGE} />
-                                ) : (
-                                    <FiUser />
-                                )}
+                                ) : (<FiUser />)}
                             </div>
                             <div className={cx('name-box')}>
                                 <strong>{seller.fullName || 'Người dùng TapHoa2Hand'}</strong>
-                                <span className={cx('verify')}>
-                                    <FiCheckCircle /> Đối tác tin cậy
-                                </span>
+                                <span className={cx('verify')}><FiCheckCircle /> Đối tác tin cậy</span>
                             </div>
                         </div>
 
                         <div className={cx('btns')}>
-                            <button
-                                className={cx('btn-phone', { showing: showProduct })}
-                                onClick={() => setShowProduct(!showProduct)}
-                            >
-                                <FiPhone />
-                                {showProduct ? (seller.phone || 'Chưa có SĐT') : 'Bấm để hiện số điện thoại'}
+                            <button className={cx('btn-phone', { showing: showProduct })} onClick={() => setShowProduct(!showProduct)}>
+                                <FiPhone /> {showProduct ? (seller.phone || 'Chưa có SĐT') : 'Bấm để hiện số điện thoại'}
                             </button>
                             <button className={cx('btn-chat')}>
                                 <FiMessageCircle /> Chat với người bán
                             </button>
                         </div>
-                    </div>
-
-                    <div className={cx('safety-tips')}>
-                        <strong>Mẹo mua sắm an toàn</strong>
-                        <ul>
-                            <li>Nên giao dịch trực tiếp để kiểm tra hàng.</li>
-                            <li>Không chuyển khoản đặt cọc trước.</li>
-                            <li>Kiểm tra kỹ thông số kỹ thuật sản phẩm.</li>
-                        </ul>
                     </div>
                 </div>
             </div>

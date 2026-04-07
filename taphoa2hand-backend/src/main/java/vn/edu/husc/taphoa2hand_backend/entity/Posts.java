@@ -1,14 +1,7 @@
 package vn.edu.husc.taphoa2hand_backend.entity;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
-
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-import org.springframework.cglib.core.Local;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.CascadeType;
@@ -42,7 +35,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
-public class Posts {
+public class Posts extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
@@ -57,10 +50,6 @@ public class Posts {
     @Column(name = "status")
     PostStatusEnum status;
     Long viewCount;
-    @CreationTimestamp
-    LocalDateTime createdAt;
-    @UpdateTimestamp
-    LocalDateTime updatedAt;
     @ManyToOne
     @JoinColumn(name = "user_id")
     Users user;

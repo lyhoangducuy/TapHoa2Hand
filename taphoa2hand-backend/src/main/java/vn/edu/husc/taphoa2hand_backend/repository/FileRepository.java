@@ -62,4 +62,10 @@ public class FileRepository {
         var data=Files.readAllBytes(Paths.get(fileMgmt.getPath()));
         return new ByteArrayResource(data);
     }
+    public void delete(FileMgmt fileMgmt) throws IOException {
+        Path filePath = Paths.get(fileMgmt.getPath());
+        if (Files.exists(filePath)) {
+            Files.delete(filePath);
+        }
+    }
 }

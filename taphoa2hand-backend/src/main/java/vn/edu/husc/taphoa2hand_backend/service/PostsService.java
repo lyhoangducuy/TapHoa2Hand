@@ -3,6 +3,7 @@ package vn.edu.husc.taphoa2hand_backend.service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -15,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import vn.edu.husc.taphoa2hand_backend.dto.request.PostsDTO.PostCreateRequest;
+import vn.edu.husc.taphoa2hand_backend.dto.request.PostsDTO.PostEditRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostDeleteResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostDetailResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostImageResponse;
@@ -88,11 +90,12 @@ public class PostsService {
         Posts newPost = postsMapper.toPosts(request);
         newPost.setUser(currentUser);
 
-        if (request.getListAcceptedPaymentMethodsValue() != null && !request.getListAcceptedPaymentMethodsValue().isEmpty()) {
+        if (request.getListAcceptedPaymentMethodsValue() != null
+                && !request.getListAcceptedPaymentMethodsValue().isEmpty()) {
             List<PaymentMethodEnum> paymentEnums = request.getListAcceptedPaymentMethodsValue().stream()
                     .map(PaymentMethodEnum::valueOf) // Ép từ String ("DIRECT") sang kiểu Enum
                     .toList();
-            
+
             newPost.setAcceptedPaymentMethods(paymentEnums); // Nhét vào Entity trước khi lưu
         }
 
@@ -116,6 +119,7 @@ public class PostsService {
             attachedCategories.add(cat);
         }
         newPost.setCategories(attachedCategories);
+        newPost.setStatus(PostStatusEnum.AVAILABLE); // Mặc định khi tạo là ACTIVE, có thể đổi sau
 
         // 4. Xử lý Ảnh
         if (images != null && !images.isEmpty()) {
@@ -145,6 +149,7 @@ public class PostsService {
 
         return postsMapper.toPostDetailResponse(savedPost);
     }
+
     @Transactional
     @PreAuthorize("@postValidationHelper.canEditPost(#postId) or hasRole('ADMIN')")
     public PostDeleteResponse deletePost(String postId) {
@@ -158,5 +163,114 @@ public class PostsService {
                 .postId(postId)
                 .result("Post deleted successfully")
                 .build();
+    }
+
+    @Transactional
+    @PreAuthorize("@postValidationHelper.canEditPost(#postId) or hasRole('ADMIN')")
+    public PostDetailResponse editPost(String postId, PostEditRequest request, List<MultipartFile> images)
+            throws IOException {
+        Posts newPost = postsRepository.findById(postId).orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+        postsMapper.updatePostFromRequest(request, newPost); // MapStruct sẽ tự động cập nhật các trường cơ bản (title,
+                                                             // price, status)
+        if (request.getListAcceptedPaymentMethodsValue() != null
+                && !request.getListAcceptedPaymentMethodsValue().isEmpty()) {
+            List<PaymentMethodEnum> paymentEnums = request.getListAcceptedPaymentMethodsValue().stream()
+                    .map(PaymentMethodEnum::valueOf) // Ép từ String ("DIRECT") sang kiểu Enum
+                    .toList();
+
+            newPost.setAcceptedPaymentMethods(paymentEnums); // Nhét vào Entity trước khi lưu
+        }
+        if (request.getStatus() != null) {
+            newPost.setStatus(PostStatusEnum.valueOf(request.getStatus()));
+        }
+
+        // BÍ QUYẾT Ở ĐÂY: MapStruct ĐÃ tự tạo sẵn PostDetail và PostAddress bên trong
+        // newPost rồi.
+        // Chúng ta chỉ cần móc nó ra và set ngược "khóa ngoại" (newPost) vào cho nó là
+        // xong.
+        if (newPost.getPostDetail() != null) {
+            newPost.getPostDetail().setPost(newPost);
+        }
+        if (newPost.getPostAddress() != null) {
+            newPost.getPostAddress().setPost(newPost);
+        }
+
+        // 3. Xử lý Categories (Tuyệt đối KHÔNG save categories, chỉ móc từ DB ra và
+        // gán)
+        Set<Categories> attachedCategories = new HashSet<>();
+        for (String categoryId : request.getListCategoriesId()) {
+            Categories cat = categoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+            attachedCategories.add(cat);
+        }
+        newPost.setCategories(attachedCategories);
+       
+        
+
+        // 4. Xử lý Ảnh
+        // 4.1 Xử lý các ảnh cũ đang có trong Database
+        if (newPost.getPostImages() != null) {
+            List<String> retainedUrls = request.getRetainedImageUrls() != null ? request.getRetainedImageUrls()
+                    : new ArrayList<>();
+
+            Iterator<PostImage> iterator = newPost.getPostImages().iterator();
+            while (iterator.hasNext()) {
+                PostImage oldImg = iterator.next();
+
+                // Nếu ảnh cũ KHÔNG nằm trong danh sách giữ lại -> Xóa
+                if (!retainedUrls.contains(oldImg.getImageUrl())) {
+
+                    // --- CÁCH SỬA Ở ĐÂY ---
+                    // Cắt lấy đoạn cuối cùng của URL (chính là tên file)
+                    // Ví dụ: "http://domain.com/files/abc.jpg" -> "abc.jpg"
+                    String fileUrl = oldImg.getImageUrl();
+                    String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+
+                    try {
+                        // Truyền đúng fileName vào
+                        fileService.deleteMedia(fileName);
+                    } catch (Exception e) {
+                        // Dùng try-catch bọc lại. Lỡ file vật lý có bị ai đó xóa tay mất rồi
+                        // thì code vẫn chạy tiếp để cập nhật bài viết chứ không bị văng lỗi 500
+                        System.out.println("Lỗi xóa file vật lý (có thể file không tồn tại): " + fileName);
+                    }
+
+                    // Xóa khỏi Database
+                    iterator.remove();
+                }
+            }
+        }
+
+        // 4.2 Xử lý và Upload các file ảnh MỚI (nếu có)
+        if (images != null && !images.isEmpty()) {
+            // Tìm sortOrder lớn nhất hiện tại để ảnh mới nối tiếp vào sau
+            int currentMaxSortOrder = newPost.getPostImages().stream()
+                    .mapToInt(PostImage::getSortOrder)
+                    .max().orElse(-1);
+
+            for (MultipartFile image : images) {
+                try {
+                    var imageUrl = fileService.uploadMedia(image);
+                    PostImage postImage = new PostImage();
+                    postImage.setImageUrl(imageUrl.getUrl());
+
+                    // Nếu post chưa có ảnh nào thì ảnh đầu tiên là thumbnail
+                    postImage.setIsThumbnail(newPost.getPostImages().isEmpty());
+                    postImage.setSortOrder(++currentMaxSortOrder);
+
+                    // Set khóa ngoại và thêm vào list
+                    postImage.setPost(newPost);
+                    newPost.getPostImages().add(postImage);
+                } catch (IOException e) {
+                    throw new AppException(ErrorCode.FILE_NOT_FOUND);
+                }
+            }
+        }
+
+        // 5. CHỐT HẠ: Lưu đúng 1 lần duy nhất!
+        // Tránh lưu lắt nhắt gây lỗi Update/Delete không đáng có
+        Posts savedPost = postsRepository.save(newPost);
+
+        return postsMapper.toPostDetailResponse(savedPost);
     }
 }

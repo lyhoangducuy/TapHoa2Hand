@@ -23,4 +23,6 @@ export const API = {
     REMOVE_FAVORITE:(postId) => `/favorites/remove/${postId}`,
     GET_MYFAVORITES:"/favorites/my-favorites",
     CHECK_FAVORITE:(postId) => `/favorites/check/${postId}`,
+    EDIT_POST:(postId) => `/posts/edit/${postId}`,
+    GET_POST_STATUS:"/post-status/getAll",
 };

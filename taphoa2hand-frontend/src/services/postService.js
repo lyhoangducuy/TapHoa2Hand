@@ -68,3 +68,28 @@ export const deletePost = async (postId) => {
         throw error;
     }
 };
+export const editPost = async (postId, postData, images) => {
+    try {
+        const token = localStorage.getItem('token');
+        const formData = new FormData();
+        formData.append(
+            "request", 
+            new Blob([JSON.stringify(postData)], { type: "application/json" })
+        );
+        if (images && images.length > 0) {
+            Array.from(images).forEach((image) => {
+                formData.append("images", image);
+            });
+        }
+        const response = await httpClient.put(API.EDIT_POST(postId), formData, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "multipart/form-data"
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error(`Error editing post with ID ${postId}:`, error);
+        throw error;
+    }
+};
