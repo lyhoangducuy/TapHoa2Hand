@@ -1,5 +1,6 @@
 package vn.edu.husc.taphoa2hand_backend.entity;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 import org.springframework.cglib.core.Local;
@@ -27,8 +28,8 @@ public class ParticipantInfo {
     @Column(name = "full_name")
     String fullName;
     String avatar;
-    @CreatedDate
     @Column(name = "joined_at")
-    LocalDateTime joinedAt;
+     @Builder.Default
+    Instant joinedAt=Instant.now();
 
 }

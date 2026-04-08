@@ -27,4 +27,6 @@ export const API = {
     GET_POST_STATUS:"/post-status/getAll",
     CREATE_CONVERSATION:"/conversations/create",
     GET_CONVERSATIONS:"/conversations/my-chats",
+    CREATE_CHATMESSAGE:"/chat-message/create",
+    GET_CHATMESSAGE:(conversationId)=>`/chat-message?conversationId=${conversationId}`
 };

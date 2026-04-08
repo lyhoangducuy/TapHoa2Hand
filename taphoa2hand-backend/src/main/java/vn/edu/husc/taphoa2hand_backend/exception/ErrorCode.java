@@ -47,7 +47,8 @@ public enum ErrorCode {
     POST_CANNOT_DELETE(7003, "Cannot delete post because it is associated with other resources",HttpStatus.BAD_REQUEST),
     FAVORITE_NOT_FOUND(8001, "Favorite not found",HttpStatus.NOT_FOUND),
     CONVERSATION_EXIST(9001, "Conversation exist",HttpStatus.BAD_REQUEST),
-    THIS_IS_YOU(9002,"Day la bai viet cua ban khong the tao chat", HttpStatus.BAD_REQUEST)
+    THIS_IS_YOU(9002,"Day la bai viet cua ban khong the tao chat", HttpStatus.BAD_REQUEST),
+    CONVERSATION_NOT_FOUND(9003,"Khong tim thay cuoc tro chuyen", HttpStatus.BAD_REQUEST)
     ;
     private int code;
     private String message;
