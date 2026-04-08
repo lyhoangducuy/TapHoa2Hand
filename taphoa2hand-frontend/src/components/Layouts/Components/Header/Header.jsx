@@ -126,7 +126,7 @@ function Header() {
                     </div>
                     <div className={cx("actions")}>
                         <div className={cx("action-item")}><FiBell className={cx("icon")} /><span>Thông báo</span></div>
-                        <div className={cx("action-item")}><FiMessageSquare className={cx("icon")} /><span>Nhắn tin</span></div>
+                        <div className={cx("action-item")}  onClick={() => navigate('/chat')}><FiMessageSquare className={cx("icon")} /><span>Nhắn tin</span></div>
                     </div>
                     <div className={cx("btn-group")}>
                         {!user && (

@@ -9,6 +9,7 @@ import {
     FiMoreHorizontal, FiHeart
 } from 'react-icons/fi';
 import { addPostToFavorites, isFavoritePost, removePostFromFavorites } from '../../../services/favoriteService';
+import { createConversation } from '../../../services/chatService';
 
 const cx = classNames.bind(styles);
 const DEFAULT_IMAGE = 'https://via.placeholder.com/600x400?text=No+Image';
@@ -24,6 +25,9 @@ function PostDetailPage() {
     const menuRef = useRef(null);
     const [showMenu, setShowMenu] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
+    
+    // State quản lý việc tạo chat
+    const [isCreatingChat, setIsCreatingChat] = useState(false);
 
     // Click ra ngoài để đóng menu
     useEffect(() => {
@@ -101,7 +105,7 @@ function PostDetailPage() {
     const currentUser = token ? JSON.parse(atob(token.split('.')[1])) : null;
 
     const isOwner = currentUser?.sub === seller.username || currentUser?.username === seller.username;
-    const isAdmin = currentUser?.scope?.includes('ROLE_ADMIN') || false; // Chỉnh lại theo cách Spring Boot lưu role trong JWT (thường là mảng scope)
+    const isAdmin = currentUser?.scope?.includes('ROLE_ADMIN') || false; 
 
     const canEdit = isOwner || isAdmin;
     const canDelete = isOwner || isAdmin;
@@ -146,6 +150,41 @@ function PostDetailPage() {
         } catch (error) {
             console.error("Lỗi thao tác lưu tin:", error);
             alert("Không thể thực hiện thao tác. Vui lòng thử lại sau!");
+        }
+    };
+
+    // --- HÀM TẠO CUỘC TRÒ CHUYỆN (ĐÃ UPDATE DỮ LIỆU CHUẨN DTO) ---
+    const handleChatWithSeller = async () => {
+        if (!currentUser) {
+            alert("Bạn cần đăng nhập để chat với người bán!");
+            // navigate('/login'); 
+            return;
+        }
+
+
+        try {
+            setIsCreatingChat(true);
+            
+            // Dữ liệu Map đúng với DTO: ConversationRequest
+            const conversationData = {
+                type: "PRIVATE", // Truyền loại cuộc trò chuyện (Có thể đổi thành 'SELLING' / 'BUYING' tuỳ logic BE)
+                participantIds: [seller.id] // Phải là một mảng Array chứa ID của người bán
+            };
+
+            const response = await createConversation(conversationData);
+
+            if (response && response.result) {
+                const newConversationId = response.result.id;
+                // Chuyển hướng sang trang Chat, đính kèm ID hội thoại lên URL
+                navigate(`/chat?activeId=${newConversationId}`); 
+            } else {
+                alert("Không thể tạo cuộc trò chuyện: " + (response.message || "Lỗi không xác định"));
+            }
+        } catch (error) {
+            console.error("Lỗi khi tạo cuộc trò chuyện:", error);
+            alert("Đã xảy ra lỗi hệ thống khi kết nối. Vui lòng thử lại sau!");
+        } finally {
+            setIsCreatingChat(false);
         }
     };
 
@@ -282,8 +321,13 @@ function PostDetailPage() {
                             <button className={cx('btn-phone', { showing: showProduct })} onClick={() => setShowProduct(!showProduct)}>
                                 <FiPhone /> {showProduct ? (seller.phone || 'Chưa có SĐT') : 'Bấm để hiện số điện thoại'}
                             </button>
-                            <button className={cx('btn-chat')}>
-                                <FiMessageCircle /> Chat với người bán
+                            <button 
+                                className={cx('btn-chat')}
+                                onClick={handleChatWithSeller}
+                                disabled={isCreatingChat}
+                                style={{ opacity: isCreatingChat ? 0.7 : 1, cursor: isCreatingChat ? 'not-allowed' : 'pointer' }}
+                            >
+                                <FiMessageCircle /> {isCreatingChat ? 'Đang kết nối...' : 'Chat với người bán'}
                             </button>
                         </div>
                     </div>

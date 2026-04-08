@@ -25,4 +25,6 @@ export const API = {
     CHECK_FAVORITE:(postId) => `/favorites/check/${postId}`,
     EDIT_POST:(postId) => `/posts/edit/${postId}`,
     GET_POST_STATUS:"/post-status/getAll",
+    CREATE_CONVERSATION:"/conversations/create",
+    GET_CONVERSATIONS:"/conversations/my-chats",
 };

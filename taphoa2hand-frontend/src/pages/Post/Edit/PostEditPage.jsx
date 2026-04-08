@@ -157,6 +157,7 @@ function PostEditPage() {
             await editPost(postId, formData, selectedFiles);
             alert("Cập nhật bài đăng thành công!");
             navigate('/post-detail/' + postId);
+        // eslint-disable-next-line no-unused-vars
         } catch (error) {
             alert("Cập nhật thất bại, vui lòng kiểm tra lại!");
         } finally {
