@@ -13,4 +13,5 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class IntrospectResponse {
     boolean valid;
+    String userId;
 }

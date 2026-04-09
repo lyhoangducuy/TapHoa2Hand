@@ -7,8 +7,8 @@ export const initiateSocketConnection = (token) => {
     // Chỉ khởi tạo kết nối nếu chưa có
     if (!socket) {
         socket = io(CONFIG.SOCKET_URL, {
-            // Có thể truyền token để Backend xác thực (nếu Backend có cài đặt)
-            auth: {
+            // ĐỔI 'auth' THÀNH 'query' Ở ĐÂY 👇
+            query: {
                 token: token
             },
             transports: ['websocket', 'polling'] // Ưu tiên websocket
@@ -21,9 +21,6 @@ export const initiateSocketConnection = (token) => {
         socket.on('disconnect', () => {
             console.log('Đã ngắt kết nối Socket.IO');
         });
-      
-        
-       
     }
     return socket;
 };

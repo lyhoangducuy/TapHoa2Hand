@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.StringJoiner;
@@ -80,13 +81,18 @@ public class AuthenticationService {
             throws JOSEException, ParseException {
         var token = request.getToken();
         boolean isVerified = true;
+        SignedJWT jwt=null;
         try {
-            verifyToken(token, request.getTokenType());
+            jwt=verifyToken(token, request.getTokenType());
+
         } catch (Exception e) {
             isVerified = false;
         }
         return IntrospectResponse.builder()
                 .valid(isVerified)
+                .userId(Objects.nonNull(jwt)
+                        ?jwt.getJWTClaimsSet().getSubject()
+                        :null)
                 .build();
     }
 

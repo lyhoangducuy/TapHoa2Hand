@@ -29,7 +29,7 @@ public class ParticipantInfo {
     String fullName;
     String avatar;
     @Column(name = "joined_at")
-     @Builder.Default
+    @Builder.Default
     Instant joinedAt=Instant.now();
 
 }

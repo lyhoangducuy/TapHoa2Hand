@@ -1,6 +1,7 @@
 package vn.edu.husc.taphoa2hand_backend.controller;
 
 import java.text.ParseException;
+import java.time.Instant;
 
 import org.springframework.stereotype.Component;
 
@@ -18,7 +19,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import vn.edu.husc.taphoa2hand_backend.dto.request.AuthenDTO.IntrospectRequest;
+import vn.edu.husc.taphoa2hand_backend.entity.WebSocketSession;
 import vn.edu.husc.taphoa2hand_backend.service.AuthenticationService;
+import vn.edu.husc.taphoa2hand_backend.service.WebSocketSessionService;
 
 @Component
 @RequiredArgsConstructor
@@ -27,6 +30,7 @@ import vn.edu.husc.taphoa2hand_backend.service.AuthenticationService;
 public class SocketHandler {
     SocketIOServer server;
     AuthenticationService authenticationService;
+    WebSocketSessionService webSocketSessionService;
 
     @OnConnect
     public void clientConnected(SocketIOClient client) throws JOSEException, ParseException{
@@ -40,25 +44,37 @@ public class SocketHandler {
         //if token is invalid disconect
         if (verifyToken.isValid()){
             log.info("Client connected: "+client.getSessionId() );
+            //Persist web socket session
+            WebSocketSession webSocketSession=WebSocketSession.builder()
+            .socketSessionId(client.getSessionId().toString())
+            .userId(verifyToken.getUserId())
+            .createdAt(Instant.now())
+            .build();
+            webSocketSession=webSocketSessionService.create(webSocketSession);
+            log.info("Web socket sesssion with id: {}",webSocketSession.getId());
         }else{
               log.info("Authentication fail: "+client.getSessionId() );
+              
               client.disconnect();
         }
       
     }
+
     @OnDisconnect
-    public void clientDisconnected(SocketIOClient client){
-        log.info("Client disconnected: "+client.getSessionId() );
+    public void clientDisconnected(SocketIOClient client) {
+        log.info("Client disconnected: " + client.getSessionId());
+        webSocketSessionService.deleteSocketSession(client.getSessionId().toString());
     }
 
     @PostConstruct
-    public void startServer(){
+    public void startServer() {
         server.start();
         server.addListeners(this);
         log.info("Socket server started");
     }
+
     @PreDestroy
-    public void stopServer(){
+    public void stopServer() {
         server.stop();
         log.info("Socket server stop");
     }
