@@ -5,6 +5,8 @@ import java.util.List;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.corundumstudio.socketio.SocketIOServer;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -28,6 +30,8 @@ public class ChatMessageService {
     ConversationRepository conversationRepository;
     UsersRepository usersRepository;
     ChatMessageMapper chatMessageMapper;
+
+    SocketIOServer socketIOServer;
     @Transactional
      public List<ChatMessageResponse> getChatMessage(String conversationId) {
         //valid conversation
@@ -70,6 +74,12 @@ public class ChatMessageService {
                 .build());
         // Create chat message
         chatMessage=chatMessageRepository.save(chatMessage);
+        //connect socket
+        String messaged=chatMessage.getMessage();
+        socketIOServer.getAllClients().stream().forEach(client->{
+            client.sendEvent("receive_new_message", messaged);
+        }
+        );
         // convert to response
         return toChatMessageResponse(chatMessage);
     }

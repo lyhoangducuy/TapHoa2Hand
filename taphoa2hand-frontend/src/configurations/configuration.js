@@ -1,6 +1,7 @@
 export const CONFIG = {
     // Vite sử dụng import.meta.env
     API_GATEWAY: import.meta.env.VITE_API_GATEWAY,
+    SOCKET_URL: import.meta.env.VITE_SOCKET_URL
 };
 
 export const API = {

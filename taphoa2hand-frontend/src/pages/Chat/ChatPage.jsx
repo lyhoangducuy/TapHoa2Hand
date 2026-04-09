@@ -13,6 +13,15 @@ import styles from './ChatPage.module.scss';
 // Import các hàm gọi API
 import { getMyConversations, getChatMessages, createChatMessage } from '../../services/chatService';
 
+// Import các hàm quản lý Socket
+import { 
+    initiateSocketConnection, 
+    disconnectSocket, 
+    joinConversation, 
+    leaveConversation, 
+    subscribeToNewMessages 
+} from '../../services/socketService';
+
 const cx = classNames.bind(styles);
 
 function ChatPage() {
@@ -30,8 +39,8 @@ function ChatPage() {
     const [messageInput, setMessageInput] = useState('');
     const [isSending, setIsSending] = useState(false);
     
-    // Dùng để tự động cuộn khung chat xuống cuối
     const messagesEndRef = useRef(null);
+    const token = localStorage.getItem('token'); 
 
     const FILTER_TABS = [
         { key: 'all', label: 'Tất cả' },
@@ -42,10 +51,22 @@ function ChatPage() {
     ];
 
     // ==========================================
-    // 2. EFFECTS (GỌI API VÀ XỬ LÝ GIAO DIỆN)
+    // 2. EFFECTS TÍCH HỢP SOCKET & GỌI API
     // ==========================================
 
-    // Lấy danh sách Sidebar (Các cuộc hội thoại)
+    // Effect 2.1: Quản lý kết nối Socket tổng thể
+    useEffect(() => {
+        if (token) {
+            initiateSocketConnection(token);
+        }
+
+        // Cleanup: Ngắt kết nối khi rời khỏi trang Chat
+        return () => {
+            disconnectSocket();
+        };
+    }, [token]);
+
+    // Effect 2.2: Lấy danh sách Sidebar (Các cuộc hội thoại)
     useEffect(() => {
         const fetchChats = async () => {
             try {
@@ -56,11 +77,12 @@ function ChatPage() {
                         const chatName = conv.conversationName || "Khách hàng"; 
                         const timeString = conv.updatedAt || conv.createdAt;
                         const displayTime = timeString ? new Date(timeString).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+                        
                         return {
                             id: conv.id,
                             name: chatName,
                             avatar: conv.conversationAvatar,
-                            lastMessage: 'Đã kết nối, hãy bắt đầu trò chuyện...', 
+                            lastMessage: 'Đã kết nối...', 
                             time: displayTime,
                             unread: 0,
                             type: conv.type?.toLowerCase() || 'selling',
@@ -78,15 +100,15 @@ function ChatPage() {
         fetchChats();
     }, []);
 
-    // Lấy danh sách tin nhắn khi click chọn 1 cuộc hội thoại
+    // Effect 2.3: Lấy tin nhắn và quản lý Room Socket khi chọn hội thoại
     useEffect(() => {
         if (!activeChatId) return;
 
+        // B1: Gọi API lấy lịch sử tin nhắn
         const fetchMessages = async () => {
             try {
                 const response = await getChatMessages(activeChatId);
                 if (response.code === 1000 && response.result) {
-                    // Đảo ngược mảng để tin nhắn cũ ở trên, mới ở dưới (Do Backend đang sort DESC)
                     const sortedMessages = response.result.reverse();
                     setMessages(sortedMessages);
                 }
@@ -94,11 +116,49 @@ function ChatPage() {
                 console.error("Lỗi lấy danh sách tin nhắn:", error);
             }
         };
-
         fetchMessages();
+
+        // B2: Báo cho server socket biết client đã tham gia phòng này
+        joinConversation(activeChatId);
+
+        // B3: Lắng nghe tin nhắn mới từ socket trả về (ĐÃ FIX LỖI Ở ĐÂY)
+        subscribeToNewMessages((newMessage) => {
+            console.log("Socket nhận tin nhắn mới:", newMessage);
+            
+            // Chuẩn hóa dữ liệu nếu Backend chỉ gửi chuỗi String
+            let formattedMessage = newMessage;
+            if (typeof newMessage === 'string') {
+                formattedMessage = {
+                    id: Date.now() + Math.random(), // Tạo ID tạm thời để React render
+                    message: newMessage,
+                    me: false, // Tin nhận qua socket từ người khác thì me = false
+                    conversationId: activeChatId 
+                };
+            }
+
+            // Tạm thời bỏ qua if check conversationId nếu Backend không gửi kèm
+            // Chỉ cần biết đang mở chat nào thì append tin nhắn vào chat đó
+            setMessages(prev => {
+                const isExist = prev.find(m => m.id === formattedMessage.id);
+                if (isExist) return prev;
+                return [...prev, formattedMessage];
+            });
+
+            // Cập nhật lại dòng tin nhắn cuối ở sidebar
+            setChats(prevChats => prevChats.map(chat => 
+                chat.id === activeChatId 
+                    ? { ...chat, lastMessage: formattedMessage.message }
+                    : chat
+            ));
+        });
+
+        // Cleanup: Rời phòng cũ khi đổi chat hoặc unmount component
+        return () => {
+            leaveConversation(activeChatId);
+        };
     }, [activeChatId]);
 
-    // Tự động scroll xuống cuối mỗi khi có tin nhắn mới hoặc mới load xong tin nhắn
+    // Effect 2.4: Tự động scroll xuống cuối mỗi khi có tin nhắn mới
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
@@ -115,17 +175,20 @@ function ChatPage() {
             message: messageInput.trim()
         };
 
-        // Clear input ngay lập tức tạo cảm giác mượt mà cho user
         setMessageInput('');
         setIsSending(true);
 
         try {
             const response = await createChatMessage(requestBody);
+            
             if (response.code === 1000 && response.result) {
-                // Đẩy tin nhắn vừa gửi thành công vào mảng hiển thị
-                setMessages(prev => [...prev, response.result]);
+                // Đẩy ngay lên UI để tạo cảm giác mượt mà
+                setMessages(prev => {
+                    const isExist = prev.find(m => m.id === response.result.id);
+                    if (isExist) return prev;
+                    return [...prev, response.result];
+                });
                 
-                // Cập nhật lại dòng text ở sidebar bên trái
                 setChats(prevChats => prevChats.map(chat => 
                     chat.id === activeChatId 
                         ? { ...chat, lastMessage: response.result.message }
@@ -139,7 +202,6 @@ function ChatPage() {
         }
     };
 
-    // Cho phép ấn Enter để gửi tin nhắn
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -263,7 +325,6 @@ function ChatPage() {
                                         key={msg.id} 
                                         className={cx('message-bubble')}
                                         style={{
-                                            // Tạm dùng inline-style để bạn thấy rõ logic, bạn có thể chuyển css này vào file .scss
                                             alignSelf: msg.me ? 'flex-end' : 'flex-start',
                                             backgroundColor: msg.me ? '#0084ff' : '#e4e6eb',
                                             color: msg.me ? '#fff' : '#000',
@@ -278,7 +339,6 @@ function ChatPage() {
                                     </div>
                                 ))
                             )}
-                            {/* Khối div ẩn này giúp tự động cuộn màn hình xuống đoạn text dưới cùng */}
                             <div ref={messagesEndRef} />
                         </div>
 
