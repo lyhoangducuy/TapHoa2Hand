@@ -29,5 +29,8 @@ export const API = {
     CREATE_CONVERSATION:"/conversations/create",
     GET_CONVERSATIONS:"/conversations/my-chats",
     CREATE_CHATMESSAGE:"/chat-message/create",
-    GET_CHATMESSAGE:(conversationId)=>`/chat-message?conversationId=${conversationId}`
+    GET_CHATMESSAGE:(conversationId)=>`/chat-message?conversationId=${conversationId}`,
+    GET_PURCHASES:"/order/purchases",
+    GET_SALES:"/order/sales",
+    GET_DETAIL_ORDER: (orderId)=> `order/${orderId}`
 };

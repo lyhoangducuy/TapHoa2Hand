@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class ChatMessageController {
     ChatMessageService chatMessageService;
     @PostMapping("/create")
-    public ApiResponse<ChatMessageResponse> postMethodName(@RequestBody @Valid ChatMessageRequest request) {
+    public ApiResponse<ChatMessageResponse> createChatMessage(@RequestBody @Valid ChatMessageRequest request) {
         return ApiResponse.<ChatMessageResponse>builder()
                             .result(chatMessageService.create(request))
                             .build();

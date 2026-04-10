@@ -1,4 +1,4 @@
-import { io } from 'socket.io-client'; // <-- DÒNG BỊ THIẾU LÀ DÒNG NÀY ĐÂY
+import { io } from 'socket.io-client';
 import { CONFIG } from '../configurations/configuration';
 
 let socket;
@@ -7,7 +7,6 @@ export const initiateSocketConnection = (token) => {
     // Chỉ khởi tạo kết nối nếu chưa có
     if (!socket) {
         socket = io(CONFIG.SOCKET_URL, {
-            // ĐỔI 'auth' THÀNH 'query' Ở ĐÂY 👇
             query: {
                 token: token
             },
@@ -53,9 +52,15 @@ export const subscribeToNewMessages = (callback) => {
     // Đảm bảo không bị lặp listener bằng cách gỡ listener cũ ra trước
     socket.off('receive_new_message');
     socket.on('receive_new_message', (newMessage) => {
-        console.log('Đã nhan tin nhan: ',newMessage);
+        console.log('Đã nhận tin nhắn: ', newMessage);
         callback(newMessage);
     });
+};
+
+// Hàm gỡ lắng nghe để dùng trong cleanup của useEffect
+export const unsubscribeFromMessages = () => {
+    if (!socket) return;
+    socket.off('receive_new_message');
 };
 
 export const getSocket = () => socket;

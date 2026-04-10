@@ -19,4 +19,5 @@ public class ConversationRequest {
     @Size(min = 1, message = "A conversation must have at least 1 participant")
     @NotNull(message = "Participants list cannot be null")
     List<String> participantIds; // Danh sách userId của participants
+    String postId;
 }

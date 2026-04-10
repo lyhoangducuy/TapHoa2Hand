@@ -20,6 +20,7 @@ import vn.edu.husc.taphoa2hand_backend.exception.AppException;
 import vn.edu.husc.taphoa2hand_backend.exception.ErrorCode;
 import vn.edu.husc.taphoa2hand_backend.mapper.ConversationMapper;
 import vn.edu.husc.taphoa2hand_backend.repository.ConversationRepository;
+import vn.edu.husc.taphoa2hand_backend.repository.PostsRepository;
 import vn.edu.husc.taphoa2hand_backend.repository.UsersRepository;
 
 @Service
@@ -29,6 +30,7 @@ public class ConversationService {
     ConversationRepository conversationRepository;
     UsersRepository userRepository;
     ConversationMapper conversationMapper;
+    PostsRepository postsRepository;
 
     @Transactional
     public List<ConversationResponse> myConversations() {
@@ -60,11 +62,15 @@ public class ConversationService {
         var sortedUserIds = userIds.stream().sorted().toList();
         String participantsHash = generateParticipantsHash(sortedUserIds);
         
-        
         Conversation existConver = conversationRepository.findByParticipantsHash(participantsHash);
-        if (existConver!=null) {
+        
+        // FIX 1: Kiểm tra tồn tại trước khi cập nhật để tránh NullPointerException
+        if (existConver != null) {
+            existConver.setPostId(request.getPostId());
+            conversationRepository.save(existConver);
             return toConversationResponse(existConver);
         }
+
         List<ParticipantInfo> participantInfos = new ArrayList<>();
         participantInfos.add(
                 ParticipantInfo.builder()
@@ -84,12 +90,12 @@ public class ConversationService {
                     .build());
         });
 
-        // toa conversation moi;
-
+        // tao conversation moi
         Conversation newConversation = Conversation.builder()
                 .type(request.getType())
                 .participantsHash(participantsHash)
                 .participants(participantInfos)
+                .postId(request.getPostId())
                 .build();
         conversationRepository.save(newConversation);
         return toConversationResponse(newConversation);
@@ -105,12 +111,42 @@ public class ConversationService {
     private ConversationResponse toConversationResponse(Conversation conversation) {
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         ConversationResponse conversationResponse = conversationMapper.toConversationResponse(conversation);
+        
+        // 1. Setup Avatar và Tên (Dựa vào người kia)
         conversationResponse.getParticipants().stream()
                 .filter(participant -> !participant.getUsername().equals(currentUserId))
-                .findFirst().ifPresent(participant -> {
+                .findFirst()
+                .ifPresent(participant -> {
                     conversationResponse.setConversationAvatar(participant.getAvatar());
                     conversationResponse.setConversationName(participant.getFullName());
                 });
+
+        // 2. Setup Thông tin sản phẩm (Chỉ khi đoạn chat có gắn postId)
+        if (conversation.getPostId() != null) {
+            
+            postsRepository.findById(conversation.getPostId()).ifPresent(postCurrent -> {
+                // FIX LAZY INITIALIZATION Ở ĐÂY:
+                // Ép Hibernate query list ảnh lên ngay lúc này (vì vẫn đang trong @Transactional)
+                
+
+                conversationResponse.setPostId(postCurrent.getId());
+                conversationResponse.setPostPrice(postCurrent.getPrice());
+                
+                conversationResponse.setPostTitle(postCurrent.getTitle());    
+                var images = postCurrent.getPostImages();
+                if (images != null && !images.isEmpty()) {
+                    // Chú ý: Đổi .getUrl() hoặc .getPath() cho đúng với tên thuộc tính trong entity PostImages của bạn
+                    conversationResponse.setPostImage(images.get(0).getImageUrl()); 
+                }   
+                if (postCurrent.getUser() != null) {
+                    boolean isOwner = postCurrent.getUser().getUsername().equals(currentUserId);
+                    conversationResponse.setIsMyPost(isOwner);
+                } else {
+                    conversationResponse.setIsMyPost(false);
+                }
+            });
+        }
+
         return conversationResponse;
     }
 

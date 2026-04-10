@@ -1,5 +1,6 @@
 package vn.edu.husc.taphoa2hand_backend.dto.response.Chat;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -10,6 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import vn.edu.husc.taphoa2hand_backend.entity.ParticipantInfo;
+import vn.edu.husc.taphoa2hand_backend.entity.PostImage;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -22,6 +24,11 @@ public class ConversationResponse {
     String conversationAvatar;
     String conversationName;
     List<ParticipantInfo> participants;
+    String postId;
+    String postTitle; // Tên sản phẩm
+    String postImage; // Ảnh thu nhỏ
+    BigDecimal postPrice; // Giá
+    Boolean isMyPost;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
 }

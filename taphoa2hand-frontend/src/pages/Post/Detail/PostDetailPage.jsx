@@ -161,14 +161,14 @@ function PostDetailPage() {
             return;
         }
 
-
         try {
             setIsCreatingChat(true);
             
             // Dữ liệu Map đúng với DTO: ConversationRequest
             const conversationData = {
                 type: "PRIVATE", // Truyền loại cuộc trò chuyện (Có thể đổi thành 'SELLING' / 'BUYING' tuỳ logic BE)
-                participantIds: [seller.id] // Phải là một mảng Array chứa ID của người bán
+                participantIds: [seller.id], // Phải là một mảng Array chứa ID của người bán
+                postId: postId
             };
 
             const response = await createConversation(conversationData);
@@ -176,7 +176,7 @@ function PostDetailPage() {
             if (response && response.result) {
                 const newConversationId = response.result.id;
                 // Chuyển hướng sang trang Chat, đính kèm ID hội thoại lên URL
-                navigate(`/chat?activeId=${newConversationId}`); 
+                navigate(`/chat?activeId=${newConversationId}&postId=${postId}`); 
             } else {
                 alert("Không thể tạo cuộc trò chuyện: " + (response.message || "Lỗi không xác định"));
             }

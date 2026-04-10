@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import { 
     FiSearch, 
@@ -6,7 +7,9 @@ import {
     FiImage, 
     FiPaperclip, 
     FiMoreVertical,
-    FiInfo
+    FiInfo,
+    FiMessageCircle,
+    FiTag
 } from 'react-icons/fi';
 import styles from './ChatPage.module.scss';
 
@@ -19,7 +22,8 @@ import {
     disconnectSocket, 
     joinConversation, 
     leaveConversation, 
-    subscribeToNewMessages 
+    subscribeToNewMessages,
+    unsubscribeFromMessages 
 } from '../../services/socketService';
 
 const cx = classNames.bind(styles);
@@ -32,7 +36,12 @@ function ChatPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
-    const [activeChatId, setActiveChatId] = useState(null);
+    
+    // Đọc ID từ URL
+    const [searchParams] = useSearchParams();
+    const urlActiveId = searchParams.get('activeId');
+
+    const [activeChatId, setActiveChatId] = useState(urlActiveId || null);
 
     // State cho khu vực nhắn tin
     const [messages, setMessages] = useState([]);
@@ -50,23 +59,31 @@ function ChatPage() {
         { key: 'hidden', label: 'Đã ẩn' },
     ];
 
+    const formatTime = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: '2-digit' });
+    };
+
     // ==========================================
     // 2. EFFECTS TÍCH HỢP SOCKET & GỌI API
     // ==========================================
 
-    // Effect 2.1: Quản lý kết nối Socket tổng thể
+    useEffect(() => {
+        if (urlActiveId) {
+            setActiveChatId(urlActiveId);
+        }
+    }, [urlActiveId]);
+
     useEffect(() => {
         if (token) {
             initiateSocketConnection(token);
         }
-
-        // Cleanup: Ngắt kết nối khi rời khỏi trang Chat
         return () => {
             disconnectSocket();
         };
     }, [token]);
 
-    // Effect 2.2: Lấy danh sách Sidebar (Các cuộc hội thoại)
     useEffect(() => {
         const fetchChats = async () => {
             try {
@@ -76,17 +93,21 @@ function ChatPage() {
                     const formattedChats = response.result.map(conv => {
                         const chatName = conv.conversationName || "Khách hàng"; 
                         const timeString = conv.updatedAt || conv.createdAt;
-                        const displayTime = timeString ? new Date(timeString).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
                         
                         return {
                             id: conv.id,
                             name: chatName,
                             avatar: conv.conversationAvatar,
                             lastMessage: 'Đã kết nối...', 
-                            time: displayTime,
+                            time: formatTime(timeString),
                             unread: 0,
                             type: conv.type?.toLowerCase() || 'selling',
-                            rawParticipants: conv.participants
+                            // Lấy thêm thông tin sản phẩm để ghim
+                            postId: conv.postId,
+                            postTitle: conv.postTitle,
+                            postImage: conv.postImage,
+                            postPrice: conv.postPrice,
+                            isMyPost: conv.isMyPost
                         };
                     });
                     setChats(formattedChats);
@@ -100,11 +121,9 @@ function ChatPage() {
         fetchChats();
     }, []);
 
-    // Effect 2.3: Lấy tin nhắn và quản lý Room Socket khi chọn hội thoại
     useEffect(() => {
         if (!activeChatId) return;
 
-        // B1: Gọi API lấy lịch sử tin nhắn
         const fetchMessages = async () => {
             try {
                 const response = await getChatMessages(activeChatId);
@@ -118,53 +137,48 @@ function ChatPage() {
         };
         fetchMessages();
 
-        // B2: Báo cho server socket biết client đã tham gia phòng này
         joinConversation(activeChatId);
 
-        // B3: Lắng nghe tin nhắn mới từ socket trả về (ĐÃ FIX LỖI Ở ĐÂY)
         subscribeToNewMessages((newMessage) => {
-            console.log("Socket nhận tin nhắn mới:", newMessage);
-            
-            // Chuẩn hóa dữ liệu nếu Backend chỉ gửi chuỗi String
-            let formattedMessage = newMessage;
-            if (typeof newMessage === 'string') {
-                formattedMessage = {
-                    id: Date.now() + Math.random(), // Tạo ID tạm thời để React render
-                    message: newMessage,
-                    me: false, // Tin nhận qua socket từ người khác thì me = false
-                    conversationId: activeChatId 
-                };
+            try {
+                const parsedMessage = typeof newMessage === 'string' ? JSON.parse(newMessage) : newMessage;
+                const isCurrentChat = String(parsedMessage.conversationId) === String(activeChatId);
+
+                if (isCurrentChat) {
+                    setMessages(prev => {
+                        const isExist = prev.some(m => String(m.id) === String(parsedMessage.id));
+                        if (isExist) return prev;
+                        return [...prev, parsedMessage];
+                    });
+                }
+
+                setChats(prevChats => prevChats.map(chat => 
+                    String(chat.id) === String(parsedMessage.conversationId) 
+                        ? { 
+                            ...chat, 
+                            lastMessage: parsedMessage.message,
+                            time: formatTime(parsedMessage.createdDate || Date.now()),
+                            unread: isCurrentChat ? chat.unread : (chat.unread || 0) + 1
+                          }
+                        : chat
+                ));
+            } catch (error) {
+                console.error("Lỗi khi parse dữ liệu:", error);
             }
-
-            // Tạm thời bỏ qua if check conversationId nếu Backend không gửi kèm
-            // Chỉ cần biết đang mở chat nào thì append tin nhắn vào chat đó
-            setMessages(prev => {
-                const isExist = prev.find(m => m.id === formattedMessage.id);
-                if (isExist) return prev;
-                return [...prev, formattedMessage];
-            });
-
-            // Cập nhật lại dòng tin nhắn cuối ở sidebar
-            setChats(prevChats => prevChats.map(chat => 
-                chat.id === activeChatId 
-                    ? { ...chat, lastMessage: formattedMessage.message }
-                    : chat
-            ));
         });
 
-        // Cleanup: Rời phòng cũ khi đổi chat hoặc unmount component
         return () => {
             leaveConversation(activeChatId);
+            unsubscribeFromMessages();
         };
     }, [activeChatId]);
 
-    // Effect 2.4: Tự động scroll xuống cuối mỗi khi có tin nhắn mới
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
     // ==========================================
-    // 3. HANDLERS (XỬ LÝ SỰ KIỆN)
+    // 3. HANDLERS
     // ==========================================
 
     const handleSendMessage = async () => {
@@ -182,16 +196,17 @@ function ChatPage() {
             const response = await createChatMessage(requestBody);
             
             if (response.code === 1000 && response.result) {
-                // Đẩy ngay lên UI để tạo cảm giác mượt mà
+                const newlySentMessage = { ...response.result, me: true };
+
                 setMessages(prev => {
-                    const isExist = prev.find(m => m.id === response.result.id);
+                    const isExist = prev.some(m => String(m.id) === String(newlySentMessage.id));
                     if (isExist) return prev;
-                    return [...prev, response.result];
+                    return [...prev, newlySentMessage];
                 });
                 
                 setChats(prevChats => prevChats.map(chat => 
-                    chat.id === activeChatId 
-                        ? { ...chat, lastMessage: response.result.message }
+                    String(chat.id) === String(activeChatId) 
+                        ? { ...chat, lastMessage: newlySentMessage.message, time: formatTime(newlySentMessage.createdDate) }
                         : chat
                 ));
             }
@@ -210,7 +225,7 @@ function ChatPage() {
     };
 
     // ==========================================
-    // 4. RENDER HELPERS
+    // 4. RENDER
     // ==========================================
 
     const filteredChats = chats.filter(chat => {
@@ -222,11 +237,32 @@ function ChatPage() {
         return chat.type === activeTab;
     });
 
-    const currentChat = chats.find(c => c.id === activeChatId);
+    const currentChat = chats.find(c => String(c.id) === String(activeChatId));
 
+    // Lấy link ảnh đầu tiên của sản phẩm (xử lý an toàn nếu data là mảng hoặc chuỗi)
+    const getProductImageUrl = (postImage) => {
+        if (!postImage) return 'https://via.placeholder.com/50';
+        if (Array.isArray(postImage) && postImage.length > 0) return postImage[0].url || postImage[0];
+        if (typeof postImage === 'string') return postImage;
+        return 'https://via.placeholder.com/50';
+    };
+// 1. THÊM HÀM FORMAT GIÁ TIỀN
+    const formatPrice = (price) => {
+        if (!price && price !== 0) return 'Thỏa thuận';
+        const num = Number(price);
+        if (isNaN(num)) return price; // Nếu giá đã là chữ (ví dụ "Liên hệ") thì giữ nguyên
+        return num.toLocaleString('vi-VN') + ' đ';
+    };
+
+    // 2. THÊM HÀM XỬ LÝ KHI BẤM NÚT YÊU CẦU GIAO DỊCH
+    const handleRequestTransaction = () => {
+        // Gọi API tạo yêu cầu giao dịch ở đây
+        console.log("Đã bấm yêu cầu giao dịch cho postId:", currentChat?.postId);
+        alert("Tính năng yêu cầu giao dịch đang được cập nhật!");
+    };
     return (
         <div className={cx('chat-layout')}>
-            {/* ---------------- CỘT TRÁI: DANH SÁCH CHAT ---------------- */}
+            {/* ---------------- CỘT TRÁI ---------------- */}
             <div className={cx('sidebar')}>
                 <div className={cx('search-area')}>
                     <div className={cx('search-box')}>
@@ -259,12 +295,12 @@ function ChatPage() {
                         filteredChats.map(chat => (
                             <div 
                                 key={chat.id} 
-                                className={cx('chat-item', { active: activeChatId === chat.id })}
+                                className={cx('chat-item', { active: String(activeChatId) === String(chat.id) })}
                                 onClick={() => setActiveChatId(chat.id)}
                             >
                                 <div className={cx('avatar')}>
                                     {chat.avatar ? (
-                                        <img src={chat.avatar} alt="avatar" style={{width: '100%', height: '100%', borderRadius: '50%'}} />
+                                        <img src={chat.avatar} alt="avatar" style={{width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover'}} />
                                     ) : (
                                         chat.name.charAt(0).toUpperCase()
                                     )}
@@ -292,14 +328,15 @@ function ChatPage() {
             </div>
 
             {/* ---------------- CỘT PHẢI: KHU VỰC NHẮN TIN ---------------- */}
-            <div className={cx('chat-area')}>
+            <div className={cx('chat-area')} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                 {activeChatId ? (
                     <>
-                        <div className={cx('chat-header')}>
+                        {/* 1. HEADER CHAT */}
+                        <div className={cx('chat-header')} style={{ flexShrink: 0 }}>
                             <div className={cx('user-info')}>
                                 <div className={cx('avatar')}>
                                     {currentChat?.avatar ? (
-                                        <img src={currentChat.avatar} alt="avatar" style={{width: '100%', height: '100%', borderRadius: '50%'}} />
+                                        <img src={currentChat.avatar} alt="avatar" style={{width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover'}} />
                                     ) : (
                                         currentChat?.name.charAt(0).toUpperCase()
                                     )}
@@ -314,62 +351,175 @@ function ChatPage() {
                             </div>
                         </div>
 
-                        <div className={cx('messages-container')} style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+                       {/* 2. KHU VỰC GHIM SẢN PHẨM (Chỉ hiện nếu có postId) */}
+                        {currentChat?.postId && (
+                            <div style={{
+                                padding: '10px 20px',
+                                backgroundColor: '#f0f2f5',
+                                borderBottom: '1px solid #e4e6eb',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px',
+                                flexShrink: 0
+                            }}>
+                                <div style={{ 
+                                    width: '50px', 
+                                    height: '50px', 
+                                    borderRadius: '8px', 
+                                    overflow: 'hidden', 
+                                    backgroundColor: '#fff',
+                                    border: '1px solid #ddd',
+                                    flexShrink: 0
+                                }}>
+                                    <img 
+                                        src={getProductImageUrl(currentChat.postImage)} 
+                                        alt="Product" 
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                    />
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                                    <span style={{ fontWeight: '600', fontSize: '15px', color: '#050505', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <FiTag size={16} color="#0084ff"/>
+                                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '300px' }}>
+                                            {currentChat.postTitle || 'Sản phẩm đang trao đổi'}
+                                        </span>
+                                    </span>
+                                    <span style={{ fontWeight: '600', fontSize: '15px', color: '#e53935', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        
+                                        {/* GỌI HÀM FORMAT GIÁ Ở ĐÂY */}
+                                        {formatPrice(currentChat.postPrice)}
+                                    </span>
+                                    <span style={{ fontSize: '13px', color: '#65676B' }}>ID: {currentChat.postId}</span>
+                                </div>
+                                
+                                {/* THÊM NHÓM NÚT BẤM (GIAO DỊCH & XEM BÀI) */}
+                                <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
+                                    {!currentChat.isMyPost && (
+                                        <button 
+                                            onClick={handleRequestTransaction}
+                                            style={{
+                                                padding: '6px 12px',
+                                                backgroundColor: '#0084ff',
+                                                border: 'none',
+                                                borderRadius: '6px',
+                                                cursor: 'pointer',
+                                                fontWeight: '600',
+                                                color: '#ffffff',
+                                                fontSize: '13px',
+                                                transition: 'background-color 0.2s'
+                                            }}
+                                            onMouseOver={(e) => e.target.style.backgroundColor = '#0073e6'}
+                                            onMouseOut={(e) => e.target.style.backgroundColor = '#0084ff'}
+                                        >
+                                            Yêu cầu giao dịch
+                                        </button>
+                                    )}
+                                    <button style={{
+                                        padding: '6px 12px',
+                                        backgroundColor: '#e4e6eb',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        fontWeight: '500',
+                                        color: '#050505',
+                                        fontSize: '13px',
+                                        transition: 'background-color 0.2s'
+                                    }}
+                                        onMouseOver={(e) => e.target.style.backgroundColor = '#d8dadf'}
+                                        onMouseOut={(e) => e.target.style.backgroundColor = '#e4e6eb'}
+                                    >
+                                        Xem bài
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 3. KHU VỰC TIN NHẮN */}
+                        <div className={cx('messages-container')} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '20px' }}>
                             {messages.length === 0 ? (
-                                <div className={cx('welcome-text')} style={{ textAlign: 'center', marginTop: '20px' }}>
+                                <div className={cx('welcome-text')} style={{ textAlign: 'center', marginTop: '20px', color: '#65676B' }}>
                                     Bắt đầu trò chuyện với {currentChat?.name}
                                 </div>
                             ) : (
                                 messages.map((msg) => (
                                     <div 
-                                        key={msg.id} 
-                                        className={cx('message-bubble')}
+                                        key={msg.id}
                                         style={{
+                                            display: 'flex',
                                             alignSelf: msg.me ? 'flex-end' : 'flex-start',
-                                            backgroundColor: msg.me ? '#0084ff' : '#e4e6eb',
-                                            color: msg.me ? '#fff' : '#000',
-                                            padding: '8px 12px',
-                                            borderRadius: '16px',
-                                            margin: '4px 8px',
-                                            maxWidth: '70%',
-                                            wordBreak: 'break-word'
+                                            flexDirection: msg.me ? 'row-reverse' : 'row',
+                                            alignItems: 'flex-end',
+                                            gap: '8px',
+                                            margin: '8px 0',
+                                            maxWidth: '80%'
                                         }}
                                     >
-                                        <span>{msg.message}</span>
+                                        {!msg.me && (
+                                            <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: '#e4e6eb', flexShrink: 0, overflow: 'hidden' }}>
+                                                {msg.sender?.avatar ? (
+                                                    <img src={msg.sender.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                ) : (
+                                                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 'bold', color: '#65676B' }}>
+                                                        {(msg.sender?.fullName || msg.sender?.username || '?').charAt(0).toUpperCase()}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: msg.me ? 'flex-end' : 'flex-start' }}>
+                                            {!msg.me && (
+                                                <span style={{ fontSize: '12px', color: '#65676B', marginBottom: '4px', marginLeft: '4px' }}>
+                                                    {msg.sender?.fullName || msg.sender?.username || 'Khách hàng'}
+                                                </span>
+                                            )}
+
+                                            <div style={{
+                                                padding: '10px 14px',
+                                                borderRadius: '18px',
+                                                backgroundColor: msg.me ? '#0084ff' : '#e4e6eb',
+                                                color: msg.me ? '#fff' : '#050505',
+                                                wordBreak: 'break-word',
+                                                whiteSpace: 'pre-wrap'
+                                            }}>
+                                                {msg.message}
+                                            </div>
+                                            
+                                            <span style={{ fontSize: '11px', color: '#8a8d91', marginTop: '4px', marginRight: msg.me ? '4px' : '0', marginLeft: !msg.me ? '4px' : '0' }}>
+                                                {formatTime(msg.createdDate)}
+                                            </span>
+                                        </div>
                                     </div>
                                 ))
                             )}
                             <div ref={messagesEndRef} />
                         </div>
 
-                        <div className={cx('chat-input-area')}>
-                            <button className={cx('btn-icon')}><FiPaperclip size={20} /></button>
-                            <button className={cx('btn-icon')}><FiImage size={20} /></button>
+                        {/* 4. THANH NHẬP TIN NHẮN */}
+                        <div className={cx('chat-input')} style={{ flexShrink: 0 }}>
+                            <button className={cx('action-btn')}><FiPaperclip size={20}/></button>
+                            <button className={cx('action-btn')}><FiImage size={20}/></button>
                             <input 
                                 type="text" 
                                 placeholder="Nhập tin nhắn..." 
-                                className={cx('msg-input')} 
                                 value={messageInput}
                                 onChange={(e) => setMessageInput(e.target.value)}
                                 onKeyDown={handleKeyDown}
                                 disabled={isSending}
                             />
                             <button 
-                                className={cx('btn-send')} 
+                                className={cx('send-btn', { active: messageInput.trim().length > 0 })}
                                 onClick={handleSendMessage}
-                                disabled={!messageInput.trim() || isSending}
+                                disabled={isSending || !messageInput.trim()}
                             >
-                                <FiSend size={18} />
+                                <FiSend size={20}/>
                             </button>
                         </div>
                     </>
                 ) : (
-                    <div className={cx('no-chat-selected')}>
-                        <div className={cx('icon-wrapper')}>
-                            <FiInfo size={40} />
-                        </div>
-                        <h3>Chào mừng đến với Tin nhắn</h3>
-                        <p>Hãy chọn một cuộc hội thoại ở cột bên trái để bắt đầu trò chuyện.</p>
+                    <div className={cx('no-chat-selected')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#65676B' }}>
+                        <div className={cx('icon-wrapper')} style={{ marginBottom: '16px' }}><FiMessageCircle size={48} color="#0084ff"/></div>
+                        <h3 style={{ margin: '0 0 8px 0', color: '#050505' }}>Chào mừng đến với TapHoa2Hand Chat</h3>
+                        <p style={{ margin: 0 }}>Chọn một cuộc trò chuyện để bắt đầu nhắn tin hoặc tìm kiếm ở thanh bên trái.</p>
                     </div>
                 )}
             </div>

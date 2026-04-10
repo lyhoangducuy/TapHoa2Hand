@@ -11,6 +11,7 @@ import { CreatePostPage } from '../pages/Post/Create';
 import FavoritePage from '../pages/Favorite/FavoritePage';
 import { PostEditPage } from '../pages/Post/Edit';
 import { ChatPage } from '../pages/Chat';
+import MyOrderPage from '../pages/Order/MyOrder/MyOrderPage';
 const publicRoutes = [
     {path:'/',component:HomePage},
     {path:'/login',component:LoginPage,layout: NoSidebarLayout},
@@ -24,6 +25,10 @@ const publicRoutes = [
     {path:'/my-favorites',component:FavoritePage},
     {path:'/edit-post/:postId',component:PostEditPage, layout: NoSidebarLayout},
     {path:'/chat',component:ChatPage},
+    {path:'/my-order',component:MyOrderPage},
+    {path:'/order-detail/:orderId',component:OrderDetailPage}
+
+
 ]
 const privateRoutes = []
 export { publicRoutes, privateRoutes }

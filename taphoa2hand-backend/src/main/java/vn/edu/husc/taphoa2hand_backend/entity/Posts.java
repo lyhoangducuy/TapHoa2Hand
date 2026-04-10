@@ -1,5 +1,6 @@
 package vn.edu.husc.taphoa2hand_backend.entity;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -40,7 +41,7 @@ public class Posts extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
     String title;
-    Long price;
+    BigDecimal price;
     @ElementCollection(targetClass = PaymentMethodEnum.class)
     @CollectionTable(name = "post_payment_methods", joinColumns = @JoinColumn(name = "post_id"))
     @Enumerated(EnumType.STRING)
