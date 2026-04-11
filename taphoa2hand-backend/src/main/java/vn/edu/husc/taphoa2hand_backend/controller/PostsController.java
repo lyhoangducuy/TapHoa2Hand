@@ -1,6 +1,7 @@
 package vn.edu.husc.taphoa2hand_backend.controller;
 
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,13 +19,13 @@ import vn.edu.husc.taphoa2hand_backend.service.PostsService;
 import java.io.IOException;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("/posts")
@@ -74,6 +75,20 @@ public class PostsController {
 
         return ApiResponse.<PostDetailResponse>builder()
                 .result(newPost)
+                .build();
+    }
+
+    @GetMapping("/search")
+    public ApiResponse<Page<PostsResponse>> search(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) String categoryId,
+            @RequestParam(defaultValue = "0") int page, // Mặc định trang 0 (trang đầu tiên)
+            @RequestParam(defaultValue = "10") int size) { // Mặc định 10 bài/trang
+
+        return ApiResponse.<Page<PostsResponse>>builder()
+                .message("Tìm kiếm thành công")
+                .result(postsService.searchPosts(keyword, location, categoryId, page, size))
                 .build();
     }
 

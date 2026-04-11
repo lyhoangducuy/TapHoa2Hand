@@ -32,5 +32,7 @@ export const API = {
     GET_CHATMESSAGE:(conversationId)=>`/chat-message?conversationId=${conversationId}`,
     GET_PURCHASES:"/order/purchases",
     GET_SALES:"/order/sales",
-    GET_DETAIL_ORDER: (orderId)=> `order/${orderId}`
+    GET_DETAIL_ORDER: (orderId)=> `order/${orderId}`,
+    CREATE_ORDER:"/order",
+    SEARCH:"/posts/search"
 };

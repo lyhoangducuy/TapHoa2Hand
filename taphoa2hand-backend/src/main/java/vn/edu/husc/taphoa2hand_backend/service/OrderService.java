@@ -46,9 +46,9 @@ public class OrderService {
         
         String buyerId=getUserStringId();
         // 1. Lấy dữ liệu từ DB (Bắt buộc phải lấy để đảm bảo bảo mật và quan hệ JPA)
-        Users buyer = usersRepository.findById(buyerId).orElseThrow();
-        Users seller = usersRepository.findById(dto.getSellerId()).orElseThrow();
-        Posts post = postsRepository.findById(dto.getPostId()).orElseThrow();
+        Users buyer = usersRepository.findById(buyerId).orElseThrow(()->new AppException(ErrorCode.USER_NOT_FOUND));
+        Users seller = usersRepository.findById(dto.getSellerId()).orElseThrow(()->new AppException(ErrorCode.USER_NOT_FOUND));
+        Posts post = postsRepository.findById(dto.getPostId()).orElseThrow(()->new AppException(ErrorCode.USER_NOT_FOUND));
 
         // 2. Dùng Mapper để biến DTO thành Entity
         Order order = orderMapper.toEntity(dto);

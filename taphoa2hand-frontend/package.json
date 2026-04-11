@@ -11,7 +11,13 @@
   },
   "proxy": "http://localhost:8080",
   "dependencies": {
+    "@coreui/icons": "^3.0.1",
+    "@coreui/icons-react": "^2.3.0",
+    "@coreui/react": "^5.10.0",
+    "@coreui/react-chartjs": "^3.0.0",
+    "@coreui/utils": "^2.0.2",
     "axios": "^1.13.6",
+    "chart.js": "^4.5.1",
     "classnames": "^2.5.1",
     "jwt-decode": "^4.0.0",
     "react": "^19.2.0",

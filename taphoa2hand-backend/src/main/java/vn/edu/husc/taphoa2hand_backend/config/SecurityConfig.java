@@ -46,6 +46,7 @@ public class SecurityConfig {
             "/media/download/**",
             "/posts/{postId}",
             "/categories/getAll",
+            "/posts/search/*"
     };
 
     @Bean

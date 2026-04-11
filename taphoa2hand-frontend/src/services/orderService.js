@@ -34,3 +34,13 @@ export const updateOrderStatus = async (orderId, status) => {
         getAuthHeaders()
     );
 };
+// Thêm cục này vào cuối cùng file orderService.js của bạn
+const orderService = {
+    createOrder,
+    getMyPurchases,
+    getMySales,
+    getOrderDetail,
+    updateOrderStatus
+};
+
+export default orderService;

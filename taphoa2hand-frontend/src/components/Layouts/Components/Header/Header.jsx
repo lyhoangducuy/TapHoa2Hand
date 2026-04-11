@@ -10,7 +10,7 @@ import { getToken, removeToken } from "../../../../services/localstorageService"
 
 const cx = classNames.bind(styles);
 
-// --- USER DROPDOWN COMPONENT (Chỉ dùng cho Desktop) ---
+// --- USER DROPDOWN COMPONENT (Giữ nguyên) ---
 const UserDropdown = ({ user, onLogout, onNavigate }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = React.useRef(null);
@@ -65,6 +65,8 @@ const UserDropdown = ({ user, onLogout, onNavigate }) => {
 function Header() {
     const [isMobile, setIsMobile] = useState(false);
     const [user, setUser] = useState(null);
+    // 1. Thêm state để lưu từ khóa tìm kiếm
+    const [searchKeyword, setSearchKeyword] = useState(""); 
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -94,6 +96,21 @@ function Header() {
         window.location.reload();
     };
 
+    // 2. Hàm xử lý khi ấn tìm kiếm
+    const handleSearch = () => {
+        if (searchKeyword.trim()) {
+            // Chuyển hướng sang trang /search và truyền từ khóa lên URL
+            navigate(`/search?keyword=${encodeURIComponent(searchKeyword.trim())}`);
+        }
+    };
+
+    // 3. Hàm xử lý khi ấn nút Enter trong ô input
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            handleSearch();
+        }
+    };
+
     return (
         <header className={cx("wrapper", { "wrapper-mobile": isMobile })}>
             {isMobile ? (
@@ -107,9 +124,19 @@ function Header() {
                             <FiBell className={cx("icon-mobile")} />
                         </div>
                     </div>
+                    {/* Bắt sự kiện cho Mobile */}
                     <div className={cx("search-wrapper", "mobile-search")}>
-                        <input type="text" placeholder="Tìm mua đồ cũ..." className={cx("search-input")} />
-                        <button className={cx("search-btn")}><FiSearch /></button>
+                        <input 
+                            type="text" 
+                            placeholder="Tìm mua đồ cũ..." 
+                            className={cx("search-input")} 
+                            value={searchKeyword}
+                            onChange={(e) => setSearchKeyword(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                        />
+                        <button className={cx("search-btn")} onClick={handleSearch}>
+                            <FiSearch />
+                        </button>
                     </div>
                 </div>
             ) : (
@@ -120,9 +147,19 @@ function Header() {
                             <span className={cx("logo-text")}>TapHoa<span className={cx("highlight")}>2Hand</span></span>
                         </div>
                     </div>
+                    {/* Bắt sự kiện cho Desktop */}
                     <div className={cx("search-wrapper")}>
-                        <input type="text" placeholder="Tìm kiếm đồ cũ giá hời tại Huế..." className={cx("search-input")} />
-                        <button className={cx("search-btn")}><FiSearch /></button>
+                        <input 
+                            type="text" 
+                            placeholder="Tìm kiếm đồ cũ giá hời tại Huế..." 
+                            className={cx("search-input")} 
+                            value={searchKeyword}
+                            onChange={(e) => setSearchKeyword(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                        />
+                        <button className={cx("search-btn")} onClick={handleSearch}>
+                            <FiSearch />
+                        </button>
                     </div>
                     <div className={cx("actions")}>
                         <div className={cx("action-item")}><FiBell className={cx("icon")} /><span>Thông báo</span></div>

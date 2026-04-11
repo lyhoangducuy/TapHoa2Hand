@@ -12,6 +12,8 @@ import FavoritePage from '../pages/Favorite/FavoritePage';
 import { PostEditPage } from '../pages/Post/Edit';
 import { ChatPage } from '../pages/Chat';
 import MyOrderPage from '../pages/Order/MyOrder/MyOrderPage';
+import OrderDetailPage from '../pages/Order/Detail/OrderDetailPage';
+import { Dashboard } from '../pages/Admin/Dashboard';
 const publicRoutes = [
     {path:'/',component:HomePage},
     {path:'/login',component:LoginPage,layout: NoSidebarLayout},
@@ -25,8 +27,10 @@ const publicRoutes = [
     {path:'/my-favorites',component:FavoritePage},
     {path:'/edit-post/:postId',component:PostEditPage, layout: NoSidebarLayout},
     {path:'/chat',component:ChatPage},
-    {path:'/my-order',component:MyOrderPage},
-    {path:'/order-detail/:orderId',component:OrderDetailPage}
+    {path:'/my-orders',component:MyOrderPage},
+    {path:'/order-detail/:orderId',component:OrderDetailPage},
+    {path:'/search',component:SearchPage},
+    {path:'/admin',component:Dashboard}
 
 
 ]

@@ -93,3 +93,18 @@ export const editPost = async (postId, postData, images) => {
         throw error;
     }
 };
+export const searchPosts = async (keyword, location, categoryId, page = 0, size = 10) => {
+    try {
+        const params = { page, size }; // Spring nhận page từ 0
+        if (keyword) params.keyword = keyword;
+        if (location) params.location = location;
+        if (categoryId) params.categoryId = categoryId;
+
+        const response = await httpClient.get(`${API.SEARCH}`, { params });
+        
+        return response.data; 
+    } catch (error) {
+        console.error("Lỗi khi tìm kiếm:", error);
+        throw error;
+    }
+};

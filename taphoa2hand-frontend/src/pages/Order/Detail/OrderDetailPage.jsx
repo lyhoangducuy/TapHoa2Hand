@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import classNames from 'classnames/bind';
 import styles from './OrderDetailPage.module.scss'; // Đảm bảo đúng tên file module
-import { orderService } from '../../../services/orderService';
+import orderService from '../../../services/orderService';
 const cx = classNames.bind(styles);
 
 const OrderDetailPage = () => {

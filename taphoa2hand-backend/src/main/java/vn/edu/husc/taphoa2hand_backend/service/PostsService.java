@@ -7,6 +7,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -57,6 +61,22 @@ public class PostsService {
 
     // Sử dụng FileService mới thay cho FileClient
     FileService fileService;
+
+    @Transactional(readOnly = true)
+    public Page<PostsResponse> searchPosts(String keyword, String location, String categoryId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        
+        // Cung cấp Enum trực tiếp từ Service
+        Page<Posts> postsPage = postsRepository.searchPosts(
+                keyword, 
+                location, 
+                categoryId, 
+                PostStatusEnum.AVAILABLE, // <--- Thêm cái này
+                pageable
+        );
+        
+        return postsPage.map(postsMapper::toPostsResponse);
+    }
 
     @Transactional(readOnly = true)
     public List<PostsResponse> getAllPosts() {
@@ -204,8 +224,6 @@ public class PostsService {
             attachedCategories.add(cat);
         }
         newPost.setCategories(attachedCategories);
-       
-        
 
         // 4. Xử lý Ảnh
         // 4.1 Xử lý các ảnh cũ đang có trong Database

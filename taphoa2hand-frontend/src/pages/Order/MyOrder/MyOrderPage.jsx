@@ -4,8 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import styles from './MyOrderPage.module.scss';
-import { orderService } from '../../../services/orderService';
-
+import orderService from '../../../services/orderService';
 const cx = classNames.bind(styles);
 
 const MyOrderPage = () => {
@@ -38,7 +37,7 @@ const MyOrderPage = () => {
             toast.success("Cập nhật trạng thái thành công");
             fetchOrders(); 
         } catch (error) {
-            toast.error("Có lỗi xảy ra khi cập nhật");
+            toast.error("Có lỗi xảy ra  khi cập nhật");
         }
     };
 
