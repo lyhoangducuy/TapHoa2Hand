@@ -1,0 +1,57 @@
+.sidebar-container {
+  background-color: #0f172a !important; /* Đã đổi sang màu cực đậm (Slate 900) */
+  height: 100vh;
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.15); /* Tăng bóng đổ để nhìn có chiều sâu hơn */
+  z-index: 1030; /* Đảm bảo luôn đè lên trên cùng */
+}
+
+.logo {
+  padding: 20px 0;
+  font-weight: 800;
+  font-size: 1.3rem;
+  letter-spacing: 1px;
+  text-align: center;
+  width: 100%;
+
+  .logo-text {
+    color: #f8fafc; /* Chữ trắng sáng */
+    
+    .highlight {
+      color: #0f172a; /* Màu đậm để nổi bật trên nền highlight */
+      background: var(--primary-color, #ff6b6b);
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin-left: 4px;
+    }
+  }
+}
+
+:global(.nav-link) {
+  color: #94a3b8 !important; /* Màu xám sáng dễ đọc hơn trên nền đậm */
+  transition: all 0.3s ease;
+
+  &:hover {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  &.active {
+    color: #ffffff !important;
+    background-color: var(--primary-color, #ff6b6b) !important;
+    border-radius: 8px;
+    margin: 0 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    
+    :global(.nav-icon) {
+      color: white !important;
+    }
+  }
+}
+
+:global(.nav-title) {
+  color: #64748b !important;
+  font-size: 0.75rem;
+  margin-top: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}

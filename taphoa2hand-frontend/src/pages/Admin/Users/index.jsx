@@ -1,0 +1,1 @@
+export {default as UserAdminPage} from "./UserAdminPage"

@@ -1,0 +1,31 @@
+/* --- WRAPPER CHÍNH BAO BỌC TOÀN BỘ NỘI DUNG --- */
+.wrapper {
+  background-color: #f4f7f6; /* Màu nền đồng bộ với Dashboard lúc nãy */
+  transition: padding-left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  padding-left: 256px; /* Kích thước mặc định của Sidebar CoreUI */
+  will-change: padding-left;
+
+  /* RESPONSIVE: Khi màn hình nhỏ hơn 768px (Tablet/Mobile) */
+  @media (max-width: 768px) {
+    padding-left: 0; /* Thu lại để nội dung tràn toàn màn hình */
+  }
+}
+
+/* --- KHU VỰC CHỨA NỘI DUNG (DASHBOARD) --- */
+.main-body {
+  flex-grow: 1;
+  padding: 0 24px; /* Padding hai bên cho nội dung */
+  margin-top: 24px; /* Cách Header một khoảng vừa vặn */
+  padding-bottom: 40px; /* Padding dưới đáy để không bị sát lề khi cuộn */
+  
+  /* Chỉnh lại padding cho thiết bị di động */
+  @media (max-width: 768px) {
+    padding: 0 16px;
+    margin-top: 16px;
+  }
+}
+
+/* --- ĐỂ ĐẢM BẢO KHÔNG BỊ TRÀN THANH CUỘN NGANG --- */
+.admin-layout {
+  overflow-x: hidden;
+}

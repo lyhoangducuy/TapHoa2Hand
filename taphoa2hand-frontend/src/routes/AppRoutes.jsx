@@ -13,7 +13,9 @@ import { PostEditPage } from '../pages/Post/Edit';
 import { ChatPage } from '../pages/Chat';
 import MyOrderPage from '../pages/Order/MyOrder/MyOrderPage';
 import OrderDetailPage from '../pages/Order/Detail/OrderDetailPage';
-import { Dashboard } from '../pages/Admin/Dashboard';
+import DashboardPage from '../pages/Admin/Dashboard/DashboardPage';
+import AdminLayout from '../components/Layouts/AdminLayout/AdminLayout';
+import UserAdminPage from '../pages/Admin/Users/UserAdminPage';
 const publicRoutes = [
     {path:'/',component:HomePage},
     {path:'/login',component:LoginPage,layout: NoSidebarLayout},
@@ -30,7 +32,8 @@ const publicRoutes = [
     {path:'/my-orders',component:MyOrderPage},
     {path:'/order-detail/:orderId',component:OrderDetailPage},
     {path:'/search',component:SearchPage},
-    {path:'/admin',component:Dashboard}
+    {path:'/admin',component:DashboardPage,layout:AdminLayout},
+    {path:'/admin/users',component:UserAdminPage,layout:AdminLayout}
 
 
 ]
