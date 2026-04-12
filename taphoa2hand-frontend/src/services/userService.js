@@ -41,3 +41,29 @@ export const updateUserInfo = async (userId, data) => {
     });
     return response.json();
 };
+export const getUserAdmin = async (page = 0, size = 10) => {
+    try {
+        // 1. Lấy token từ LocalStorage (hoặc Cookie, tùy cách bạn lưu khi Login)
+        const token = localStorage.getItem('token'); 
+        
+        // Cấu hình URL gọi tới Backend
+        const url = `${CONFIG.API_GATEWAY}${API.ADMIN_GETUSER}?page=${page}&size=${size}`;
+
+        const response = await fetch(url, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                // 2. Gắn Token vào đây để Backend biết mình là Admin hợp lệ
+                "Authorization": `Bearer ${token}` 
+            }
+        });
+
+        // 3. Xử lý dữ liệu trả về
+        const data = await response.json();
+        return data;
+
+    } catch (error) {
+        console.error("Lỗi gọi API getUserAdmin:", error);
+        throw error;
+    }
+};

@@ -26,24 +26,38 @@ const Sidebar = ({ visible, onVisibleChange }) => {
 
       <CSidebarNav>
         <CNavTitle>Hệ thống</CNavTitle>
-        <CNavItem as={Link} to="/admin" active={location.pathname === '/admin'}>
-          <CIcon icon={cilSpeedometer} customClassName="nav-icon" /> Dashboard
+        
+        {/* Tách CNavItem và Link ra riêng biệt để không bị lồng thẻ <a> */}
+        <CNavItem>
+          <Link to="/admin" className={`nav-link ${location.pathname === '/admin' ? 'active' : ''}`}>
+            <CIcon icon={cilSpeedometer} customClassName="nav-icon" /> Dashboard
+          </Link>
         </CNavItem>
 
         <CNavTitle>Quản lý nội dung</CNavTitle>
-        <CNavItem as={Link} to="/admin/posts" active={location.pathname === '/admin/posts'}>
-          <CIcon icon={cilBasket} customClassName="nav-icon" /> Quản lý bài đăng
+        <CNavItem>
+          <Link to="/admin/posts" className={`nav-link ${location.pathname === '/admin/posts' ? 'active' : ''}`}>
+            <CIcon icon={cilBasket} customClassName="nav-icon" /> Quản lý bài đăng
+          </Link>
         </CNavItem>
-        <CNavItem as={Link} to="/admin/users" active={location.pathname === '/admin/users'}>
-          <CIcon icon={cilPeople} customClassName="nav-icon" /> Người dùng
+        
+        <CNavItem>
+          <Link to="/admin/users" className={`nav-link ${location.pathname === '/admin/users' ? 'active' : ''}`}>
+            <CIcon icon={cilPeople} customClassName="nav-icon" /> Người dùng
+          </Link>
         </CNavItem>
 
         <CNavTitle>Báo cáo & Cài đặt</CNavTitle>
-        <CNavItem as={Link} to="/admin/analytics" active={location.pathname === '/admin/analytics'}>
-          <CIcon icon={cilChartLine} customClassName="nav-icon" /> Thống kê doanh thu
+        <CNavItem>
+          <Link to="/admin/analytics" className={`nav-link ${location.pathname === '/admin/analytics' ? 'active' : ''}`}>
+            <CIcon icon={cilChartLine} customClassName="nav-icon" /> Thống kê doanh thu
+          </Link>
         </CNavItem>
-        <CNavItem as={Link} to="/admin/settings" active={location.pathname === '/admin/settings'}>
-          <CIcon icon={cilSettings} customClassName="nav-icon" /> Cấu hình hệ thống
+        
+        <CNavItem>
+          <Link to="/admin/settings" className={`nav-link ${location.pathname === '/admin/settings' ? 'active' : ''}`}>
+            <CIcon icon={cilSettings} customClassName="nav-icon" /> Cấu hình hệ thống
+          </Link>
         </CNavItem>
       </CSidebarNav>
       

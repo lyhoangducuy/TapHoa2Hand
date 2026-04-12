@@ -17,25 +17,27 @@ import DashboardPage from '../pages/Admin/Dashboard/DashboardPage';
 import AdminLayout from '../components/Layouts/AdminLayout/AdminLayout';
 import UserAdminPage from '../pages/Admin/Users/UserAdminPage';
 const publicRoutes = [
-    {path:'/',component:HomePage},
-    {path:'/login',component:LoginPage,layout: NoSidebarLayout},
-    {path:'/search',component:SearchPage},
-    {path:'/profile',component:ProfilePage},
-    {path:'/register',component:RegisterPage,layout: NoSidebarLayout},
-    {path:'send-code',component:CodePage,layout: NoSidebarLayout},
-    {path:'/edit-profile',component:UpdateInfoPage},
-    {path:'/post-detail/:postId',component:PostDetailPage},
-    {path:'/create-post',component:CreatePostPage, layout: NoSidebarLayout},
-    {path:'/my-favorites',component:FavoritePage},
-    {path:'/edit-post/:postId',component:PostEditPage, layout: NoSidebarLayout},
-    {path:'/chat',component:ChatPage},
-    {path:'/my-orders',component:MyOrderPage},
-    {path:'/order-detail/:orderId',component:OrderDetailPage},
-    {path:'/search',component:SearchPage},
-    {path:'/admin',component:DashboardPage,layout:AdminLayout},
-    {path:'/admin/users',component:UserAdminPage,layout:AdminLayout}
+    { path: '/', component: HomePage },
+    { path: '/login', component: LoginPage, layout: NoSidebarLayout },
+    { path: '/register', component: RegisterPage, layout: NoSidebarLayout },
+    { path: '/search', component: SearchPage },
+    { path: '/post-detail/:postId', component: PostDetailPage },
+];
 
+// 2. DÀNH CHO USER ĐÃ ĐĂNG NHẬP
+const privateRoutes = [
+    { path: '/profile', component: ProfilePage },
+    { path: '/edit-profile', component: UpdateInfoPage },
+    { path: '/create-post', component: CreatePostPage, layout: NoSidebarLayout },
+    { path: '/my-favorites', component: FavoritePage },
+    { path: '/chat', component: ChatPage },
+    { path: '/my-orders', component: MyOrderPage },
+];
 
-]
-const privateRoutes = []
-export { publicRoutes, privateRoutes }
+// 3. DÀNH RIÊNG CHO ADMIN
+const adminRoutes = [
+    { path: '/admin', component: DashboardPage, layout: AdminLayout },
+    { path: '/admin/users', component: UserAdminPage, layout: AdminLayout }
+];
+
+export { publicRoutes, privateRoutes, adminRoutes };

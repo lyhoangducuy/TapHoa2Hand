@@ -7,6 +7,7 @@ import org.mapstruct.MappingTarget;
 import vn.edu.husc.taphoa2hand_backend.dto.request.UsersDTO.UserCreateRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.UsersDTO.UserUpdateRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.response.UserResponse;
+import vn.edu.husc.taphoa2hand_backend.dto.response.AdminUsers.AdminUsersResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.UsersResponse;
 import vn.edu.husc.taphoa2hand_backend.entity.Users;
 
@@ -23,5 +24,6 @@ public interface UserMapper {
 
     UsersResponse toUsersResponse(Users user);
     UsersResponse toUsersResponse(String userId);
+    AdminUsersResponse toAdminUsersResponse(Users user);
     
 }

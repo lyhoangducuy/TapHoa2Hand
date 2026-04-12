@@ -34,5 +34,6 @@ export const API = {
     GET_SALES:"/order/sales",
     GET_DETAIL_ORDER: (orderId)=> `order/${orderId}`,
     CREATE_ORDER:"/order",
-    SEARCH:"/posts/search"
+    SEARCH:"/posts/search",
+    ADMIN_GETUSER:"/admin/users"
 };

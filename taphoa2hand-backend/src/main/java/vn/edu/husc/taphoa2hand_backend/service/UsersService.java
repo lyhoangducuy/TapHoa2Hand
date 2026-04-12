@@ -3,8 +3,13 @@ package vn.edu.husc.taphoa2hand_backend.service;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +24,7 @@ import vn.edu.husc.taphoa2hand_backend.dto.request.UsersDTO.UserCreateRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.UsersDTO.UserUpdateRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.response.ApiResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.UserResponse;
+import vn.edu.husc.taphoa2hand_backend.dto.response.AdminUsers.AdminUsersResponse;
 import vn.edu.husc.taphoa2hand_backend.entity.Users;
 import vn.edu.husc.taphoa2hand_backend.exception.AppException;
 import vn.edu.husc.taphoa2hand_backend.exception.ErrorCode;
@@ -62,6 +68,15 @@ public class UsersService {
         return Set.copyOf(usersRepository.findAll());
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    public Page<AdminUsersResponse> getAllUserAdmin(Pageable pageable) {
+        // 1. Gọi hàm findAll có sẵn, truyền pageable vào
+        Page<Users> pageUsers = usersRepository.findAll(pageable);
+
+        // 2. Map dữ liệu từ Entity sang DTO (Response)
+        return pageUsers.map(userMapper::toAdminUsersResponse);
+    }
+
     @PostAuthorize("returnObject.username == authentication.name or hasRole('ADMIN')")
     public Users findById(String userId) {
         return usersRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
@@ -88,14 +103,15 @@ public class UsersService {
         usersRepository.delete(existingUser);
         return "User deleted successfully";
     }
+
     public UserResponse updateAvatar(MultipartFile file) throws IOException {
-        var user=SecurityContextHolder.getContext().getAuthentication();
-        String username=user.getName();
+        var user = SecurityContextHolder.getContext().getAuthentication();
+        String username = user.getName();
 
         var existingUser = usersRepository.findByUsername(username)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         var storedFile = fileService.uploadMedia(file);
-        
+
         existingUser.setAvatar(storedFile.getUrl());
         usersRepository.save(existingUser);
         return userMapper.toUserResponse(existingUser);
