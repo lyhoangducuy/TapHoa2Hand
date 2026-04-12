@@ -65,7 +65,6 @@ public class UsersController {
     }
     @DeleteMapping("/{userId}")
     public String deleteUser(@PathVariable("userId") String userId) {
-       
         return  usersService.deleteUser(userId);
     }
     @PostMapping("/update-avatar")

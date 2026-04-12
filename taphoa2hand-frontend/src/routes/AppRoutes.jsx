@@ -16,6 +16,8 @@ import OrderDetailPage from '../pages/Order/Detail/OrderDetailPage';
 import DashboardPage from '../pages/Admin/Dashboard/DashboardPage';
 import AdminLayout from '../components/Layouts/AdminLayout/AdminLayout';
 import UserAdminPage from '../pages/Admin/Users/UserAdminPage';
+import UserEditPage from '../pages/Admin/Users/UserTable/UpdateUser/UserEditPage';
+import UserCreatePage from '../pages/Admin/Users/Create/UserCreatePage';
 const publicRoutes = [
     { path: '/', component: HomePage },
     { path: '/login', component: LoginPage, layout: NoSidebarLayout },
@@ -37,7 +39,9 @@ const privateRoutes = [
 // 3. DÀNH RIÊNG CHO ADMIN
 const adminRoutes = [
     { path: '/admin', component: DashboardPage, layout: AdminLayout },
-    { path: '/admin/users', component: UserAdminPage, layout: AdminLayout }
+    { path: '/admin/users', component: UserAdminPage, layout: AdminLayout },
+    { path: '/admin/users/detail/:userId', component: UserEditPage, layout: AdminLayout },
+    { path: '/admin/users/create', component: UserCreatePage, layout: AdminLayout }
 ];
 
 export { publicRoutes, privateRoutes, adminRoutes };

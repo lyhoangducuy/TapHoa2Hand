@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // Bổ sung thư viện chuyển trang
 import classNames from 'classnames/bind';
 import styles from './UserAdminPage.module.scss';
 import { 
@@ -9,14 +10,13 @@ import CIcon from '@coreui/icons-react';
 import { cilSearch, cilUserPlus } from '@coreui/icons';
 
 import UserTable from './UserTable/UserTable';
-import UserModalForm from './UserModalForm/UserModalForm';
 import { getUserAdmin } from '../../../services/userService';
 
 const cx = classNames.bind(styles);
 
 function UserAdminPage() {
+  const navigate = useNavigate(); // Khởi tạo hàm điều hướng
   const [users, setUsers] = useState([]);
-  const [modalVisible, setModalVisible] = useState(false);
   const [currentPage, setCurrentPage] = useState(0); 
   const [totalPages, setTotalPages] = useState(1);
 
@@ -57,7 +57,8 @@ function UserAdminPage() {
     <div className={cx('user-page')}>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h3 className="fw-bold m-0">Quản lý người dùng</h3>
-        <CButton color="primary" onClick={() => setModalVisible(true)}>
+        {/* Đổi onClick thành navigate chuyển sang route /admin/users/create */}
+        <CButton color="primary" onClick={() => navigate('/admin/users/create')}>
           <CIcon icon={cilUserPlus} className="me-2"/> Thêm người dùng
         </CButton>
       </div>
@@ -70,9 +71,9 @@ function UserAdminPage() {
           </CInputGroup>
         </CCardHeader>
         <CCardBody>
-          <UserTable users={users} />
+          <UserTable users={users} onRefresh={() => fetchUsers(currentPage)} />
           
-          {totalPages > 1 && (
+          {totalPages > 0 && (
             <div className="d-flex justify-content-end mt-4">
               <CPagination>
                 <CPaginationItem 
@@ -93,12 +94,6 @@ function UserAdminPage() {
           )}
         </CCardBody>
       </CCard>
-
-      <UserModalForm 
-        visible={modalVisible} 
-        onClose={() => setModalVisible(false)} 
-        onSubmit={() => { setModalVisible(false); fetchUsers(0); }} 
-      />
     </div>
   );
 }

@@ -12,6 +12,7 @@ public enum ErrorCode {
     UNCAGORIZED_EXCEPTION(9999, "Uncategorized error",HttpStatus.INTERNAL_SERVER_ERROR),
     VALID_EXCEPTION(8888, "Uncategorized error",HttpStatus.BAD_REQUEST),
     USER_EXISTS(1001, "Username already exists",HttpStatus.BAD_REQUEST),
+    
     EMAIL_EXISTS(1002, "Email already exists",HttpStatus.BAD_REQUEST),
     USER_BLANK(1003, "Username must not be blank",HttpStatus.BAD_REQUEST),
     USER_SIZE(1004, "Username must be between 3 and 50 characters",HttpStatus.BAD_REQUEST),
@@ -21,6 +22,7 @@ public enum ErrorCode {
     EMAIL_INVALID(1008, "Email is not valid",HttpStatus.BAD_REQUEST),
     PASSWORD_BLANK(1009, "Password must not be blank",HttpStatus.BAD_REQUEST),
     PASSWORD_SIZE(1010, "Password must be between 6 and 100 characters",HttpStatus.BAD_REQUEST),
+    CANNOT_DELETE_YOURSELF(1011,"Ban khong the xoa chinh minh",HttpStatus.BAD_REQUEST),
     USER_NOT_FOUND(2001, "User not found",HttpStatus.NOT_FOUND),
     INVALID_PASSWORD(2002, "Invalid password",HttpStatus.BAD_REQUEST),
     UNAUTHENTICATED(2003, "Unauthenticated",HttpStatus.UNAUTHORIZED),

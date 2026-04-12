@@ -1,5 +1,7 @@
 package vn.edu.husc.taphoa2hand_backend.dto.response.AdminUsers;
 
+import java.util.Set;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,5 +17,5 @@ import vn.edu.husc.taphoa2hand_backend.entity.Roles;
 public class AdminUsersResponse {
     String id;
     String username;
-    Roles role;
+    Set<Roles> roles;
 }

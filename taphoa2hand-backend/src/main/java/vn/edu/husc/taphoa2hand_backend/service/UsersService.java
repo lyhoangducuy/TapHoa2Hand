@@ -12,12 +12,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import vn.edu.husc.taphoa2hand_backend.dto.request.UsersDTO.UserCreateRequest;
@@ -25,6 +28,7 @@ import vn.edu.husc.taphoa2hand_backend.dto.request.UsersDTO.UserUpdateRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.response.ApiResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.UserResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.AdminUsers.AdminUsersResponse;
+import vn.edu.husc.taphoa2hand_backend.entity.Roles;
 import vn.edu.husc.taphoa2hand_backend.entity.Users;
 import vn.edu.husc.taphoa2hand_backend.exception.AppException;
 import vn.edu.husc.taphoa2hand_backend.exception.ErrorCode;
@@ -58,8 +62,10 @@ public class UsersService {
             throw new AppException(ErrorCode.EMAIL_EXISTS);
         Users user = userMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        var roles = rolesRepository.findAllById(request.getRoles());
-        user.setRoles(new HashSet<>(roles));
+        var roles = rolesRepository.findById("USER");
+        Set<Roles> userRoles = new HashSet<>();
+        userRoles.add(roles.get());
+        user.setRoles(userRoles);
         return userMapper.toUserResponse(usersRepository.save(user));
     }
 
@@ -69,6 +75,7 @@ public class UsersService {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public Page<AdminUsersResponse> getAllUserAdmin(Pageable pageable) {
         // 1. Gọi hàm findAll có sẵn, truyền pageable vào
         Page<Users> pageUsers = usersRepository.findAll(pageable);
@@ -98,10 +105,35 @@ public class UsersService {
     }
 
     public String deleteUser(String userId) {
+        // 1. Lấy thông tin user đang thực hiện request (người đang đăng nhập)
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+
+        // 2. Tìm user cần xóa dưới DB
         Users existingUser = usersRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        usersRepository.delete(existingUser);
-        return "User deleted successfully";
+
+        // 3. CHẶN XÓA CHÍNH MÌNH: Nếu username trùng
+        if (existingUser.getUsername().equals(currentUsername)) {
+            throw new AppException(ErrorCode.CANNOT_DELETE_YOURSELF);
+        }
+
+        // ---------------- THAY ĐỔI Ở ĐÂY ----------------
+        // 4. XÓA MỀM (Soft Delete): Thay vì xóa thật, chỉ đổi trạng thái thành false
+        existingUser.setActive(false);
+
+        // (Tùy chọn) Thực tế người ta hay sửa lại email/username để mốt người dùng này
+        // có thể dùng lại email cũ để đăng ký nick mới. Ví dụ:
+        // existingUser.setEmail("deleted_" + System.currentTimeMillis() + "_" +
+        // existingUser.getEmail());
+        // existingUser.setUsername("deleted_" + System.currentTimeMillis() + "_" +
+        // existingUser.getUsername());
+
+        // 5. Lưu xuống Database
+        usersRepository.save(existingUser);
+        // ------------------------------------------------
+
+        return "User deleted successfully (Soft Delete)";
     }
 
     public UserResponse updateAvatar(MultipartFile file) throws IOException {
@@ -115,5 +147,34 @@ public class UsersService {
         existingUser.setAvatar(storedFile.getUrl());
         usersRepository.save(existingUser);
         return userMapper.toUserResponse(existingUser);
+    }
+
+    public UserResponse updateAvatarAdmin(String userId, MultipartFile file) throws IOException {
+
+        var existingUser = usersRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        var storedFile = fileService.uploadMedia(file);
+
+        existingUser.setAvatar(storedFile.getUrl());
+        usersRepository.save(existingUser);
+        return userMapper.toUserResponse(existingUser);
+    }
+
+    public UserResponse getInfo(String userId) {
+        Users user = usersRepository.findById(userId).orElseThrow(
+                () -> new AppException(ErrorCode.USER_NOT_FOUND));
+        return userMapper.toUserResponse(user);
+    }
+
+    public UserResponse createAdminUser(UserCreateRequest request) {
+        if (usersRepository.existsByUsername(request.getUsername()))
+            throw new AppException(ErrorCode.USER_EXISTS);
+        if (usersRepository.existsByEmail(request.getEmail()))
+            throw new AppException(ErrorCode.EMAIL_EXISTS);
+        Users user = userMapper.toUser(request);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        var roles = rolesRepository.findAllById(request.getRoles());
+        user.setRoles(new HashSet<>(roles));
+        return userMapper.toUserResponse(usersRepository.save(user));
     }
 }

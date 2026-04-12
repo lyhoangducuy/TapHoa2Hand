@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
+import org.hibernate.annotations.Where;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -20,6 +21,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @Table(name = "users")
+@Where(clause = "active = true")
 public class Users extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
