@@ -1,4 +1,4 @@
-import { API } from "../configurations/configuration";
+import { API, CONFIG } from "../configurations/configuration";
 import httpClient from "../configurations/httpClient";
 
 export const getAllPosts = async () => {
@@ -105,6 +105,115 @@ export const searchPosts = async (keyword, location, categoryId, page = 0, size 
         return response.data; 
     } catch (error) {
         console.error("Lỗi khi tìm kiếm:", error);
+        throw error;
+    }
+};
+// =========================================================
+// CÁC API DÀNH CHO ADMIN QUẢN LÝ BÀI VIẾT (POSTS)
+// =========================================================
+
+export const adminGetAllPosts = async (page = 0, size = 10) => {
+    try {
+        const token = localStorage.getItem('token');
+        // Đã bỏ CONFIG.API_GATEWAY đi vì httpClient tự động nối Base URL
+        const response = await httpClient.get(`${API.ADMIN_GET_POSTS}?page=${page}&size=${size}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Lỗi khi Admin lấy danh sách bài viết:", error);
+        throw error;
+    }
+};
+
+export const adminGetPostDetail = async (postId) => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await httpClient.get(API.ADMIN_GET_POST_DETAIL(postId), {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data; 
+    } catch (error) {
+        console.error(`Lỗi khi Admin lấy chi tiết bài viết ID ${postId}:`, error);
+        throw error;
+    }
+};
+
+export const adminCreatePost = async (postData, images) => {
+    try {
+        const token = localStorage.getItem('token');
+        const formData = new FormData();
+
+        // Ép kiểu JSON thành Blob để Spring Boot @RequestPart có thể đọc được
+        formData.append(
+            "request", 
+            new Blob([JSON.stringify(postData)], { type: "application/json" })
+        );
+
+        if (images && images.length > 0) {
+            Array.from(images).forEach((image) => {
+                formData.append("images", image);
+            });
+        }
+
+        const response = await httpClient.post(API.ADMIN_CREATE_POST, formData, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "multipart/form-data" 
+            }
+        });
+        
+        return response.data;
+    } catch (error) {
+        console.error("Lỗi khi Admin tạo bài viết:", error);
+        throw error;
+    }
+};
+
+export const adminUpdatePost = async (postId, postData, images) => {
+    try {
+        const token = localStorage.getItem('token');
+        const formData = new FormData();
+        
+        formData.append(
+            "request", 
+            new Blob([JSON.stringify(postData)], { type: "application/json" })
+        );
+
+        if (images && images.length > 0) {
+            Array.from(images).forEach((image) => {
+                formData.append("images", image);
+            });
+        }
+
+        const response = await httpClient.put(API.ADMIN_UPDATE_POST(postId), formData, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "multipart/form-data"
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error(`Lỗi khi Admin cập nhật bài viết ID ${postId}:`, error);
+        throw error;
+    }
+};
+
+export const adminDeletePost = async (postId) => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await httpClient.delete(API.ADMIN_DELETE_POST(postId), {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error(`Lỗi khi Admin xóa bài viết ID ${postId}:`, error);
         throw error;
     }
 };

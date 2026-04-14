@@ -3,6 +3,9 @@ package vn.edu.husc.taphoa2hand_backend.entity;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
+
+import org.hibernate.annotations.Where;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.CascadeType;
@@ -36,6 +39,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
+@Where(clause = "active = true")
 public class Posts extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -54,6 +58,8 @@ public class Posts extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "user_id")
     Users user;
+    @Builder.Default
+    boolean active = true;
     @OneToOne(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude

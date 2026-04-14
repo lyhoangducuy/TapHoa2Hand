@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.angus.mail.handlers.handler_base;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -178,7 +179,8 @@ public class PostsService {
         if (!post.getUser().getUsername().equals(user.getName())) {
             throw new AppException(ErrorCode.POST_CANNOT_DELETE);
         }
-        postsRepository.delete(post);
+        post.setActive(false);
+        postsRepository.save(post);
         return PostDeleteResponse.builder()
                 .postId(postId)
                 .result("Post deleted successfully")
@@ -290,5 +292,11 @@ public class PostsService {
         Posts savedPost = postsRepository.save(newPost);
 
         return postsMapper.toPostDetailResponse(savedPost);
+    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional(readOnly = true)
+    public Page<PostsResponse> getAllPostsAdmin(Pageable pageable) {
+         Page<Posts> pagePosts=postsRepository.findAll(pageable);
+        return pagePosts.map(postsMapper::toPostsResponse);
     }
 }

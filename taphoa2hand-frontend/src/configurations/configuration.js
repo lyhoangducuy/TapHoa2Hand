@@ -35,10 +35,17 @@ export const API = {
     GET_DETAIL_ORDER: (orderId)=> `order/${orderId}`,
     CREATE_ORDER:"/order",
     SEARCH:"/posts/search",
+    //users
     ADMIN_GETUSER:"/admin/users",
     ADMIN_GETINFO:(userId)=>`/admin/users/${userId}`,
     ADMIN_UPDATE_USER:(userId)=>`/admin/users/${userId}/update`,
     ADMIN_UPDATE_AVATAR:(userId)=>`/admin/users/${userId}/update-avatar`,
     ADMIN_DELETE_USER: (userId) => `/admin/users/${userId}/delete`,
-    ADMIN_CREATE_USER: "/admin/users/create"
+    ADMIN_CREATE_USER: "/admin/users/create",
+    //posts
+    ADMIN_GET_POSTS:"/admin/posts",
+    ADMIN_GET_POST_DETAIL:(postId) => `/admin/posts/${postId}`,
+    ADMIN_UPDATE_POST:(postId) => `/admin/posts/${postId}/update`,
+    ADMIN_DELETE_POST:(postId) => `/admin/posts/${postId}/delete`,
+    ADMIN_CREATE_POST:"/admin/posts/create",
 };

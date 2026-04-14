@@ -18,6 +18,8 @@ import AdminLayout from '../components/Layouts/AdminLayout/AdminLayout';
 import UserAdminPage from '../pages/Admin/Users/UserAdminPage';
 import UserEditPage from '../pages/Admin/Users/UserTable/UpdateUser/UserEditPage';
 import UserCreatePage from '../pages/Admin/Users/Create/UserCreatePage';
+import { PostAdminPage } from '../pages/Admin/Posts';
+import PostCreatePage from '../pages/Admin/Posts/Create/PostCreatePage';
 const publicRoutes = [
     { path: '/', component: HomePage },
     { path: '/login', component: LoginPage, layout: NoSidebarLayout },
@@ -34,6 +36,7 @@ const privateRoutes = [
     { path: '/my-favorites', component: FavoritePage },
     { path: '/chat', component: ChatPage },
     { path: '/my-orders', component: MyOrderPage },
+    {path:'/edit-post/:postId',component:PostEditPage, layout: NoSidebarLayout},
 ];
 
 // 3. DÀNH RIÊNG CHO ADMIN
@@ -41,7 +44,12 @@ const adminRoutes = [
     { path: '/admin', component: DashboardPage, layout: AdminLayout },
     { path: '/admin/users', component: UserAdminPage, layout: AdminLayout },
     { path: '/admin/users/detail/:userId', component: UserEditPage, layout: AdminLayout },
-    { path: '/admin/users/create', component: UserCreatePage, layout: AdminLayout }
+    { path: '/admin/users/create', component: UserCreatePage, layout: AdminLayout },
+
+    //posts
+    {path:'/admin/posts',component: PostAdminPage,layout:AdminLayout},
+    {path:'/admin/posts/detail/:postId',component: PostDetailPage, layout: AdminLayout},
+    {path:'/admin/posts/create',component: PostCreatePage, layout:AdminLayout}
 ];
 
 export { publicRoutes, privateRoutes, adminRoutes };
