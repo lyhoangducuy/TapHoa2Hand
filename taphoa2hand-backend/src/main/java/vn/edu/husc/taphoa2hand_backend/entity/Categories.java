@@ -2,6 +2,8 @@ package vn.edu.husc.taphoa2hand_backend.entity;
 
 import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Where;
+
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -13,7 +15,8 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 @Table(name = "categories")
-public class Categories {
+@Where(clause = "active = true")
+public class Categories extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
@@ -21,7 +24,6 @@ public class Categories {
     @Column(unique = true, nullable = false) // Tên danh mục nên duy nhất
     String name;
 
-    @CreationTimestamp // Tự động điền thời gian khi tạo mới, không cần truyền từ FE
-    @Column(updatable = false)
-    LocalDateTime createdAt;
+    @Builder.Default
+    boolean active = true;
 }

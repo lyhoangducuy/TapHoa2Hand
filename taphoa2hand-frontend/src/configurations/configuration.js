@@ -48,4 +48,16 @@ export const API = {
     ADMIN_UPDATE_POST:(postId) => `/admin/posts/${postId}/update`,
     ADMIN_DELETE_POST:(postId) => `/admin/posts/${postId}/delete`,
     ADMIN_CREATE_POST:"/admin/posts/create",
+    //category
+    ADMIN_GET_CATEGORY:"/admin/categories",
+    ADMIN_GET_CATEGORY_DETAIL:(categoryId)=>`/admin/categories/${categoryId}`,
+    ADMIN_UPDATE_CATEGORY:(categoryId)=>`/admin/categories/${categoryId}/update`,
+    ADMIN_DELETE_CATEGORY:(categoryId)=>`/admin/categories/${categoryId}/delete`,
+    ADMIN_CREATE_CATEGORY:"/admin/categories/create",
+
+    // Notification
+    GET_NOTIFICATIONS: (userId) => `/notification/user/${userId}`,
+    CREATE_NOTIFICATION: "/notification",
+    MARK_READ_NOTIFICATION: (id) => `/notification/${id}/read`,
+    DELETE_NOTIFICATION: (id) => `/notification/${id}`,
 };

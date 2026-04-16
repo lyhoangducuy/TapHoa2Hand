@@ -7,6 +7,7 @@ import org.mapstruct.Mapper;
 
 import vn.edu.husc.taphoa2hand_backend.dto.request.CategoriesDTO.CategoryCreateRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.CategoriesDTO.CategoryRequest;
+import vn.edu.husc.taphoa2hand_backend.dto.request.CategoriesDTO.CategoryUpdateRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Categories.CategoryResponse;
 import vn.edu.husc.taphoa2hand_backend.entity.Categories;
 
@@ -16,4 +17,5 @@ public interface CategoriesMapper {
     Categories toCategory(CategoryCreateRequest request);
     Set<CategoryResponse> toCategoryResponse(Set<Categories> categories);
     Set<Categories> toCategory(Set<CategoryResponse> categoryResponses);
+    Categories toCategories(CategoryUpdateRequest request);
 }

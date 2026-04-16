@@ -20,6 +20,10 @@ import UserEditPage from '../pages/Admin/Users/UserTable/UpdateUser/UserEditPage
 import UserCreatePage from '../pages/Admin/Users/Create/UserCreatePage';
 import { PostAdminPage } from '../pages/Admin/Posts';
 import PostCreatePage from '../pages/Admin/Posts/Create/PostCreatePage';
+import CategoryAdminPage from '../pages/Admin/Categories/CategoryAdminPage';
+import CategoryEditPage from '../pages/Admin/Categories/CategoryTable/UpdateCategory/CategoryEditPage';
+import CategoryCreatePage from '../pages/Admin/Categories/Create/CategoryCreatePage';
+import Notificationpage from '../pages/Admin/Notification/NotificationPage';
 const publicRoutes = [
     { path: '/', component: HomePage },
     { path: '/login', component: LoginPage, layout: NoSidebarLayout },
@@ -48,8 +52,15 @@ const adminRoutes = [
 
     //posts
     {path:'/admin/posts',component: PostAdminPage,layout:AdminLayout},
-    {path:'/admin/posts/detail/:postId',component: PostDetailPage, layout: AdminLayout},
-    {path:'/admin/posts/create',component: PostCreatePage, layout:AdminLayout}
+    {path:'/admin/posts/detail/:postId',component: PostEditPage, layout: AdminLayout},
+    {path:'/admin/posts/create',component: PostCreatePage, layout:AdminLayout},
+
+    //category
+    {path:'/admin/categories',component:CategoryAdminPage,layout: AdminLayout},
+    {path: '/admin/categories/detail/:categoryId',component: CategoryEditPage, layout:AdminLayout},
+    {path:'/admin/categories/create',component: CategoryCreatePage,layout: AdminLayout},
+    //noti
+    {path:"/admin/notifications",component:Notificationpage,layout:AdminLayout}
 ];
 
 export { publicRoutes, privateRoutes, adminRoutes };

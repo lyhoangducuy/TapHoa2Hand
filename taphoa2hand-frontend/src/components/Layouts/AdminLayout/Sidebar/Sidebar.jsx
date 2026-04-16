@@ -12,11 +12,11 @@ const Sidebar = ({ visible, onVisibleChange }) => {
   const location = useLocation();
 
   return (
-    <CSidebar 
-      className={cx('sidebar-container')} 
-      position="fixed" 
-      visible={visible} 
-      onVisibleChange={onVisibleChange} 
+    <CSidebar
+      className={cx('sidebar-container')}
+      position="fixed"
+      visible={visible}
+      onVisibleChange={onVisibleChange}
     >
       <CSidebarBrand className="d-none d-md-flex">
         <div className={cx('logo')}>
@@ -26,7 +26,7 @@ const Sidebar = ({ visible, onVisibleChange }) => {
 
       <CSidebarNav>
         <CNavTitle>Hệ thống</CNavTitle>
-        
+
         {/* Tách CNavItem và Link ra riêng biệt để không bị lồng thẻ <a> */}
         <CNavItem>
           <Link to="/admin" className={`nav-link ${location.pathname === '/admin' ? 'active' : ''}`}>
@@ -40,10 +40,20 @@ const Sidebar = ({ visible, onVisibleChange }) => {
             <CIcon icon={cilBasket} customClassName="nav-icon" /> Quản lý bài đăng
           </Link>
         </CNavItem>
-        
+
         <CNavItem>
           <Link to="/admin/users" className={`nav-link ${location.pathname === '/admin/users' ? 'active' : ''}`}>
             <CIcon icon={cilPeople} customClassName="nav-icon" /> Người dùng
+          </Link>
+        </CNavItem>
+        <CNavItem>
+          <Link to="/admin/categories" className={`nav-link ${location.pathname === '/admin/categories' ? 'active' : ''}`}>
+            <CIcon icon={cilPeople} customClassName="nav-icon" /> Danh muc
+          </Link>
+        </CNavItem>
+        <CNavItem>
+          <Link to="/admin/categories" className={`nav-link ${location.pathname === '/admin/notifications' ? 'active' : ''}`}>
+            <CIcon icon={cilPeople} customClassName="nav-icon" /> Thong bao
           </Link>
         </CNavItem>
 
@@ -53,14 +63,14 @@ const Sidebar = ({ visible, onVisibleChange }) => {
             <CIcon icon={cilChartLine} customClassName="nav-icon" /> Thống kê doanh thu
           </Link>
         </CNavItem>
-        
+
         <CNavItem>
           <Link to="/admin/settings" className={`nav-link ${location.pathname === '/admin/settings' ? 'active' : ''}`}>
             <CIcon icon={cilSettings} customClassName="nav-icon" /> Cấu hình hệ thống
           </Link>
         </CNavItem>
       </CSidebarNav>
-      
+
       <CSidebarToggler className="d-none d-lg-flex" onClick={() => onVisibleChange(!visible)} />
     </CSidebar>
   );

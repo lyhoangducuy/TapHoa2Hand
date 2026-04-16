@@ -64,3 +64,19 @@ export const unsubscribeFromMessages = () => {
 };
 
 export const getSocket = () => socket;
+// Lắng nghe sự kiện có thông báo mới (Tên event 'new_notification' phải khớp với Backend)
+export const subscribeToNotifications = (callback) => {
+    if (!socket) return;
+    
+    socket.off('new_notification'); // Xóa listener cũ tránh trùng lặp
+    socket.on('new_notification', (notification) => {
+        console.log('🔔 Đã nhận thông báo mới: ', notification);
+        callback(notification);
+    });
+};
+
+// Gỡ lắng nghe thông báo
+export const unsubscribeFromNotifications = () => {
+    if (!socket) return;
+    socket.off('new_notification');
+};
