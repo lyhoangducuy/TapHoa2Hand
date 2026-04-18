@@ -52,7 +52,7 @@ const Sidebar = ({ visible, onVisibleChange }) => {
           </Link>
         </CNavItem>
         <CNavItem>
-          <Link to="/admin/categories" className={`nav-link ${location.pathname === '/admin/notifications' ? 'active' : ''}`}>
+          <Link to="/admin/notifications" className={`nav-link ${location.pathname === '/admin/notifications' ? 'active' : ''}`}>
             <CIcon icon={cilPeople} customClassName="nav-icon" /> Thong bao
           </Link>
         </CNavItem>

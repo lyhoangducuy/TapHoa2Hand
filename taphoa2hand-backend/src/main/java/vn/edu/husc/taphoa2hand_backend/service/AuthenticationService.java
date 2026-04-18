@@ -28,6 +28,7 @@ import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
@@ -199,9 +200,10 @@ public class AuthenticationService {
                 .success(true)
                 .build();
     }
+    @Transactional
     public RegisterResponse verifyOtpAndSaveUser(String email, String code) {
         // 1. Tìm thông tin trong Redis bằng email
-        UserRedisCodeRequest redisData = userRedisCodeRequestRepository.findById(email)
+        UserRedisCodeRequest redisData = userRedisCodeRequestRepository.findById(email.trim().toLowerCase())
                 .orElseThrow(() -> new AppException(ErrorCode.OTP_EXPIRED_OR_NOT_FOUND)); // Thông báo: OTP hết hạn hoặc email chưa đăng ký
 
         // 2. Kiểm tra mã OTP có khớp không

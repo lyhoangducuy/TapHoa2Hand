@@ -52,3 +52,14 @@ export const deleteNotification = async (id) => {
         throw error;
     }
 };
+export const getUnreadNotificationCount = async (userId) => {
+    try {
+        const response = await httpClient.get(API.GET_UNREAD_NOTI_COUNT(userId), {
+            headers: { Authorization: `Bearer ${getToken()}` }
+        });
+        return response.data; 
+    } catch (error) {
+        console.error("Lỗi khi lấy số lượng thông báo chưa đọc:", error);
+        throw error;
+    }
+};

@@ -30,6 +30,7 @@ const publicRoutes = [
     { path: '/register', component: RegisterPage, layout: NoSidebarLayout },
     { path: '/search', component: SearchPage },
     { path: '/post-detail/:postId', component: PostDetailPage },
+    {path:'/send-code',component: CodePage}
 ];
 
 // 2. DÀNH CHO USER ĐÃ ĐĂNG NHẬP

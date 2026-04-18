@@ -9,5 +9,6 @@ import vn.edu.husc.taphoa2hand_backend.entity.Notification;
 
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification,String> {
-    List<Notification> findByRecipientIdOrderByCreatedAtDesc(String recipientId);
+    List<Notification> findByUserIds_IdOrderByCreatedAtDesc(String userId);
+    Long countByUserIds_IdAndIsRead(String userId, boolean isRead);
 }

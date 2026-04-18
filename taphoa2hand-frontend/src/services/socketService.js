@@ -1,5 +1,6 @@
 import { io } from 'socket.io-client';
 import { CONFIG } from '../configurations/configuration';
+import { getToken } from './localstorageService';
 
 let socket;
 
@@ -64,19 +65,27 @@ export const unsubscribeFromMessages = () => {
 };
 
 export const getSocket = () => socket;
-// Lắng nghe sự kiện có thông báo mới (Tên event 'new_notification' phải khớp với Backend)
-export const subscribeToNotifications = (callback) => {
-    if (!socket) return;
+
+export const subscribeToNotifications = ( callback) => {
+    const token = getToken();
+    if (!socket && token) {
+        initiateSocketConnection(token);
+    }
     
-    socket.off('new_notification'); // Xóa listener cũ tránh trùng lặp
-    socket.on('new_notification', (notification) => {
-        console.log('🔔 Đã nhận thông báo mới: ', notification);
-        callback(notification);
-    });
+    if (socket) {
+        
+        socket.off("new_notification"); // Tránh lặp listener
+        socket.on("new_notification", (data) => {
+            console.log("🎉 Nhận được thông báo realtime: ", data);
+            callback(data);
+        });
+    }
 };
 
-// Gỡ lắng nghe thông báo
 export const unsubscribeFromNotifications = () => {
-    if (!socket) return;
-    socket.off('new_notification');
+    if (socket) {
+        socket.off("new_notification");
+        // CHỈ TẮT LẮNG NGHE SỰ KIỆN NÀY, TUYỆT ĐỐI KHÔNG GỌI socket.disconnect()
+        // Xóa dòng socket.disconnect() ở đây đi nhé!
+    }
 };

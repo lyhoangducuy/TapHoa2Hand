@@ -11,7 +11,7 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class NotificationRequest {
-    List<String> recipientId;
+    List<String> userIds;
     String content;
     String link;
 }

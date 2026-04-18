@@ -130,7 +130,8 @@ public class ChatMessageService {
             if (Objects.nonNull(webSocketSession)) {
                 String messaged = null;
                 try {
-                    chatMessageResponse.setMe(webSocketSession.getUserId().equals(userResponseGet.getUsername()));
+                    chatMessageResponse.setMe(webSocketSession.getUserId()
+                            .equals(userResponseGet.getUsername()));
                     messaged = objectMapper.writeValueAsString(chatMessageResponse);
                     client.sendEvent("receive_new_message", messaged);
                     System.out.println(">>> ĐÃ GỬI THÀNH CÔNG CHO: " + sessionId);

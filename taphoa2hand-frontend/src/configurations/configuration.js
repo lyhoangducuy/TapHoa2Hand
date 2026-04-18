@@ -57,7 +57,8 @@ export const API = {
 
     // Notification
     GET_NOTIFICATIONS: (userId) => `/notification/user/${userId}`,
-    CREATE_NOTIFICATION: "/notification",
+    CREATE_NOTIFICATION: "/notification/create",
     MARK_READ_NOTIFICATION: (id) => `/notification/${id}/read`,
     DELETE_NOTIFICATION: (id) => `/notification/${id}`,
+    GET_UNREAD_NOTI_COUNT: (userId) => `/notification/${userId}`
 };
