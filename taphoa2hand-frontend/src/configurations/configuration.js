@@ -60,5 +60,6 @@ export const API = {
     CREATE_NOTIFICATION: "/notification/create",
     MARK_READ_NOTIFICATION: (id) => `/notification/${id}/read`,
     DELETE_NOTIFICATION: (id) => `/notification/${id}`,
-    GET_UNREAD_NOTI_COUNT: (userId) => `/notification/${userId}`
+    GET_UNREAD_NOTI_COUNT: (userId) => `/notification/${userId}`,
+    GET_CHECK_AI:(postId)=>`/chat-ai/check-product/${postId}`
 };

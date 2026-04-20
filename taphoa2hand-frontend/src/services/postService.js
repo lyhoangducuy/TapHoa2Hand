@@ -217,3 +217,20 @@ export const adminDeletePost = async (postId) => {
         throw error;
     }
 };
+export const getCheckAI = async (postId) => {
+    try {
+        const token = localStorage.getItem('token');
+        
+        // Thêm {} vào giữa URL và phần config
+        const response = await httpClient.post(API.GET_CHECK_AI(postId), {}, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        
+        return response.data;
+    } catch (error) {
+        console.error(`Lỗi khi lấy check AI bài viết ID ${postId}:`, error);
+        throw error;
+    }
+};

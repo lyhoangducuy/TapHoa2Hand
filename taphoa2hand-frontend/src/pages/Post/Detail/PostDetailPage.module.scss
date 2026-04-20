@@ -444,3 +444,108 @@
         }
     }
 }
+/* --- AI Assessment Card --- */
+.ai-card {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 24px;
+    border-left: 4px solid #ccc;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+
+    &.loading {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #666;
+        font-style: italic;
+
+        .spin-icon {
+            animation: spin 1.5s linear infinite;
+        }
+    }
+
+    &.is-matching {
+        border-left-color: #28a745; /* Màu xanh lá nếu khớp */
+        background-color: #f0fdf4;
+    }
+
+    &.not-matching {
+        border-left-color: #dc3545; /* Màu đỏ nếu có bất thường */
+        background-color: #fff1f2;
+    }
+
+    .ai-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        padding-bottom: 8px;
+
+        .ai-icon {
+            font-size: 20px;
+            color: #4f46e5;
+        }
+
+        h3 {
+            font-size: 16px;
+            margin: 0;
+            flex: 1;
+            color: #333;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+
+            &.success {
+                background-color: #d1fae5;
+                color: #065f46;
+            }
+            &.warning {
+                background-color: #ffe4e6;
+                color: #be123c;
+            }
+        }
+    }
+
+    .ai-body {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+
+        .ai-row {
+            font-size: 14px;
+            color: #444;
+
+            strong {
+                color: #222;
+                margin-right: 6px;
+            }
+
+            .highlight {
+                font-weight: 600;
+                color: #e11d48;
+            }
+
+            .ai-text {
+                margin: 4px 0 0 0;
+                line-height: 1.5;
+                background: rgba(255, 255, 255, 0.6);
+                padding: 8px;
+                border-radius: 4px;
+                font-style: italic;
+            }
+        }
+    }
+}
+
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}

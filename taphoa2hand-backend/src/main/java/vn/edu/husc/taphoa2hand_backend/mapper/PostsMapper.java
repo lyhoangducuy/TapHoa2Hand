@@ -1,12 +1,14 @@
 package vn.edu.husc.taphoa2hand_backend.mapper;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 import vn.edu.husc.taphoa2hand_backend.dto.request.PostsDTO.PostAddressRequest;
+import vn.edu.husc.taphoa2hand_backend.dto.request.PostsDTO.PostAiCheckRecord;
 import vn.edu.husc.taphoa2hand_backend.dto.request.PostsDTO.PostCreateRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.PostsDTO.PostDetailInfoRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.PostsDTO.PostEditRequest;
@@ -104,4 +106,46 @@ public interface PostsMapper {
     @Mapping(target="status", ignore = true) // Đừng để mất trạng thái cũ
     // Tuỳ vào logic, bạn có thể cần ignore thêm các trường khác
     void updatePostFromRequest(PostEditRequest request, @MappingTarget Posts post);
+
+   public static PostAiCheckRecord toAiCheckRecord(Posts post) {
+        // 1. Lấy danh sách URL ảnh (Kiểm tra null an toàn)
+        List<String> imageUrls = (post.getPostImages() != null) 
+            ? post.getPostImages().stream()
+                  .map(PostImage::getImageUrl) // Đảm bảo PostImage có hàm getImageUrl()
+                  .collect(Collectors.toList())
+            : List.of();
+
+        // 2. Khởi tạo các giá trị mặc định cho PostDetail
+        String brand = "Không rõ";
+        String model = "Không rõ";
+        String condition = "Không rõ";
+        String usedDuration = "Không rõ";
+        String reasonForSelling = "Không có";
+        String description = "Không có mô tả";
+        
+        // 3. Gán giá trị thực tế nếu PostDetail tồn tại
+        PostDetail detail = post.getPostDetail();
+        if (detail != null) {
+            brand = detail.getBrand() != null ? detail.getBrand() : brand;
+            model = detail.getModel() != null ? detail.getModel() : model;
+            condition = detail.getCondition() != null ? detail.getCondition() : condition;
+            usedDuration = detail.getUsedDuration() != null ? detail.getUsedDuration() : usedDuration;
+            reasonForSelling = detail.getReasonForSelling() != null ? detail.getReasonForSelling() : reasonForSelling;
+            description = detail.getDescription() != null ? detail.getDescription() : description;
+        }
+
+        // 4. Trả về record
+        return new PostAiCheckRecord(
+                post.getId(),
+                post.getTitle(),
+                post.getPrice(),
+                brand,
+                model,
+                condition,
+                usedDuration,
+                reasonForSelling,
+                description,
+                imageUrls
+        );
+    }
 }
