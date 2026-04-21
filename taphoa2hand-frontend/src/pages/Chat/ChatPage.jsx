@@ -63,15 +63,15 @@ function ChatPage() {
     // Modal order
     const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
     const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
-    const [orderForm, setOrderForm] = useState({
-        receiverName: '',
-        receiverPhone: '',
-        shippingAddress: '',
-        method: 'MIDDLEMAN',
-        bankName: '',
-        accountName: '',
-        accountNumber: ''
-    });
+const [orderForm, setOrderForm] = useState({
+    sellerId: '',
+    buyerId: '',
+    postId: '',
+    method: 'MIDDLEMAN', // phải match enum BE
+    receiverName: '',
+    receiverPhone: '',
+    shippingAddress: ''
+});
 
     const messagesEndRef = useRef(null);
     const token = localStorage.getItem('token');

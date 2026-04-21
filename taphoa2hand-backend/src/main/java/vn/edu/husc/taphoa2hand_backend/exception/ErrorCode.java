@@ -50,7 +50,9 @@ public enum ErrorCode {
     FAVORITE_NOT_FOUND(8001, "Favorite not found",HttpStatus.NOT_FOUND),
     CONVERSATION_EXIST(9001, "Conversation exist",HttpStatus.BAD_REQUEST),
     THIS_IS_YOU(9002,"Day la bai viet cua ban khong the tao chat", HttpStatus.BAD_REQUEST),
-    CONVERSATION_NOT_FOUND(9003,"Khong tim thay cuoc tro chuyen", HttpStatus.BAD_REQUEST)
+    CONVERSATION_NOT_FOUND(9003,"Khong tim thay cuoc tro chuyen", HttpStatus.BAD_REQUEST), 
+    POST_HAD_SOLD(9004,"Bai viet da ban",HttpStatus.BAD_REQUEST),
+    POST_HIDDEN(9005,"Bai viet da an",HttpStatus.BAD_REQUEST)
     ;
     private int code;
     private String message;

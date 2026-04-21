@@ -15,13 +15,13 @@ public interface OrderMapper {
     @Mapping(target = "buyer", ignore = true)
     @Mapping(target = "seller", ignore = true)
     @Mapping(target = "status", constant = "PENDING")
-    @Mapping(target = "paymentStatus", constant = "UNPAID")
-    @Mapping(target = "buyerBankInfo", source = "buyerBank")
-    @Mapping(target = "sellerBankInfo", source = "sellerBank")
+    // @Mapping(target = "paymentStatus", constant = "UNPAID")
+    // @Mapping(target = "buyerBankInfo", source = "buyerBank")
+    // @Mapping(target = "sellerBankInfo", source = "sellerBank")
     @Mapping(target = "paymentMethod", source = "method")
-    Order toEntity(OrderRequest dto);
+    Order toOrder(OrderRequest dto);
 
     // Ánh xạ tự động cho InfoBank từ BankInfoDTO
-    OrderBankInfo toOrderBankInfo(OrderRequest.BankInfoDTO dto);
+    // OrderBankInfo toOrderBankInfo(OrderRequest.BankInfoDTO dto);
     OrderResponse toResponse(Order order);
 }

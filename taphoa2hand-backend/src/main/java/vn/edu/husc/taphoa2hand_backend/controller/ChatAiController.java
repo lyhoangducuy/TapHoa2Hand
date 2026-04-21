@@ -30,7 +30,7 @@ public class ChatAiController {
         return chatAiService.chatAi(chatAiRequest);
     }
     @PostMapping("/chat-with-image")
-    public ApiResponse<String> chatWithAI(@RequestParam("file") MultipartFile file,
+    public ApiResponse<String> chatWithAI(@RequestParam(value="file",required = false) MultipartFile file,
                             @RequestParam("message") String message) {
         //TODO: process POST request
         

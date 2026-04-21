@@ -5,6 +5,7 @@ import { publicRoutes, privateRoutes, adminRoutes } from './routes/AppRoutes';
 import DefaultLayout from './components/Layouts/DefaultLayout/DefaultLayout';
 // 2. Import "Chú bảo vệ" đã tạo ở bước trước
 import { ProtectedRoute } from './components/ProtectedRoute';
+import ChatBox from './pages/ChatBox/ChatBox';
 
 function App() {
     // Viết một hàm helper nhỏ để xử lý logic Render giúp code bên dưới siêu sạch
@@ -52,6 +53,7 @@ function App() {
                     {/* 3. Những trang bắt buộc là Admin (Dashboard, UserAdmin...) */}
                     {adminRoutes.map((route, index) => renderRoute(route, index, false, true))}
                 </Routes>
+                <ChatBox />
             </div>
         </Router>
     );

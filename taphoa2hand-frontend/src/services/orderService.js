@@ -1,4 +1,4 @@
-import { API } from "../configurations/configuration";
+import { API, CONFIG } from "../configurations/configuration";
 import httpClient from "../configurations/httpClient";
 import { getToken } from "./localstorageService";
 
@@ -9,8 +9,23 @@ const getAuthHeaders = () => ({
     }
 });
 
-export const createOrder = async (orderRequest) => {
-    return await httpClient.post(API.CREATE_ORDER, orderRequest, getAuthHeaders());
+
+export const createOrder = async (orderData) => {
+    try {
+        const token = getToken();
+        const response = await fetch(`${CONFIG.API_GATEWAY}${API.CREATE_ORDER}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(orderData)
+        });
+        return await response.json();
+    } catch (error) {
+        console.error("Lỗi khi tạo user mới:", error);
+        throw error;
+    }
 };
 
 export const getMyPurchases = async () => {

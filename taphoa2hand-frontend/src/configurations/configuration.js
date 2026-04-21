@@ -32,8 +32,7 @@ export const API = {
     GET_CHATMESSAGE:(conversationId)=>`/chat-message?conversationId=${conversationId}`,
     GET_PURCHASES:"/order/purchases",
     GET_SALES:"/order/sales",
-    GET_DETAIL_ORDER: (orderId)=> `order/${orderId}`,
-    CREATE_ORDER:"/order",
+
     SEARCH:"/posts/search",
     //users
     ADMIN_GETUSER:"/admin/users",
@@ -61,5 +60,10 @@ export const API = {
     MARK_READ_NOTIFICATION: (id) => `/notification/${id}/read`,
     DELETE_NOTIFICATION: (id) => `/notification/${id}`,
     GET_UNREAD_NOTI_COUNT: (userId) => `/notification/${userId}`,
-    GET_CHECK_AI:(postId)=>`/chat-ai/check-product/${postId}`
+    GET_CHECK_AI:(postId)=>`/chat-ai/check-product/${postId}`,
+    //Order
+    GET_DETAIL_ORDER: (orderId)=> `order/${orderId}`,
+    CREATE_ORDER:"/order",
+    //
+    POST_CHAT_AI:`/chat-ai/chat-with-image`
 };

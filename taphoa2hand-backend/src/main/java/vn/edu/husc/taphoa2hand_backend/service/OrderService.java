@@ -16,6 +16,7 @@ import vn.edu.husc.taphoa2hand_backend.entity.Order;
 import vn.edu.husc.taphoa2hand_backend.entity.OrderItem;
 import vn.edu.husc.taphoa2hand_backend.entity.OrderStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.PaymentMethodEnum;
+import vn.edu.husc.taphoa2hand_backend.entity.PostStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.Posts;
 import vn.edu.husc.taphoa2hand_backend.entity.Users;
 import vn.edu.husc.taphoa2hand_backend.exception.AppException;
@@ -42,37 +43,38 @@ public class OrderService {
 
     }
     @Transactional
-    public OrderResponse createOrder(OrderRequest dto) {
-        
-        String buyerId=getUserStringId();
+    public OrderResponse createOrder(OrderRequest request) {
         // 1. Lấy dữ liệu từ DB (Bắt buộc phải lấy để đảm bảo bảo mật và quan hệ JPA)
-        Users buyer = usersRepository.findById(buyerId).orElseThrow(()->new AppException(ErrorCode.USER_NOT_FOUND));
-        Users seller = usersRepository.findById(dto.getSellerId()).orElseThrow(()->new AppException(ErrorCode.USER_NOT_FOUND));
-        Posts post = postsRepository.findById(dto.getPostId()).orElseThrow(()->new AppException(ErrorCode.USER_NOT_FOUND));
-
+        Users buyer = usersRepository.findById(request.getBuyerId()).orElseThrow(()->new AppException(ErrorCode.USER_NOT_FOUND));
+        Users seller = usersRepository.findById(request.getSellerId()).orElseThrow(()->new AppException(ErrorCode.USER_NOT_FOUND));
+        Posts post = postsRepository.findById(request.getPostId()).orElseThrow(()->new AppException(ErrorCode.USER_NOT_FOUND));
+        if (post.getStatus().equals(PostStatusEnum.HIDDEN))
+            throw new AppException(ErrorCode.POST_HIDDEN);
+        if (post.getStatus().equals(PostStatusEnum.SOLD))
+            throw new AppException(ErrorCode.POST_HAD_SOLD);
         // 2. Dùng Mapper để biến DTO thành Entity
-        Order order = orderMapper.toEntity(dto);
+        Order order = orderMapper.toOrder(request);
 
         // 3. Gán các quan hệ và logic tính toán (Phần Mapper không làm được hoặc khó làm)
         order.setBuyer(buyer);
         order.setSeller(seller);
 
         // Tính phí sàn 2% nếu chọn MIDDLEMAN
-        BigDecimal productPrice = post.getPrice();
-        BigDecimal platformFee = BigDecimal.ZERO;
+        //BigDecimal productPrice = post.getPrice();
+        //BigDecimal platformFee = BigDecimal.ZERO;
         
-        if (dto.getMethod() == PaymentMethodEnum.MIDDLEMAN) {
-            platformFee = productPrice.multiply(new BigDecimal("0.02"));
-        }
-        
-        order.setPlatformFee(platformFee);
-        order.setTotalAmount(productPrice.add(platformFee));
+        // if (dto.getMethod() == PaymentMethodEnum.MIDDLEMAN) {
+        //     platformFee = productPrice.multiply(new BigDecimal("0.02"));
+        // }
+        // order.setPaymentMethod(dto.getMethod());
+        // order.setPlatformFee(platformFee);
+        // order.setTotalAmount(productPrice.add(platformFee));
 
-        // 4. Tạo OrderItem
+        // // 4. Tạo OrderItem
         OrderItem item = OrderItem.builder()
                 .order(order)
                 .post(post)
-                .price(productPrice)
+                .price(post.getPrice())
                 .quantity(1)
                 .build();
         order.setItems(List.of(item));

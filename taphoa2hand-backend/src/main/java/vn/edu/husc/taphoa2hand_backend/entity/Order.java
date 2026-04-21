@@ -20,6 +20,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -56,12 +57,15 @@ public class Order extends BaseEntity{
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "seller_bank_info_id")
+    
     OrderBankInfo sellerBankInfo; // Dùng để Admin giải ngân tiền bán hàng
 
     @Enumerated(EnumType.STRING)
+    @NotBlank(message = "Phuong thuc giao dich khong duoc de trong")
     PaymentMethodEnum paymentMethod;
 
     @Enumerated(EnumType.STRING)
+    @NotBlank(message = "Order status khong duoc de trong")
     OrderStatusEnum status;
 
     @Enumerated(EnumType.STRING)
@@ -70,8 +74,11 @@ public class Order extends BaseEntity{
     BigDecimal totalAmount;
     BigDecimal platformFee;
 
+    @NotBlank(message = "Ten nguoi nhan khong duoc de trong")
     String receiverName;
+    @NotBlank(message = "So dien thoai nguoi nhan")
     String receiverPhone;
+    @NotBlank(message = "Dia chi nguoi nhan")
     String shippingAddress;
     LocalDateTime holdUntil;
 

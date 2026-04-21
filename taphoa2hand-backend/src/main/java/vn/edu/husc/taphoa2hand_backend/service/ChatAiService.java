@@ -61,17 +61,31 @@ public class ChatAiService {
     }
 
     public String chatWitImage(MultipartFile file, String message) {
+
+        ChatOptions chatOption = ChatOptions.builder()
+                .temperature(0D)
+                .build();
+
+        // 👉 CASE 1: KHÔNG có file (chat text)
+        if (file == null || file.isEmpty()) {
+            return chatClient.prompt()
+                    .options(chatOption)
+                    .system("You are taphoa2hand")
+                    .user(message)
+                    .call()
+                    .content();
+        }
+
+        // 👉 CASE 2: CÓ file (chat image)
         Media media = Media.builder()
                 .mimeType(MimeTypeUtils.parseMimeType(file.getContentType()))
                 .data(file.getResource())
                 .build();
-        ChatOptions chatOption = ChatOptions.builder()
-                .temperature(0D)
-                .build();
+
         return chatClient.prompt()
                 .options(chatOption)
                 .system("You are taphoa2hand")
-                .user(promtUserSpec -> promtUserSpec.media(media).text(message))
+                .user(promptUserSpec -> promptUserSpec.media(media).text(message))
                 .call()
                 .content();
     }

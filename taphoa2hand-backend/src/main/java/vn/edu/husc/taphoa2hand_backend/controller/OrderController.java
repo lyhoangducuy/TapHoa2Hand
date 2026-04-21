@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import vn.edu.husc.taphoa2hand_backend.dto.request.Order.OrderRequest;
@@ -28,7 +29,7 @@ public class OrderController {
 
     // Tạo mới
     @PostMapping
-    public ApiResponse<OrderResponse> create(@RequestBody OrderRequest request) {
+    public ApiResponse<OrderResponse> create(@RequestBody @Valid OrderRequest request) {
         return ApiResponse.<OrderResponse>builder()
                 .message("Tao order thanh cong")
                 .result(orderService.createOrder(request))
