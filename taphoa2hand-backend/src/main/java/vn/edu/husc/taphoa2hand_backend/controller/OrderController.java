@@ -34,7 +34,7 @@ public class OrderController {
                 .message("Tao order thanh cong")
                 .result(orderService.createOrder(request))
                 .build();
-            }
+    }
 
     // Lấy đơn hàng mình đi mua
     @GetMapping("/purchases")
@@ -66,7 +66,7 @@ public class OrderController {
     // Cập nhật trạng thái (Dùng PATCH để cập nhật một phần)
     @PatchMapping("/{id}/status")
     public ApiResponse<OrderResponse> updateStatus(
-            @PathVariable String id, 
+            @PathVariable String id,
             @RequestParam OrderStatusEnum status) {
         return ApiResponse.<OrderResponse>builder()
                 .result(orderService.updateStatus(id, status))

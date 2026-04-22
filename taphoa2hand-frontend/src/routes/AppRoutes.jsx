@@ -24,7 +24,7 @@ import CategoryAdminPage from '../pages/Admin/Categories/CategoryAdminPage';
 import CategoryEditPage from '../pages/Admin/Categories/CategoryTable/UpdateCategory/CategoryEditPage';
 import CategoryCreatePage from '../pages/Admin/Categories/Create/CategoryCreatePage';
 import Notificationpage from '../pages/Admin/Notification/NotificationPage';
-import ChatBox from '../pages/ChatBox/ChatBox';
+import ChatBox from '../pages/ChatBox/ChatBoxPage';
 const publicRoutes = [
     { path: '/', component: HomePage },
     { path: '/login', component: LoginPage, layout: NoSidebarLayout },

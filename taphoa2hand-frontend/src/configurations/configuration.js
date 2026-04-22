@@ -62,7 +62,8 @@ export const API = {
     GET_UNREAD_NOTI_COUNT: (userId) => `/notification/${userId}`,
     GET_CHECK_AI:(postId)=>`/chat-ai/check-product/${postId}`,
     //Order
-    GET_DETAIL_ORDER: (orderId)=> `order/${orderId}`,
+    GET_DETAIL_ORDER: (orderId)=> `/order/${orderId}`,
+    Get_DETAIL_USER:"/order/myOrder",
     CREATE_ORDER:"/order",
     //
     POST_CHAT_AI:`/chat-ai/chat-with-image`
