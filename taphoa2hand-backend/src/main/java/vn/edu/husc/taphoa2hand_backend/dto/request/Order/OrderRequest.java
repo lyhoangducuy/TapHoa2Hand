@@ -1,6 +1,7 @@
 package vn.edu.husc.taphoa2hand_backend.dto.request.Order;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,11 +17,10 @@ import vn.edu.husc.taphoa2hand_backend.entity.PaymentMethodEnum;
 public class OrderRequest {
     @NotBlank(message="Khong duoc de trong sellerID")
     String sellerId;
-    @NotBlank(message="Khong duoc de trong buyerId")
     String buyerId;
     @NotBlank(message="Khong duoc de trong postId")
     String postId;
-    @NotBlank(message="Khong duoc de trong method")
+    @NotNull(message = "Phương thức thanh toán không được để trống")
     PaymentMethodEnum method;
     
     @NotBlank(message="Khong duoc de trong receiverName")

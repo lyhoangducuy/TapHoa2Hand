@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './ProfilePage.module.scss';
 import { getMyInfo } from '../../services/userService';
+import { getMyPosts } from '../../services/postService'; // Gọi API lấy bài viết
 import { removeToken } from '../../services/localstorageService';
+import UserPosts from './Post/UserPosts'; // Import component con
+
 import {
     FiUser, FiMail, FiPhone, FiMapPin, FiCalendar,
     FiEdit3, FiShield, FiHeart, FiPackage, FiLogOut, FiChevronRight, FiLoader
@@ -15,25 +18,58 @@ function ProfilePage() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    
+    // State quản lý bài viết
+    const [posts, setPosts] = useState([]);
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
+    
     const navigate = useNavigate();
-
     const fileInputRef = useRef(null);
 
     useEffect(() => {
-        const fetchProfile = async () => {
+        const fetchData = async () => {
             try {
-                const response = await getMyInfo();
-                if (response.data.code === 1000) {
-                    setUser(response.data.result);
+                // Gọi song song 2 API: User Info và Posts (Trang 0, size 10)
+                const [userResponse, postsResponse] = await Promise.all([
+                    getMyInfo(),
+                    getMyPosts(0, 10).catch(() => null) // Bắt lỗi riêng để không sập Promise.all
+                ]);
+
+                // Xử lý dữ liệu User
+                if (userResponse?.data?.code === 1000) {
+                    setUser(userResponse.data.result);
+                }
+
+                // Xử lý dữ liệu Posts (Spring Boot Page Object)
+                if (postsResponse?.code === 1000 && postsResponse.result) {
+                    setPosts(postsResponse.result.content || []);
+                    setTotalPages(postsResponse.result.totalPages || 1);
                 }
             } catch (error) {
-                console.error("Lỗi khi tải thông tin cá nhân:", error);
+                console.error("Lỗi khi tải dữ liệu:", error);
             } finally {
                 setLoading(false);
             }
         };
-        fetchProfile();
+        fetchData();
     }, []);
+
+    const handleLoadMorePosts = async () => {
+        const nextPage = currentPage + 1;
+        if (nextPage >= totalPages) return;
+
+        try {
+            const response = await getMyPosts(nextPage, 10);
+            if (response?.code === 1000 && response.result) {
+                // Nối thêm bài viết mới vào mảng cũ
+                setPosts(prev => [...prev, ...(response.result.content || [])]);
+                setCurrentPage(nextPage);
+            }
+        } catch (error) {
+            console.error("Lỗi khi tải thêm bài viết:", error);
+        }
+    };
 
     const handleLogout = () => {
         removeToken();
@@ -42,9 +78,7 @@ function ProfilePage() {
     };
 
     const handleEditAvatarClick = () => {
-        if (fileInputRef.current) {
-            fileInputRef.current.click();
-        }
+        if (fileInputRef.current) fileInputRef.current.click();
     };
 
     const handleFileChange = async (event) => {
@@ -64,9 +98,7 @@ function ProfilePage() {
             const token = localStorage.getItem('token');
             const response = await fetch('http://localhost:8080/user/update-avatar', {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
             });
 
@@ -94,24 +126,11 @@ function ProfilePage() {
             <div className={cx('profile-card')}>
                 {/* 1. Header Section */}
                 <div className={cx('header-section')}>
+                   {/* Giữ nguyên code header của bạn */}
                     <div className={cx('avatar-container')}>
-                        <img
-                            src={user.avatar || 'https://via.placeholder.com/150'}
-                            alt="Avatar"
-                            className={cx('avatar')}
-                        />
-                        <input
-                            type="file"
-                            accept="image/*"
-                            ref={fileInputRef}
-                            onChange={handleFileChange}
-                            style={{ display: 'none' }}
-                        />
-                        <button
-                            className={cx('edit-avatar-btn')}
-                            onClick={handleEditAvatarClick}
-                            disabled={uploadingAvatar}
-                        >
+                        <img src={user.avatar || 'https://via.placeholder.com/150'} alt="Avatar" className={cx('avatar')} />
+                        <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} />
+                        <button className={cx('edit-avatar-btn')} onClick={handleEditAvatarClick} disabled={uploadingAvatar}>
                             {uploadingAvatar ? <FiLoader className={cx('spin')} /> : <FiEdit3 />}
                         </button>
                     </div>
@@ -121,9 +140,7 @@ function ProfilePage() {
                         <p className={cx('username')}>@{user.username}</p>
                         <div className={cx('role-tags')}>
                             {user.roles?.map((role, index) => (
-                                <span key={index} className={cx('role-badge')}>
-                                    <FiShield /> {role.name}
-                                </span>
+                                <span key={index} className={cx('role-badge')}><FiShield /> {role.name}</span>
                             ))}
                         </div>
                     </div>
@@ -131,87 +148,65 @@ function ProfilePage() {
 
                 <hr className={cx('divider')} />
 
-                {/* 2. Menu Quick Links (Tiện ích) */}
+                {/* 2. Menu Quick Links */}
                 <div className={cx('menu-list')}>
+                    {/* Giữ nguyên menu list */}
                     <div className={cx('menu-item')} onClick={() => navigate('/my-orders')}>
-                        <div className={cx('item-left')}>
-                            <FiPackage className={cx('item-icon')} />
-                            <span>Đơn hàng của tôi</span>
-                        </div>
+                        <div className={cx('item-left')}><FiPackage className={cx('item-icon')} /><span>Đơn hàng của tôi</span></div>
                         <FiChevronRight className={cx('item-arrow')} />
                     </div>
                     <div className={cx('menu-item')} onClick={() => navigate('/favorites')}>
-                        <div className={cx('item-left')}>
-                            <FiHeart className={cx('item-icon')} />
-                            <span>Đã thích</span>
-                        </div>
+                        <div className={cx('item-left')}><FiHeart className={cx('item-icon')} /><span>Đã thích</span></div>
                         <FiChevronRight className={cx('item-arrow')} />
                     </div>
                     <div className={cx('menu-item')} onClick={() => navigate('/settings')}>
-                        <div className={cx('item-left')}>
-                            <FiUser className={cx('item-icon')} />
-                            <span>Cài đặt tài khoản</span>
-                        </div>
+                        <div className={cx('item-left')}><FiUser className={cx('item-icon')} /><span>Cài đặt tài khoản</span></div>
                         <FiChevronRight className={cx('item-arrow')} />
                     </div>
                 </div>
 
                 <hr className={cx('divider')} />
 
-                {/* 3. Details Section (Thông tin chi tiết) */}
+                {/* 3. Details Section */}
                 <div className={cx('details-section')}>
+                    {/* Giữ nguyên detail section */}
                     <h3 className={cx('section-title')}>Thông tin liên hệ</h3>
-
                     <div className={cx('detail-row')}>
-                        <div className={cx('detail-icon-wrapper')}>
-                            <FiMail />
-                        </div>
-                        <div className={cx('detail-content')}>
-                            <span className={cx('detail-label')}>Email</span>
-                            <span className={cx('detail-value')}>{user.email || 'Chưa cập nhật'}</span>
-                        </div>
+                        <div className={cx('detail-icon-wrapper')}><FiMail /></div>
+                        <div className={cx('detail-content')}><span className={cx('detail-label')}>Email</span><span className={cx('detail-value')}>{user.email || 'Chưa cập nhật'}</span></div>
                     </div>
-
                     <div className={cx('detail-row')}>
-                        <div className={cx('detail-icon-wrapper')}>
-                            <FiPhone />
-                        </div>
-                        <div className={cx('detail-content')}>
-                            <span className={cx('detail-label')}>Số điện thoại</span>
-                            <span className={cx('detail-value')}>{user.phone || 'Chưa cập nhật'}</span>
-                        </div>
+                        <div className={cx('detail-icon-wrapper')}><FiPhone /></div>
+                        <div className={cx('detail-content')}><span className={cx('detail-label')}>Số điện thoại</span><span className={cx('detail-value')}>{user.phone || 'Chưa cập nhật'}</span></div>
                     </div>
-
                     <div className={cx('detail-row')}>
-                        <div className={cx('detail-icon-wrapper')}>
-                            <FiMapPin />
-                        </div>
-                        <div className={cx('detail-content')}>
-                            <span className={cx('detail-label')}>Địa chỉ</span>
-                            <span className={cx('detail-value')}>{user.address || 'Chưa cập nhật'}</span>
-                        </div>
+                        <div className={cx('detail-icon-wrapper')}><FiMapPin /></div>
+                        <div className={cx('detail-content')}><span className={cx('detail-label')}>Địa chỉ</span><span className={cx('detail-value')}>{user.address || 'Chưa cập nhật'}</span></div>
                     </div>
-
                     <div className={cx('detail-row')}>
-                        <div className={cx('detail-icon-wrapper')}>
-                            <FiCalendar />
-                        </div>
+                        <div className={cx('detail-icon-wrapper')}><FiCalendar /></div>
                         <div className={cx('detail-content')}>
                             <span className={cx('detail-label')}>Ngày tham gia</span>
-                            <span className={cx('detail-value')}>
-                                {/* Parse ngày tháng nếu backend trả về, nếu không thì để mặc định */}
-                                {user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : 'Mới tham gia'}
-                            </span>
+                            <span className={cx('detail-value')}>{user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : 'Mới tham gia'}</span>
                         </div>
                     </div>
                 </div>
 
-                {/* 4. Footer Section */}
+                <hr className={cx('divider')} />
+
+                {/* 4. My Posts Section (Phần mới thêm) */}
+                <div className={cx('my-posts-section')}>
+                    <h3 className={cx('section-title')}>Bài đăng của tôi</h3>
+                    <UserPosts 
+                        posts={posts} 
+                        onLoadMore={handleLoadMorePosts} 
+                        hasMore={currentPage < totalPages - 1} 
+                    />
+                </div>
+
+                {/* 5. Footer Section */}
                 <div className={cx('footer-section')}>
-                    <button
-                        className={cx('edit-profile-btn')}
-                        onClick={() => navigate('/edit-profile')} // THÊM DÒNG NÀY (Đổi đường dẫn tùy file route của ông)
-                    >
+                    <button className={cx('edit-profile-btn')} onClick={() => navigate('/edit-profile')}>
                         CHỈNH SỬA HỒ SƠ
                     </button>
                     <button className={cx('logout-btn')} onClick={handleLogout}>

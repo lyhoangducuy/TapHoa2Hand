@@ -81,8 +81,7 @@ function PostDetailPage() {
                     {/* Ảnh sản phẩm */}
                     <ImageGallery images={post.postImages || []} status={post.status} />
 
-                    {/* Check AI */}
-                    <AiAssessment postId={postId} />
+                    
 
                     {/* Mô tả */}
                     <div className={cx('info-block')}>
@@ -113,6 +112,7 @@ function PostDetailPage() {
                     currentUser={currentUser}
                     postId={postId}
                 />
+                
             </div>
         </div>
     );

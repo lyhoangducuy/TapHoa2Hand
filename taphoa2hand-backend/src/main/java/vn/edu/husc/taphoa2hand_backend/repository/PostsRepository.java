@@ -7,7 +7,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import vn.edu.husc.taphoa2hand_backend.entity.Posts;
+import vn.edu.husc.taphoa2hand_backend.entity.Users;
 import vn.edu.husc.taphoa2hand_backend.entity.PostStatusEnum; // Thêm import này
+import java.util.List;
+
 
 @Repository
 public interface PostsRepository extends JpaRepository<Posts, String> {
@@ -34,5 +37,6 @@ public interface PostsRepository extends JpaRepository<Posts, String> {
                         @Param("categoryName") String categoryName,
                         @Param("status") PostStatusEnum status,
                         Pageable pageable);
+        Page<Posts> findByUser(Users user,Pageable pageable);
 
 }

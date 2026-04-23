@@ -37,7 +37,7 @@ function HomePage() {
 
     return (
         <div className={cx('wrapper')}>
-            <h2 className={cx('page-title')}>Tin đăng mới tại Huế</h2>
+            <h2 className={cx('page-title')}>Tin đăng mới nhất </h2>
 
             <div className={cx('product-grid')}>
                 {posts.map((post) => (
@@ -65,8 +65,6 @@ function HomePage() {
                             </p>
 
                             <div className={cx('meta-info')}>
-                                <span>{post.viewCount || 0} lượt xem</span>
-                                <span>•</span>
                                 <span>{new Date(post.createdAt).toLocaleDateString('vi-VN')}</span>
                             </div>
                         </div>

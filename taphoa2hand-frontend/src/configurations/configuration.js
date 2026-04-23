@@ -41,6 +41,7 @@ export const API = {
     ADMIN_UPDATE_AVATAR:(userId)=>`/admin/users/${userId}/update-avatar`,
     ADMIN_DELETE_USER: (userId) => `/admin/users/${userId}/delete`,
     ADMIN_CREATE_USER: "/admin/users/create",
+
     //posts
     ADMIN_GET_POSTS:"/admin/posts",
     ADMIN_GET_POST_DETAIL:(postId) => `/admin/posts/${postId}`,
@@ -66,5 +67,6 @@ export const API = {
     Get_DETAIL_USER:"/order/myOrder",
     CREATE_ORDER:"/order",
     //
-    POST_CHAT_AI:`/chat-ai/chat-with-image`
+    POST_CHAT_AI:"/chat-ai/chat-with-image",
+    GET_MYPOST:"/posts/my-post"
 };

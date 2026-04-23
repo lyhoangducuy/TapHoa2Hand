@@ -91,5 +91,14 @@ public class PostsController {
                 .result(postsService.searchPosts(keyword, location, categoryId, page, size))
                 .build();
     }
+    @GetMapping("/my-post")
+    public ApiResponse<Page<PostsResponse>> myPost(
+            @RequestParam(defaultValue = "0") int page, // Mặc định trang 0 (trang đầu tiên)
+            @RequestParam(defaultValue = "10") int size){
+                return ApiResponse.<Page<PostsResponse>>builder()
+                .message("Lay bai viet cua toi thanh cong")
+                .result(postsService.myPost(page,size))
+                .build();
+            }
 
 }

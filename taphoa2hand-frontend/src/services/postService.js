@@ -234,3 +234,22 @@ export const getCheckAI = async (postId) => {
         throw error;
     }
 };
+export const getMyPosts = async (page = 0, size = 10) => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await httpClient.get(API.GET_MYPOST, {
+            params: {
+                page: page,
+                size: size
+            },
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        // Trả về toàn bộ response.data để component tự bóc tách ApiResponse
+        return response.data;
+    } catch (error) {
+        console.error("Lỗi khi lấy bài viết của tôi:", error);
+        throw error;
+    }
+};

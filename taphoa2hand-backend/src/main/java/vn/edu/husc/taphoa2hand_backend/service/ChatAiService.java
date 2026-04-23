@@ -65,8 +65,7 @@ public class ChatAiService {
         ChatOptions chatOption = ChatOptions.builder()
                 .temperature(0D)
                 .build();
-
-        // 👉 CASE 1: KHÔNG có file (chat text)
+        //no image
         if (file == null || file.isEmpty()) {
             return chatClient.prompt()
                     .options(chatOption)
@@ -75,8 +74,7 @@ public class ChatAiService {
                     .call()
                     .content();
         }
-
-        // 👉 CASE 2: CÓ file (chat image)
+        //have image
         Media media = Media.builder()
                 .mimeType(MimeTypeUtils.parseMimeType(file.getContentType()))
                 .data(file.getResource())

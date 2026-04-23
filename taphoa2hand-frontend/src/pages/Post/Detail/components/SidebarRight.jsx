@@ -9,6 +9,7 @@ import {
 import { deletePost } from '../../../../services/postService';
 import { addPostToFavorites, removePostFromFavorites } from '../../../../services/favoriteService';
 import { createConversation } from '../../../../services/chatService';
+import AiAssessment from './AiAssessment';
 
 const cx = classNames.bind(styles);
 
@@ -167,6 +168,8 @@ const SidebarRight = ({ post, seller, address, isFavorite, setIsFavorite, curren
                     </button>
                 </div>
             </div>
+            {/* Check AI */}<br/>
+                    <AiAssessment postId={postId} />
         </div>
     );
 };

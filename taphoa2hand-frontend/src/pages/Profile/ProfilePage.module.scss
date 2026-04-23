@@ -314,3 +314,125 @@
 .spin {
     animation: spin 1s linear infinite;
 }
+/* --- STYLES CHO COMPONENT USER POSTS --- */
+.user-posts-container {
+    margin-top: 10px;
+}
+
+.no-posts {
+    text-align: center;
+    color: #888;
+    padding: 30px 0;
+    font-style: italic;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* Responsive grid */
+    gap: 16px;
+}
+
+.product-card {
+    border: 1px solid #ebebeb;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #fff;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .image-wrapper {
+        position: relative;
+        width: 100%;
+        height: 160px; /* Cố định chiều cao ảnh */
+        background-color: #f9f9f9;
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .no-image {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .status-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            
+            /* Bạn có thể thêm màu theo các status cụ thể */
+            &.active { background-color: #28a745; }
+            &.pending { background-color: #ffc107; color: #333; }
+            &.sold { background-color: #dc3545; }
+        }
+    }
+
+    .info-wrapper {
+        padding: 12px;
+
+        .post-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin: 0 0 6px 0;
+            /* Cắt text nếu quá dài (hiện dấu ...) */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .price {
+            font-size: 15px;
+            font-weight: bold;
+            color: #ee4d2d; /* Màu cam giá tiền */
+            margin: 0 0 8px 0;
+        }
+
+        .meta-info {
+            font-size: 12px;
+            color: #888;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    }
+}
+
+.load-more-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+
+    .load-more-btn {
+        padding: 8px 24px;
+        background-color: #f0f0f0;
+        color: #333;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+            background-color: #e0e0e0;
+        }
+    }
+}
