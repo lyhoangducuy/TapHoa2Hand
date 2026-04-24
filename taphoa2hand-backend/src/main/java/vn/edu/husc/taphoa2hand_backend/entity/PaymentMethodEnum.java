@@ -11,6 +11,6 @@ import lombok.Getter;
 public enum PaymentMethodEnum {
     DIRECT("DIRECT", "Trực tiếp"),
     MIDDLEMAN("MIDDLEMAN", "Trung gian");
-    private String value;
-    private String label;
+    private String name;
+    private String description;
 }

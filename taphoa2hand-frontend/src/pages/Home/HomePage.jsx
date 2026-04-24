@@ -53,6 +53,9 @@ function HomePage() {
                                 <div className={cx('no-image')}>Không ảnh</div>
                             )}
 
+                            <span className={cx('type-badge', post.postType?.name?.toLowerCase())}>
+                                {post.postType?.displayName || post.postType?.name}
+                            </span>
                             <span className={cx('status-badge', post.status?.toLowerCase())}>
                                 {post.status}
                             </span>

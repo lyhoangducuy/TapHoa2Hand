@@ -26,6 +26,7 @@ export const API = {
     CHECK_FAVORITE:(postId) => `/favorites/check/${postId}`,
     EDIT_POST:(postId) => `/posts/edit/${postId}`,
     GET_POST_STATUS:"/post-status/getAll",
+    GET_POST_TYPE:"/post-type/getAll",
     CREATE_CONVERSATION:"/conversations/create",
     GET_CONVERSATIONS:"/conversations/my-chats",
     CREATE_CHATMESSAGE:"/chat-message/create",
@@ -68,5 +69,6 @@ export const API = {
     CREATE_ORDER:"/order",
     //
     POST_CHAT_AI:"/chat-ai/chat-with-image",
-    GET_MYPOST:"/posts/my-post"
+    GET_MYPOST:"/posts/my-post",
+
 };

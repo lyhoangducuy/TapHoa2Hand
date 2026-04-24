@@ -42,7 +42,7 @@ import vn.edu.husc.taphoa2hand_backend.dto.request.AuthenDTO.RegisterRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.response.AuthenticationResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.IntrospectResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.RegisterResponse;
-import vn.edu.husc.taphoa2hand_backend.entity.Email;
+import vn.edu.husc.taphoa2hand_backend.entity.EmailInfo;
 import vn.edu.husc.taphoa2hand_backend.entity.RedisToken;
 import vn.edu.husc.taphoa2hand_backend.entity.Roles;
 import vn.edu.husc.taphoa2hand_backend.entity.Users;
@@ -149,7 +149,7 @@ public class AuthenticationService {
         userRedisCodeRequestRepository.save(redisData); // Lưu vào Redis
 
         // 4. Gửi Email
-        emailService.sendEmail(Email.builder()
+        emailService.sendEmail(EmailInfo.builder()
                 .toEmail(request.getEmail())
                 .subject("Welcome to TapHoA2Hand - Verify your account")
                 .body("Thank you for registering with us! Your OTP code is: " + otp + 
@@ -189,7 +189,7 @@ public class AuthenticationService {
         userRedisCodeRequestRepository.save(redisData);
 
         // 6. Gửi lại Email cho người dùng
-        emailService.sendEmail(Email.builder()
+        emailService.sendEmail(EmailInfo.builder()
                 .toEmail(email)
                 .subject("TapHoA2Hand - Your New Verification Code")
                 .body("You requested a new verification code. Your new OTP is: " + newOtp + 

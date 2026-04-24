@@ -14,6 +14,7 @@ import lombok.experimental.FieldDefaults;
 import vn.edu.husc.taphoa2hand_backend.entity.PaymentMethodEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.PostImage;
 import vn.edu.husc.taphoa2hand_backend.entity.PostStatusEnum;
+import vn.edu.husc.taphoa2hand_backend.entity.PostType;
 
 @Data
 @AllArgsConstructor
@@ -25,13 +26,14 @@ public class PostsResponse {
     String id;
     String title;
     Long price;
-    Set<PaymentMethodEnum> acceptedPaymentMethods;
+    Set<PaymentMethodEnumResponse> acceptedPaymentMethods;
     PostStatusEnum status;
+    PostTypeResponse postType;
     Long viewCount;
     LocalDate createdAt;
     LocalDate updatedAt;
     String userId;
-    List<PostImage> postImages;
+    List<PostImageResponse> postImages;
     String postDetailId;
     String postAddressId;
 }

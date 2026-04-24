@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { getAllCategories } from "../../../services/categoryService";
 import { getAllPayments } from "../../../services/paymentsService";
+import { getAllPostsType } from "../../../services/postTypeService";
 import { createPost } from "../../../services/postService";
 import classNames from 'classnames/bind';
 import styles from './CreatePostPage.module.scss';
@@ -10,12 +11,14 @@ const cx = classNames.bind(styles);
 function CreatePostPage() {
     const [categories, setCategories] = useState([]);
     const [payments, setPayments] = useState([]);
+    const [postTypes, setPostTypes] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [images, setImages] = useState([]);
 
     const [formData, setFormData] = useState({
         title: "",
         price: "",
+        postTypeName: "SELL",
         listCategoriesId: [],
         acceptedPaymentMethods: [],
         postDetail: {
@@ -40,7 +43,10 @@ function CreatePostPage() {
                 setCategories(categoryRes.result || []);
 
                 const paymentRes = await getAllPayments();
-                setPayments(paymentRes.result || []);
+                setPayments(paymentRes || []);
+
+                const postTypeRes = await getAllPostsType();
+                setPostTypes(postTypeRes || []);
             } catch (error) {
                 console.error("Lỗi khi tải dữ liệu nền", error);
             }
@@ -80,19 +86,24 @@ function CreatePostPage() {
     };
 
     const handlePaymentToggle = (payment) => {
-        const currentList = [...formData.acceptedPaymentMethods];
+    const currentList = [...formData.acceptedPaymentMethods];
 
-        // Dùng 'value' vì dữ liệu từ API trả về trường này
-        const index = currentList.findIndex((p) => p.value === payment.value);
+    const index = currentList.findIndex((p) => p.name === payment.name);
 
-        if (index > -1) {
-            currentList.splice(index, 1);
-        } else {
-            currentList.push({ value: payment.value, label: payment.label });
-        }
+    if (index > -1) {
+        currentList.splice(index, 1);
+    } else {
+        currentList.push({
+            name: payment.name,
+            description: payment.description
+        });
+    }
 
-        setFormData({ ...formData, acceptedPaymentMethods: currentList });
-    };
+    setFormData({
+        ...formData,
+        acceptedPaymentMethods: currentList
+    });
+};
 
     const handleFileChange = (e) => {
         setImages(e.target.files);
@@ -103,17 +114,28 @@ function CreatePostPage() {
         setIsLoading(true);
 
         try {
-            const mappedPayments = formData.acceptedPaymentMethods.map(pay => pay.value);
+            const mappedPayments = formData.acceptedPaymentMethods.map(pay => pay.name);
 
             const payload = {
-                ...formData,
-                // Dùng đúng tên biến khai báo trong PostCreateRequest.java
+                title: formData.title,
+                price: Number(formData.price),
+                postTypeName: formData.postTypeName,
+                listCategoriesId: formData.listCategoriesId,
                 listAcceptedPaymentMethodsValue: mappedPayments,
-                price: Number(formData.price)
+                postDetail: {
+                    description: formData.postDetail.description,
+                    brand: formData.postDetail.brand,
+                    model: formData.postDetail.model,
+                    itemCondition: formData.postDetail.itemCondition,
+                    usedDuration: formData.postDetail.usedDuration,
+                    reasonForSelling: formData.postDetail.reasonForSelling
+                },
+                postAddress: {
+                    city: formData.postAddress.city,
+                    ward: formData.postAddress.ward,
+                    street: formData.postAddress.street
+                }
             };
-
-            // Có thể xóa trường cũ đi cho sạch request (Tùy chọn)
-            delete payload.acceptedPaymentMethods;
 
             const response = await createPost(payload, images);
             alert("Tạo bài viết thành công!");
@@ -128,7 +150,6 @@ function CreatePostPage() {
             setIsLoading(false);
         }
     };
-
     return (
         <div className={cx('wrapper')}>
             <h2 className={cx('pageTitle')}>Đăng Tin Tạp Hóa 2Hand</h2>
@@ -137,6 +158,22 @@ function CreatePostPage() {
                 {/* --- THÔNG TIN CƠ BẢN --- */}
                 <fieldset className={cx('fieldset')}>
                     <legend className={cx('legend')}>Thông tin cơ bản</legend>
+                    <div className={cx('formGroup')}>
+                        <label>Loại tin:</label>
+                        <select 
+                            className={cx('inputControl')} 
+                            name="postTypeName" 
+                            value={formData.postTypeName} 
+                            onChange={handleBasicChange}
+                            required
+                        >
+                            {postTypes.map((type) => (
+                                <option key={type.name} value={type.name}>
+                                    {type.displayName}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                     <div className={cx('formGroup')}>
                         <label>Tiêu đề:</label>
                         <input className={cx('inputControl')} name="title" value={formData.title} onChange={handleBasicChange} required />
@@ -166,14 +203,16 @@ function CreatePostPage() {
                 <fieldset className={cx('fieldset')}>
                     <legend className={cx('legend')}>Phương thức thanh toán chấp nhận</legend>
                     <div className={cx('checkboxGroup')}>
-                        {payments.map((pay) => (
-                            <label key={pay.value} className={cx('checkboxLabel')}>
-                                <input
-                                    type="checkbox"
-                                    onChange={() => handlePaymentToggle(pay)}
-                                /> {pay.label}
-                            </label>
-                        ))}
+                        {(payments || []).map((pay) => (
+    <label key={pay.name} className={cx('checkboxLabel')}>
+        <input
+            type="checkbox"
+            checked={formData.acceptedPaymentMethods.some(p => p.name === pay.name)}
+            onChange={() => handlePaymentToggle(pay)}
+        />
+        {pay.description}
+    </label>
+))}
                     </div>
                 </fieldset>
 

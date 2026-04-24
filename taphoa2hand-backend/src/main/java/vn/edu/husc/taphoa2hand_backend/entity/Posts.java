@@ -70,6 +70,10 @@ public class Posts extends BaseEntity {
     @EqualsAndHashCode.Exclude
     PostAddress postAddress;
 
+     @Enumerated(EnumType.STRING)
+    @Column(name = "post_type")
+    PostType postType;
+
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude

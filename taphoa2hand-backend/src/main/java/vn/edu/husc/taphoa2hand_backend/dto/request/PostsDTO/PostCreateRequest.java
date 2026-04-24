@@ -28,6 +28,7 @@ public class PostCreateRequest {
     
     // Chi tiết (từ PostDetail)
     PostDetailInfoRequest postDetail;
+    String postTypeName; // Name của PostType (từ PostDetail)
     
     // Địa chỉ (từ PostAddress)
     PostAddressRequest postAddress;

@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-Taphoa2handBackendApplication<taphoa2hand-backend>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "vn.edu.husc.taphoa2hand_backend.Taphoa2handBackendApplication",
+            "projectName": "taphoa2hand-backend",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

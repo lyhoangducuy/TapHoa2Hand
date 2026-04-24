@@ -26,6 +26,7 @@ public interface PostsMapper {
     @Mapping(source = "user.id", target = "userId")
     @Mapping(source = "postDetail.id", target = "postDetailId")
     @Mapping(source = "postAddress.id", target = "postAddressId")
+    @Mapping(source = "postType", target = "postType")
     PostsResponse toPostsResponse(Posts post);
 
     PostDetailResponse toPostDetailResponse(PostDetail postDetail);

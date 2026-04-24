@@ -13,7 +13,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
-public class Email {
+public class EmailInfo {
     @NotBlank(message = "Email address must not be blank")
     String toEmail;
     @NotBlank(message = "Subject must not be blank")

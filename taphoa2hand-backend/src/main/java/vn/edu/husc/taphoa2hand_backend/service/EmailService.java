@@ -9,14 +9,14 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import vn.edu.husc.taphoa2hand_backend.entity.Email;
+import vn.edu.husc.taphoa2hand_backend.entity.EmailInfo;
 
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 public class EmailService {
     JavaMailSender javaMailSender;
-    public void sendEmail(Email email){
+    public void sendEmail(EmailInfo email){
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
         try {
             MimeMessageHelper helper=new MimeMessageHelper(mimeMessage,true);
