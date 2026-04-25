@@ -11,14 +11,14 @@ import vn.edu.husc.taphoa2hand_backend.dto.response.ApiResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostStatusResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostTypeResponse;
 import vn.edu.husc.taphoa2hand_backend.entity.PostStatusEnum;
-import vn.edu.husc.taphoa2hand_backend.entity.PostType;
+import vn.edu.husc.taphoa2hand_backend.entity.PostTypeEnum;
 
 @RestController
 @RequestMapping("/post-type")
 public class PostTypeController {
     @GetMapping("/getAll")
     public ApiResponse<List<PostTypeResponse>> getAllPayments() {
-        List<PostTypeResponse> result = Arrays.stream(PostType.values())
+        List<PostTypeResponse> result = Arrays.stream(PostTypeEnum.values())
                 .map(type -> PostTypeResponse.builder()
                         .name(type.name())
                         .displayName(type.getDisplayName())

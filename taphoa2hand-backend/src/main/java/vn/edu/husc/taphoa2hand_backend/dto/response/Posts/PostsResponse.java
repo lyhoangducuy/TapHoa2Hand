@@ -14,7 +14,7 @@ import lombok.experimental.FieldDefaults;
 import vn.edu.husc.taphoa2hand_backend.entity.PaymentMethodEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.PostImage;
 import vn.edu.husc.taphoa2hand_backend.entity.PostStatusEnum;
-import vn.edu.husc.taphoa2hand_backend.entity.PostType;
+import vn.edu.husc.taphoa2hand_backend.entity.PostTypeEnum;
 
 @Data
 @AllArgsConstructor
@@ -27,7 +27,7 @@ public class PostsResponse {
     String title;
     Long price;
     Set<PaymentMethodEnumResponse> acceptedPaymentMethods;
-    PostStatusEnum status;
+    PostStatusResponse status;
     PostTypeResponse postType;
     Long viewCount;
     LocalDate createdAt;

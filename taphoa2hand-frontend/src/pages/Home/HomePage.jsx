@@ -53,11 +53,11 @@ function HomePage() {
                                 <div className={cx('no-image')}>Không ảnh</div>
                             )}
 
-                            <span className={cx('type-badge', post.postType?.name?.toLowerCase())}>
-                                {post.postType?.displayName || post.postType?.name}
+                            <span className={cx('type-badge', post.postType?.name?.toLowerCase() || 'sell')}>
+                                {post.postType?.displayName || post.postType?.name || 'Tin rao bán'}
                             </span>
-                            <span className={cx('status-badge', post.status?.toLowerCase())}>
-                                {post.status}
+                            <span className={cx('status-badge', post.status?.name?.toLowerCase() || 'available')}>
+                                {post.status?.displayName || post.status?.name || 'Đang bán'}
                             </span>
                         </div>
 

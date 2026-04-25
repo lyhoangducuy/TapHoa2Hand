@@ -91,6 +91,28 @@
                 &.sold { background: #dc3545; }
                 &.hidden { background: #6c757d; }
             }
+
+            .type-tag {
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                padding: 6px 14px;
+                border-radius: 20px;
+                font-size: 0.85rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+
+                &.sell {
+                    background: #3498db;
+                    color: #fff;
+                }
+                
+                &.buy {
+                    background: #e67e22;
+                    color: #fff;
+                }
+            }
         }
 
         .thumb-row {

@@ -77,6 +77,29 @@
         text-transform: uppercase;
     }
 
+    /* Badge loại tin đăng (Tin rao bán / Tin cần mua) */
+    .type-badge {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        padding: 2px 8px;
+        font-size: 10px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        font-weight: 600;
+        
+        /* Màu sắc theo từng loại */
+        &.sell {
+            background: #3498db; /* Màu xanh dương cho tin rao bán */
+            color: #fff;
+        }
+        
+        &.buy {
+            background: #e67e22; /* Màu cam cho tin cần mua */
+            color: #fff;
+        }
+    }
+
     /* Hiển thị khi không có ảnh */
     .no-image {
         position: absolute;

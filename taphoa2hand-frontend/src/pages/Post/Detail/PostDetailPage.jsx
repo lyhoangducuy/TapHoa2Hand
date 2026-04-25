@@ -79,7 +79,7 @@ function PostDetailPage() {
                 <div className={cx('left-column')}>
                     
                     {/* Ảnh sản phẩm */}
-                    <ImageGallery images={post.postImages || []} status={post.status} />
+                    <ImageGallery images={post.postImages || []} status={post.status} postType={post.postType} />
 
                     
 

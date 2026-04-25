@@ -32,7 +32,7 @@ import vn.edu.husc.taphoa2hand_backend.entity.PostAddress;
 import vn.edu.husc.taphoa2hand_backend.entity.PostDetail;
 import vn.edu.husc.taphoa2hand_backend.entity.PostImage;
 import vn.edu.husc.taphoa2hand_backend.entity.PostStatusEnum;
-import vn.edu.husc.taphoa2hand_backend.entity.PostType;
+import vn.edu.husc.taphoa2hand_backend.entity.PostTypeEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.Posts;
 import vn.edu.husc.taphoa2hand_backend.entity.Users;
 import vn.edu.husc.taphoa2hand_backend.exception.AppException;
@@ -142,7 +142,7 @@ public class PostsService {
         }
         newPost.setCategories(attachedCategories);
         newPost.setStatus(PostStatusEnum.AVAILABLE); // Mặc định khi tạo là ACTIVE, có thể đổi sau
-        newPost.setPostType(PostType.valueOf(request.getPostTypeName().trim()));
+        newPost.setPostType(PostTypeEnum.valueOf(request.getPostTypeName().trim()));
 
         // 4. Xử lý Ảnh
         if (images != null && !images.isEmpty()) {

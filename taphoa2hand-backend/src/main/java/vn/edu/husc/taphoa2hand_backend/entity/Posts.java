@@ -72,7 +72,7 @@ public class Posts extends BaseEntity {
 
      @Enumerated(EnumType.STRING)
     @Column(name = "post_type")
-    PostType postType;
+    PostTypeEnum postType;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude

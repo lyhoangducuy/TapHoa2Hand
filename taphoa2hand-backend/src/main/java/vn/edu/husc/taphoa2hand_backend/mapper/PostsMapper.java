@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
 
 import vn.edu.husc.taphoa2hand_backend.dto.request.PostsDTO.PostAddressRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.PostsDTO.PostAiCheckRecord;
@@ -17,17 +18,43 @@ import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PaymentMethodResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostAddressResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostDetailResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostImageResponse;
+import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostStatusResponse;
+import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostTypeResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostsResponse;
 import vn.edu.husc.taphoa2hand_backend.entity.*;
 
 @Mapper(componentModel = "spring")
 public interface PostsMapper {
 
+
     @Mapping(source = "user.id", target = "userId")
     @Mapping(source = "postDetail.id", target = "postDetailId")
     @Mapping(source = "postAddress.id", target = "postAddressId")
-    @Mapping(source = "postType", target = "postType")
+    @Mapping(source = "postType", target = "postType", qualifiedByName = "postTypeToResponse")
+    @Mapping(source = "status", target = "status", qualifiedByName = "statusToString")
     PostsResponse toPostsResponse(Posts post);
+
+    @Named("statusToString")
+    default PostStatusResponse statusToString(PostStatusEnum status) {
+        if (status == null) {
+            return null;
+        }
+        return PostStatusResponse.builder()
+                .name(status.getName())
+                .displayName(status.getDisplayName())
+                .build();
+    }
+
+    @Named("postTypeToResponse")
+    default PostTypeResponse toPostType(PostTypeEnum postTypeEnum) {
+        if (postTypeEnum == null) {
+            return null;
+        }
+        return PostTypeResponse.builder()
+                .name(postTypeEnum.getName())
+                .displayName(postTypeEnum.getDisplayName())
+                .build();
+    }
 
     PostDetailResponse toPostDetailResponse(PostDetail postDetail);
 
@@ -68,14 +95,8 @@ public interface PostsMapper {
 
     List<PostImage> toPostImage(List<PostImageResponse> postImageResponses); // Hà
 
-    @Mapping(target = "acceptedPaymentMethods", ignore = true) // MapStruct sẽ không tự động map
-                                                               // List<PaymentMethodResponse> sang
-                                                               // List<PaymentMethodEnum>, chúng ta sẽ xử lý thủ công
-                                                               // trong Service
-    @Mapping(target = "id", ignore = true)
-    Posts toPosts(PostDetailResponse postDetailResponse); // Hàm này sẽ map toàn bộ thông tin từ PostDetailResponse sang
-                                                          // Posts, bao gồm cả các trường con như PostDetail,
-                                                          // PostAddress, PostImage, PaymentMethodEnum, và Categories
+  
+    
     @Mapping(target = "id", ignore = true)
     Posts toPosts(PostEditRequest postEditRequest);
 

@@ -9,6 +9,6 @@ public enum PostStatusEnum {
     AVAILABLE("AVAILABLE", "Đang bán"),
     SOLD("SOLD", "Đã bán"),
     HIDDEN("HIDDEN", "Đã ẩn");
-    private String code;
+    private String name;
     private String displayName;
 }

@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PostStatusResponse {
-    String code;
+    String name;
     String displayName;
 }

@@ -18,7 +18,7 @@ public class PostStatusController {
     public ApiResponse<List<PostStatusResponse>> getAllPayments() {
         List<PostStatusResponse> result = Arrays.stream(PostStatusEnum.values())
                 .map(status -> PostStatusResponse.builder()
-                        .code(status.name())
+                        .name(status.name())
                         .displayName(status.getDisplayName())
                         .build())
                 .toList();

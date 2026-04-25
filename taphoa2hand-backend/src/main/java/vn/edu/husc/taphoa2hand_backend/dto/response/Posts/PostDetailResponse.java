@@ -40,6 +40,7 @@ public class PostDetailResponse {
     LocalDateTime updatedAt;
 
     Set<CategoryResponse> categories; // Tên danh mục
+    PostTypeResponse postType;
     
     // Phương thức thanh toán (chuyển Enum thành String cho FE dễ xài)
     List<PaymentMethodResponse> acceptedPaymentMethods;

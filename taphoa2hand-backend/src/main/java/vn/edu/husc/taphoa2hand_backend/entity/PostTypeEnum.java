@@ -5,10 +5,10 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum PostType {
+public enum PostTypeEnum {
     SELL("SELL", "Tin rao bán"),
     BUY("BUY", "Tin cần mua");
     
-    private final String code;
+    private final String name;
     private final String displayName;
 }
