@@ -54,7 +54,6 @@ public class Posts extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     PostStatusEnum status;
-    Long viewCount;
     @ManyToOne
     @JoinColumn(name = "user_id")
     Users user;

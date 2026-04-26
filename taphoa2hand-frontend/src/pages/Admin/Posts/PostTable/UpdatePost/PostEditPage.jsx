@@ -15,10 +15,25 @@ const PostEditPage = () => {
   const { postId } = useParams(); 
   const navigate = useNavigate();
 
+  // Hàm map status displayName sang name
+  const mapStatusToName = (status) => {
+    if (typeof status === 'object' && status !== null) {
+      return status.name || 'AVAILABLE';
+    }
+    // Nếu là string displayName
+    switch (status) {
+      case 'Đang bán': return 'AVAILABLE';
+      case 'Đã bán': return 'SOLD';
+      case 'Đã ẩn': return 'HIDDEN';
+      default: return status || 'AVAILABLE';
+    }
+  };
+
   // State lưu thông tin text của bài viết
   const [formData, setFormData] = useState({
     title: '',
     price: '',
+    postTypeName: 'SELL',
     status: 'AVAILABLE',
     content: '', // Giả định có trường content/mô tả
   });
@@ -42,7 +57,9 @@ const PostEditPage = () => {
         setFormData({
           title: post.title || '',
           price: post.price || '',
-          status: post.status || 'AVAILABLE',
+          postTypeName: post.postType?.name || 'SELL',
+          // Map displayName trở lại name để gửi backend
+          status: mapStatusToName(post.status),
           content: post.content || '',
         });
         
@@ -139,6 +156,13 @@ const PostEditPage = () => {
                 <option value="AVAILABLE">Hiển thị (AVAILABLE)</option>
                 <option value="HIDDEN">Đã ẩn (HIDDEN)</option>
                 {/* Có thể thêm các trạng thái khác như PENDING, SOLD tùy logic của bạn */}
+              </CFormSelect>
+            </CCol>
+            <CCol md={4} className="mb-3">
+              <CFormLabel>Loại bài viết</CFormLabel>
+              <CFormSelect name="postTypeName" value={formData.postTypeName} onChange={handleChange}>
+                <option value="SELL">Tin rao bán</option>
+                <option value="BUY">Tin cần mua</option>
               </CFormSelect>
             </CCol>
           </CRow>

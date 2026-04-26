@@ -12,6 +12,7 @@ const PostModalForm = ({ visible, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({ 
     title: '', 
     price: '', 
+    postTypeName: 'SELL',
     status: '' 
   });
 
@@ -43,7 +44,7 @@ const PostModalForm = ({ visible, onClose, onSubmit }) => {
       fetchStatuses();
     } else {
       // Khi đóng Modal, reset form
-      setFormData({ title: '', price: '', status: '' });
+      setFormData({ title: '', price: '', postTypeName: 'SELL', status: '' });
     }
   }, [visible]);
 
@@ -91,6 +92,13 @@ const PostModalForm = ({ visible, onClose, onSubmit }) => {
                 onChange={handleChange} 
                 placeholder="Ví dụ: 150000" 
               />
+            </div>
+            <div className="mb-3">
+              <CFormLabel>Loại bài viết</CFormLabel>
+              <CFormSelect name="postTypeName" value={formData.postTypeName} onChange={handleChange}>
+                <option value="SELL">Tin rao bán</option>
+                <option value="BUY">Tin cần mua</option>
+              </CFormSelect>
             </div>
             <div className="mb-3">
               <CFormLabel>Trạng thái</CFormLabel>

@@ -53,14 +53,50 @@ const PostTable = ({ posts, onRefresh }) => {
 
   // Hàm hiển thị badge trạng thái
   const renderStatusBadge = (status) => {
+    // Xử lý nếu status là object {name, displayName}
+    if (typeof status === 'object' && status !== null) {
+      status = status.displayName || status.name || 'Không rõ';
+    }
+    
     switch (status) {
+      case 'Đang bán':
       case 'AVAILABLE':
-        return <CBadge color="success" shape="rounded-pill">Hiển thị</CBadge>;
+        return <CBadge color="success" shape="rounded-pill">Đang bán</CBadge>;
+      case 'Đã bán':
+      case 'SOLD':
+        return <CBadge color="danger" shape="rounded-pill">Đã bán</CBadge>;
+      case 'Đã ẩn':
       case 'HIDDEN':
         return <CBadge color="secondary" shape="rounded-pill">Đã ẩn</CBadge>;
       default:
         return <CBadge color="warning" shape="rounded-pill">{status}</CBadge>;
     }
+  };
+
+  // Hàm hiển thị badge loại bài viết
+  const renderPostTypeBadge = (postType) => {
+    if (!postType) return <CBadge color="light">Không rõ</CBadge>;
+    
+    // Xử lý nếu postType là object {name, displayName}
+    if (typeof postType === 'object' && postType !== null) {
+      const displayName = postType.displayName || postType.name || 'Không rõ';
+      const name = postType.name || '';
+      
+      if (name.toUpperCase() === 'SELL') {
+        return <CBadge color="info" shape="rounded-pill">{displayName}</CBadge>;
+      } else if (name.toUpperCase() === 'BUY') {
+        return <CBadge color="warning" shape="rounded-pill">{displayName}</CBadge>;
+      }
+      return <CBadge color="light">{displayName}</CBadge>;
+    }
+    
+    // Xử lý nếu postType là string
+    if (postType.toUpperCase() === 'SELL') {
+      return <CBadge color="info" shape="rounded-pill">Tin rao bán</CBadge>;
+    } else if (postType.toUpperCase() === 'BUY') {
+      return <CBadge color="warning" shape="rounded-pill">Tin cần mua</CBadge>;
+    }
+    return <CBadge color="light">{postType}</CBadge>;
   };
 
   return (
@@ -72,6 +108,7 @@ const PostTable = ({ posts, onRefresh }) => {
             <CTableHeaderCell className="text-center" style={{ width: '100px' }}>Hình ảnh</CTableHeaderCell>
             <CTableHeaderCell>Tiêu đề</CTableHeaderCell>
             <CTableHeaderCell>Giá bán</CTableHeaderCell>
+            <CTableHeaderCell className="text-center">Loại</CTableHeaderCell>
             <CTableHeaderCell className="text-center">Trạng thái</CTableHeaderCell>
             <CTableHeaderCell className="text-center">Ngày đăng</CTableHeaderCell>
             <CTableHeaderCell className="text-center">Hành động</CTableHeaderCell>
@@ -107,6 +144,11 @@ const PostTable = ({ posts, onRefresh }) => {
               {/* Cột Giá bán */}
               <CTableDataCell className="fw-bold text-danger">
                 {formatPrice(post.price)}
+              </CTableDataCell>
+
+              {/* Cột Loại bài viết */}
+              <CTableDataCell className="text-center">
+                {renderPostTypeBadge(post.postType)}
               </CTableDataCell>
 
               {/* Cột Trạng thái */}

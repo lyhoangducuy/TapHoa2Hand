@@ -33,9 +33,10 @@ function PostCreatePage() {
     const [formData, setFormData] = useState({
         title: "",
         price: "",
+        postTypeName: "SELL",
         status: "",
         listCategoriesId: [],
-        acceptedPaymentMethods: [], // Chứa mảng object { value, label }
+        acceptedPaymentMethods: [], // Chứa mảy object { value, label }
         postDetail: {
             description: "",
             brand: "",
@@ -196,6 +197,13 @@ function PostCreatePage() {
                             </CCol>
                             <CCol md={3}>
                                 <CFormInput type="number" label="Giá (VNĐ) (*)" name="price" value={formData.price} onChange={handleBasicChange} required />
+                            </CCol>
+                            <CCol md={3}>
+                                <CFormLabel>Loại bài viết</CFormLabel>
+                                <CFormSelect name="postTypeName" value={formData.postTypeName} onChange={handleBasicChange}>
+                                    <option value="SELL">Tin rao bán</option>
+                                    <option value="BUY">Tin cần mua</option>
+                                </CFormSelect>
                             </CCol>
                             <CCol md={3}>
                                 <CFormLabel>Trạng thái</CFormLabel>
