@@ -9,10 +9,10 @@ import lombok.Getter;
 @AllArgsConstructor
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum PaymentStatusEnum {
-    UNPAID(1, "Chưa thanh toán"),
-    PAID(2, "Đã thanh toán"),
-    REFUNDED(3, "Đã hoàn tiền");
+    UNPAID("UNPAID", "Chưa thanh toán"),
+    PAID("PAID", "Đã thanh toán"),
+    REFUNDED("REFUNDED", "Đã hoàn tiền");
 
-    private final int code;
-    private final String message;
+    private final String name;
+    private final String displayName;
 }

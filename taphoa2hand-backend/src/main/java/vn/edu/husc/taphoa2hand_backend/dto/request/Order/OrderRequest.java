@@ -21,7 +21,7 @@ public class OrderRequest {
     @NotBlank(message="Khong duoc de trong postId")
     String postId;
     @NotNull(message = "Phương thức thanh toán không được để trống")
-    PaymentMethodEnum method;
+    String method;
     
     @NotBlank(message="Khong duoc de trong receiverName")
     String receiverName;

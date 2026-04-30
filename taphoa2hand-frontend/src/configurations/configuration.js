@@ -56,6 +56,14 @@ export const API = {
     ADMIN_DELETE_CATEGORY:(categoryId)=>`/admin/categories/${categoryId}/delete`,
     ADMIN_CREATE_CATEGORY:"/admin/categories/create",
 
+    //banner
+    ADMIN_GET_BANNERS:"/admin/banner",
+    ADMIN_GET_BANNER_DETAIL:(bannerId)=>`/admin/banner/${bannerId}`,
+    ADMIN_UPDATE_BANNER:(bannerId)=>`/admin/banner/${bannerId}`,
+    ADMIN_DELETE_BANNER:(bannerId)=>`/admin/banner/${bannerId}`,
+    ADMIN_CREATE_BANNER:"/admin/banner",
+    GET_BANNERS:"/banners",
+
     // Notification
     GET_NOTIFICATIONS: (userId) => `/notification/user/${userId}`,
     CREATE_NOTIFICATION: "/notification/create",
@@ -67,6 +75,8 @@ export const API = {
     GET_DETAIL_ORDER: (orderId)=> `/order/${orderId}`,
     Get_DETAIL_USER:"/order/myOrder",
     CREATE_ORDER:"/order",
+    UPDATE_ORDER_STATUS: (orderId) => `/order/${orderId}/status`,
+    UPDATE_ORDER_STATUS_POST: "/order/update",
     //
     POST_CHAT_AI:"/chat-ai/chat-with-image",
     GET_MYPOST:"/posts/my-post",

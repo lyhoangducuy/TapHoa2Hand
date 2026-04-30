@@ -4,7 +4,7 @@ import classNames from 'classnames/bind';
 import styles from './Sidebar.module.scss';
 import { CSidebar, CSidebarBrand, CSidebarNav, CNavItem, CNavTitle, CSidebarToggler } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { cilSpeedometer, cilBasket, cilPeople, cilSettings, cilChartLine } from '@coreui/icons';
+import { cilSpeedometer, cilBasket, cilPeople, cilSettings, cilChartLine, cilImage } from '@coreui/icons';
 
 const cx = classNames.bind(styles);
 
@@ -49,6 +49,11 @@ const Sidebar = ({ visible, onVisibleChange }) => {
         <CNavItem>
           <Link to="/admin/categories" className={`nav-link ${location.pathname === '/admin/categories' ? 'active' : ''}`}>
             <CIcon icon={cilPeople} customClassName="nav-icon" /> Danh muc
+          </Link>
+        </CNavItem>
+        <CNavItem>
+          <Link to="/admin/banners" className={`nav-link ${location.pathname === '/admin/banners' ? 'active' : ''}`}>
+            <CIcon icon={cilImage} customClassName="nav-icon" /> Banner
           </Link>
         </CNavItem>
         <CNavItem>

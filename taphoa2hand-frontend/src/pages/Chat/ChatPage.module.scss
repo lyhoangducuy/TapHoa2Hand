@@ -169,5 +169,43 @@
       .btn-cancel { background-color: #e4e6eb; color: #333; }
       .btn-submit { background-color: #0084ff; color: #fff; &:disabled { background-color: #888; } }
     }
+
+    /* Order info section - sau khi tạo order thành công */
+    .order-info-section {
+      margin: 16px 0;
+      padding: 12px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid #e9ecef;
+
+      h3 {
+        margin: 0 0 12px;
+        font-size: 14px;
+        color: #495057;
+        font-weight: 600;
+      }
+
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #e9ecef;
+        &:last-child { border-bottom: none; }
+
+        .label {
+          color: #868e96;
+          font-size: 13px;
+        }
+
+        .value {
+          color: #212529;
+          font-size: 13px;
+          font-weight: 500;
+          text-align: right;
+          max-width: 60%;
+          word-break: break-word;
+        }
+      }
+    }
   }
 }

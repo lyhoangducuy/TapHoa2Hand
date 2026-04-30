@@ -61,11 +61,11 @@ public class Order extends BaseEntity{
     OrderBankInfo sellerBankInfo; // Dùng để Admin giải ngân tiền bán hàng
 
     @Enumerated(EnumType.STRING)
-    @NotBlank(message = "Phuong thuc giao dich khong duoc de trong")
+   
     PaymentMethodEnum paymentMethod;
 
     @Enumerated(EnumType.STRING)
-    @NotBlank(message = "Order status khong duoc de trong")
+   
     OrderStatusEnum status;
 
     @Enumerated(EnumType.STRING)

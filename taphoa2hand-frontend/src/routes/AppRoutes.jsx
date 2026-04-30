@@ -25,6 +25,8 @@ import CategoryEditPage from '../pages/Admin/Categories/CategoryTable/UpdateCate
 import CategoryCreatePage from '../pages/Admin/Categories/Create/CategoryCreatePage';
 import Notificationpage from '../pages/Admin/Notification/NotificationPage';
 import ChatBox from '../pages/ChatBox/ChatBoxPage';
+import BannerSlider from '../pages/Banner/BannerSlider';
+import AdminBannerPage from '../pages/Admin/Banner/AdminBannerPage';
 const publicRoutes = [
     { path: '/', component: HomePage },
     { path: '/login', component: LoginPage, layout: NoSidebarLayout },
@@ -42,8 +44,11 @@ const privateRoutes = [
     { path: '/my-favorites', component: FavoritePage },
     { path: '/chat', component: ChatPage },
     { path: '/my-orders', component: MyOrderPage },
+    { path: '/order/myOrder', component: MyOrderPage },
+    { path: '/order/myOrder/:orderId', component: OrderDetailPage },
     {path:'/edit-post/:postId',component:PostEditPage, layout: NoSidebarLayout},
-    {path:'/chat-box',component: ChatBox}
+    {path:'/chat-box',component: ChatBox},
+    {path:"/banner",component: BannerSlider}
 ];
 
 // 3. DÀNH RIÊNG CHO ADMIN
@@ -62,6 +67,8 @@ const adminRoutes = [
     {path:'/admin/categories',component:CategoryAdminPage,layout: AdminLayout},
     {path: '/admin/categories/detail/:categoryId',component: CategoryEditPage, layout:AdminLayout},
     {path:'/admin/categories/create',component: CategoryCreatePage,layout: AdminLayout},
+    //banner
+    {path:'/admin/banners',component: AdminBannerPage, layout: AdminLayout},
     //noti
     {path:"/admin/notifications",component:Notificationpage,layout:AdminLayout}
 ];

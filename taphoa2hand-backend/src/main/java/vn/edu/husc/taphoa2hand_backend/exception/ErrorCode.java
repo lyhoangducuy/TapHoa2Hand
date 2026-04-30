@@ -23,7 +23,7 @@ public enum ErrorCode {
     PASSWORD_BLANK(1009, "Password must not be blank",HttpStatus.BAD_REQUEST),
     PASSWORD_SIZE(1010, "Password must be between 6 and 100 characters",HttpStatus.BAD_REQUEST),
     CANNOT_DELETE_YOURSELF(1011,"Ban khong the xoa chinh minh",HttpStatus.BAD_REQUEST),
-    USER_NOT_FOUND(2001, "User not found",HttpStatus.NOT_FOUND),
+    USER_NOT_FOUND(2001, "User not found",HttpStatus.BAD_REQUEST),
     INVALID_PASSWORD(2002, "Invalid password",HttpStatus.BAD_REQUEST),
     UNAUTHENTICATED(2003, "Unauthenticated",HttpStatus.UNAUTHORIZED),
     CANNOT_CREATE_TOKEN(3001, "Cannot create token",HttpStatus.BAD_REQUEST),
@@ -52,7 +52,12 @@ public enum ErrorCode {
     THIS_IS_YOU(9002,"Day la bai viet cua ban khong the tao chat", HttpStatus.BAD_REQUEST),
     CONVERSATION_NOT_FOUND(9003,"Khong tim thay cuoc tro chuyen", HttpStatus.BAD_REQUEST), 
     POST_HAD_SOLD(9004,"Bai viet da ban",HttpStatus.BAD_REQUEST),
-    POST_HIDDEN(9005,"Bai viet da an",HttpStatus.BAD_REQUEST)
+    POST_HIDDEN(9005,"Bai viet da an",HttpStatus.BAD_REQUEST),
+    BANNER_NOT_FOUND(10001, "Banner not found",HttpStatus.NOT_FOUND),
+    BANNER_EXISTS(10002, "Banner already exists",HttpStatus.BAD_REQUEST),
+    SAVE_FILE_ERRROR(10003,"Save file that bai", HttpStatus.BAD_REQUEST), 
+    ID_USER_NOT_FOUND(10004, "User ID not found",HttpStatus.BAD_REQUEST),
+    SELLER_NOT_FOUND(10005, "Seller not found",HttpStatus.BAD_REQUEST)
     ;
     private int code;
     private String message;

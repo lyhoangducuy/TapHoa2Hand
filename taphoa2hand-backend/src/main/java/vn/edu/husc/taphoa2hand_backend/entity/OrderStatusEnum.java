@@ -9,13 +9,13 @@ import lombok.Getter;
 @AllArgsConstructor
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum OrderStatusEnum {
-    PENDING(1, "Chờ xác nhận"),
-    CONFIRMED(2, "Đã xác nhận, chờ lấy hàng"),
-    SHIPPING(3, "Đang giao hàng"),
-    DELIVERED(4, "Đã giao thành công"),
-    CANCELLED(5, "Đã hủy"),
-    RETURNED(6, "Trả hàng/Hoàn tiền");
+    PENDING("PENDING", "Chờ xác nhận"),
+    CONFIRMED("CONFIRMED", "Đã xác nhận, chờ lấy hàng"),
+    SHIPPING("SHIPPING", "Đang giao hàng"),
+    DELIVERED("DELIVERED", "Đã giao thành công"),
+    CANCELLED("CANCELLED", "Đã hủy"),
+    RETURNED("RETURNED", "Trả hàng/Hoàn tiền");
 
-    private final int code;
-    private final String message;
+    private final String name;
+    private final String displayName;
 }

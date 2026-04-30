@@ -8,9 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import vn.edu.husc.taphoa2hand_backend.entity.OrderStatusEnum;
-import vn.edu.husc.taphoa2hand_backend.entity.PaymentMethodEnum;
-import vn.edu.husc.taphoa2hand_backend.entity.PaymentStatusEnum;
+import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PaymentMethodEnumResponse;
 
 @Data
 @AllArgsConstructor
@@ -21,9 +19,9 @@ public class OrderResponse {
      String id;
      String buyserId;
      String sellerId;
-     OrderStatusEnum status;
-     PaymentMethodEnum paymentMethod;
-     PaymentStatusEnum paymentStatus;
+     OrderStatusEnumResponse status;
+     PaymentMethodEnumResponse paymentMethod;
+     PaymentStatusEnumResponse paymentStatus;
      BigDecimal totalAmount;
      LocalDateTime createdAt;
 

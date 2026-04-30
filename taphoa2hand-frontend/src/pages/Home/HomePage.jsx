@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'; // Thêm cái này để chuyể
 import classNames from 'classnames/bind';
 import styles from './HomePage.module.scss';
 import { getAllPosts } from '../../services/postService';
+import BannerSlider from '../Banner/BannerSlider';
 
 const cx = classNames.bind(styles);
 
@@ -37,6 +38,8 @@ function HomePage() {
 
     return (
         <div className={cx('wrapper')}>
+            <BannerSlider></BannerSlider>
+            <br/>
             <h2 className={cx('page-title')}>Tin đăng mới nhất </h2>
 
             <div className={cx('product-grid')}>

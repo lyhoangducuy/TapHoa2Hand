@@ -1,29 +1,48 @@
 import React, { useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import styles from './MyOrderPage.module.scss';
-import orderService from '../../../services/orderService';
+import * as orderService from '../../../services/orderService';
 const cx = classNames.bind(styles);
 
 const MyOrderPage = () => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('purchases'); // 'purchases' hoặc 'sales'
+    const [searchParams] = useSearchParams();
+    const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'purchases'); // 'purchases' hoặc 'sales'
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [pagination, setPagination] = useState({
+        page: 0,
+        size: 10,
+        totalElements: 0,
+        totalPages: 0
+    });
 
     useEffect(() => {
         fetchOrders();
-    }, [activeTab]);
+    }, [activeTab, pagination.page]);
 
     const fetchOrders = async () => {
         setLoading(true);
         try {
-            const data = activeTab === 'purchases' 
-                ? await orderService.getPurchases() 
-                : await orderService.getSales();
-            setOrders(data || []);
+            const response = activeTab === 'purchases' 
+                ? await orderService.getPurchases(pagination.page, pagination.size) 
+                : await orderService.getSales(pagination.page, pagination.size);
+            
+            // Backend trả về ApiResponse với result chứa Page
+            const pageData = response.data?.result;
+            if (pageData) {
+                setOrders(pageData.content || []);
+                setPagination(prev => ({
+                    ...prev,
+                    totalElements: pageData.totalElements || 0,
+                    totalPages: pageData.totalPages || 0
+                }));
+            } else {
+                setOrders(response.data?.result || []);
+            }
         } catch (error) {
             toast.error("Không thể tải danh sách đơn hàng");
         } finally {
@@ -31,9 +50,15 @@ const MyOrderPage = () => {
         }
     };
 
+    const handlePageChange = (newPage) => {
+        if (newPage >= 0 && newPage < pagination.totalPages) {
+            setPagination(prev => ({ ...prev, page: newPage }));
+        }
+    };
+
     const handleUpdateStatus = async (orderId, newStatus) => {
         try {
-            await orderService.updateStatus(orderId, newStatus);
+            await orderService.updateOrderStatusPost(orderId, newStatus);
             toast.success("Cập nhật trạng thái thành công");
             fetchOrders(); 
         } catch (error) {
@@ -52,13 +77,13 @@ const MyOrderPage = () => {
             <div className={cx('order-tabs')}>
                 <div 
                     className={cx('tab-item', { active: activeTab === 'purchases' })}
-                    onClick={() => setActiveTab('purchases')}
+                    onClick={() => { setActiveTab('purchases'); setPagination(prev => ({ ...prev, page: 0 })); }}
                 >
                     🛒 Đơn mua
                 </div>
                 <div 
                     className={cx('tab-item', { active: activeTab === 'sales' })}
-                    onClick={() => setActiveTab('sales')}
+                    onClick={() => { setActiveTab('sales'); setPagination(prev => ({ ...prev, page: 0 })); }}
                 >
                     💰 Đơn bán
                 </div>
@@ -81,11 +106,9 @@ const MyOrderPage = () => {
                                         <span className={cx('label')}>Mã đơn:</span>
                                         <span className={cx('value')}>#{order.id?.substring(0, 8).toUpperCase()}</span>
                                     </div>
-                                    <div className={cx('order-status-badge', order.status)}>
-                                        {order.status === 'PENDING' ? 'Chờ xác nhận' : 
-                                         order.status === 'CONFIRMED' ? 'Đã xác nhận' :
-                                         order.status === 'DELIVERED' ? 'Hoàn thành' : 'Đã hủy'}
-                                    </div>
+                                    <div className={cx('order-status-badge', order.status?.name?.toLowerCase())}>
+    {order.status?.displayName}
+</div>
                                 </div>
 
                                 <div className={cx('order-body')}>
@@ -113,12 +136,12 @@ const MyOrderPage = () => {
                                 <div className={cx('order-footer')}>
                                     <button 
                                         className={cx('btn-detail')} 
-                                        onClick={() => navigate(`/order/${order.id}`)}
+                                        onClick={() => navigate(`/order/myOrder/${order.id}?role=${activeTab}`)}
                                     >
                                         Xem chi tiết
                                     </button>
                                     
-                                    {activeTab === 'sales' && order.status === 'PENDING' && (
+                                    {activeTab === 'sales' && order.status?.name === 'PENDING' && (
                                         <div className={cx('seller-actions')}>
                                             <button 
                                                 className={cx('btn-reject')} 
@@ -138,6 +161,29 @@ const MyOrderPage = () => {
                             </div>
                         ))
                     )}
+                </div>
+            )}
+
+            {/* Phân trang */}
+            {pagination.totalPages > 1 && (
+                <div className={cx('pagination')}>
+                    <button 
+                        className={cx('page-btn')} 
+                        onClick={() => handlePageChange(pagination.page - 1)}
+                        disabled={pagination.page === 0}
+                    >
+                        ← Trước
+                    </button>
+                    <span className={cx('page-info')}>
+                        Trang {pagination.page + 1} / {pagination.totalPages}
+                    </span>
+                    <button 
+                        className={cx('page-btn')} 
+                        onClick={() => handlePageChange(pagination.page + 1)}
+                        disabled={pagination.page >= pagination.totalPages - 1}
+                    >
+                        Sau →
+                    </button>
                 </div>
             )}
         </div>

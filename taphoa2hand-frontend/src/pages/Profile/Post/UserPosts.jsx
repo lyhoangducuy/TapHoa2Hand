@@ -35,11 +35,11 @@ function UserPosts({ posts, onLoadMore, hasMore }) {
                             )}
 
                             {/* Badge trạng thái (nếu có) */}
-                            {post.status && (
-                                <span className={cx('status-badge', post.status?.toLowerCase())}>
+                            {/* {post.status && (
+                                <span className={cx('status-badge', post.status)}>
                                     {post.status}
                                 </span>
-                            )}
+                            )} */}
                         </div>
 
                         <div className={cx('info-wrapper')}>

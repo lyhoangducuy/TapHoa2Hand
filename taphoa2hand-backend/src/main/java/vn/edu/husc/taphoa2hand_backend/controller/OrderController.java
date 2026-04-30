@@ -1,7 +1,8 @@
 package vn.edu.husc.taphoa2hand_backend.controller;
 
-import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,9 +16,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import vn.edu.husc.taphoa2hand_backend.dto.request.Order.OrderRequest;
+import vn.edu.husc.taphoa2hand_backend.dto.request.Order.OrderUpdateStatusRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.response.ApiResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Order.OrderResponse;
-import vn.edu.husc.taphoa2hand_backend.entity.OrderStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.service.OrderService;
 
 @RestController
@@ -36,27 +37,27 @@ public class OrderController {
                 .build();
     }
 
-    // Lấy đơn hàng mình đi mua
+    // Lấy đơn hàng mình đi mua (phân trang)
     @GetMapping("/purchases")
-    public ApiResponse<List<OrderResponse>> getMyPurchases() {
-        return ApiResponse.<List<OrderResponse>>builder()
+    public ApiResponse<Page<OrderResponse>> getMyPurchases(Pageable pageable) {
+        return ApiResponse.<Page<OrderResponse>>builder()
                 .message("Lấy đơn hàng mình đi mua thanh cong")
-                .result(orderService.getMyPurchases())
+                .result(orderService.getPurchase(pageable))
                 .build();
     }
 
-    // Lấy đơn hàng mình là người bán
+    // Lấy đơn hàng mình là người bán (phân trang)
     @GetMapping("/sales")
-    public ApiResponse<List<OrderResponse>> getMySales() {
-        return ApiResponse.<List<OrderResponse>>builder()
-                .result(orderService.getMySales())
+    public ApiResponse<Page<OrderResponse>> getMySales(Pageable pageable) {
+        return ApiResponse.<Page<OrderResponse>>builder()
                 .message("Lấy đơn hàng mình là người bán thanh cong")
+                .result(orderService.getSales(pageable))
                 .build();
     }
 
     // Lấy chi tiết
     @GetMapping("/{id}")
-    public ApiResponse<OrderResponse> getById(@PathVariable("orderId") String orderId) {
+    public ApiResponse<OrderResponse> getById(@PathVariable("id") String orderId) {
         return ApiResponse.<OrderResponse>builder()
                 .result(orderService.getOrderDetails(orderId))
                 .message("Lấy chi tiết thanh cong")
@@ -64,13 +65,21 @@ public class OrderController {
     }
 
     // Cập nhật trạng thái (Dùng PATCH để cập nhật một phần)
-    @PatchMapping("/{id}/status")
-    public ApiResponse<OrderResponse> updateStatus(
-            @PathVariable String id,
-            @RequestParam OrderStatusEnum status) {
+    @PatchMapping("/{orderId}/status")
+    public ApiResponse<OrderResponse> updateStatusDetail(
+            @PathVariable String orderId,
+            @RequestParam String newStatus) {
         return ApiResponse.<OrderResponse>builder()
-                .result(orderService.updateStatus(id, status))
+                .result(orderService.updateStatus(orderId, newStatus))
                 .message("Cập nhật trạng thái thanh cong")
                 .build();
     }
+    @PostMapping("/update")
+    public ApiResponse<OrderResponse> postMethodUpdate(@RequestBody OrderUpdateStatusRequest request) {
+        return ApiResponse.<OrderResponse>builder()
+                .result(orderService.updateStatus(request.getOrderId(), request.getNewStatus()))
+                .message("Cập nhật trạng thái thanh cong")
+                .build();
+    }
+    
 }
