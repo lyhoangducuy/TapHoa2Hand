@@ -57,7 +57,9 @@ public enum ErrorCode {
     BANNER_EXISTS(10002, "Banner already exists",HttpStatus.BAD_REQUEST),
     SAVE_FILE_ERRROR(10003,"Save file that bai", HttpStatus.BAD_REQUEST), 
     ID_USER_NOT_FOUND(10004, "User ID not found",HttpStatus.BAD_REQUEST),
-    SELLER_NOT_FOUND(10005, "Seller not found",HttpStatus.BAD_REQUEST)
+    SELLER_NOT_FOUND(10005, "Seller not found",HttpStatus.BAD_REQUEST), 
+    POST_ALREADY_SOLD(9006,"Bai viet da ban",HttpStatus.BAD_REQUEST),
+    ORDER_ALREADY_EXISTS(9007,"Da co don hang cho bai viet nay, khong the tao don hang moi",HttpStatus.BAD_REQUEST)
     ;
     private int code;
     private String message;

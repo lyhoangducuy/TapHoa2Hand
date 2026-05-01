@@ -39,7 +39,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
-@Where(clause = "active = true")
+@Where(clause = "active = true && status != 'HIDDEN'") // Lọc bỏ các bài viết có trạng thái DELETED và không active
 public class Posts extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

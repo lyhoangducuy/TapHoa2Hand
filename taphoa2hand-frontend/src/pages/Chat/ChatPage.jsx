@@ -118,6 +118,7 @@ function ChatPage() {
                         postTitle: conv.postTitle,
                         postImage: conv.postImage,
                         postPrice: conv.postPrice,
+                        postStatus: conv.postStatus,
                         isMyPost: conv.isMyPost
                     }));
                     setChats(formattedChats);

@@ -45,6 +45,9 @@ function ChatHeader({ currentChat, onOpenOrderModal }) {
 function PinnedProduct({ currentChat, onOpenOrderModal }) {
     if (!currentChat?.postId) return null;
 
+    // Kiểm tra xem bài viết có bị khóa hoặc đã bán không
+    const isPostUnavailable = currentChat?.postStatus === 'SOLD' || currentChat?.postStatus === 'HIDDEN';
+
     return (
         <div className={cx('pinned-product')}>
             <div className={cx('product-image')}>
@@ -63,6 +66,8 @@ function PinnedProduct({ currentChat, onOpenOrderModal }) {
                     <button 
                         className={cx('btn-primary')} 
                         onClick={onOpenOrderModal}
+                        disabled={isPostUnavailable}
+                        title={isPostUnavailable ? (currentChat?.postStatus === 'SOLD' ? 'Bài viết đã bán' : 'Bài viết đã ẩn') : ''}
                     >
                         Yêu cầu giao dịch
                     </button>

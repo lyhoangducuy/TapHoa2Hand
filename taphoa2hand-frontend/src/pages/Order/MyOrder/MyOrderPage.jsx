@@ -27,10 +27,10 @@ const MyOrderPage = () => {
     const fetchOrders = async () => {
         setLoading(true);
         try {
-            const response = activeTab === 'purchases' 
-                ? await orderService.getPurchases(pagination.page, pagination.size) 
+            const response = activeTab === 'purchases'
+                ? await orderService.getPurchases(pagination.page, pagination.size)
                 : await orderService.getSales(pagination.page, pagination.size);
-            
+
             // Backend trả về ApiResponse với result chứa Page
             const pageData = response.data?.result;
             if (pageData) {
@@ -60,7 +60,7 @@ const MyOrderPage = () => {
         try {
             await orderService.updateOrderStatusPost(orderId, newStatus);
             toast.success("Cập nhật trạng thái thành công");
-            fetchOrders(); 
+            fetchOrders();
         } catch (error) {
             toast.error("Có lỗi xảy ra  khi cập nhật");
         }
@@ -73,15 +73,15 @@ const MyOrderPage = () => {
     return (
         <div className={cx('my-order-wrapper')}>
             <h2 className={cx('page-title')}>Quản lý đơn hàng</h2>
-            
+
             <div className={cx('order-tabs')}>
-                <div 
+                <div
                     className={cx('tab-item', { active: activeTab === 'purchases' })}
                     onClick={() => { setActiveTab('purchases'); setPagination(prev => ({ ...prev, page: 0 })); }}
                 >
                     🛒 Đơn mua
                 </div>
-                <div 
+                <div
                     className={cx('tab-item', { active: activeTab === 'sales' })}
                     onClick={() => { setActiveTab('sales'); setPagination(prev => ({ ...prev, page: 0 })); }}
                 >
@@ -95,7 +95,7 @@ const MyOrderPage = () => {
                 <div className={cx('order-list')}>
                     {orders.length === 0 ? (
                         <div className={cx('empty-state')}>
-                            <img src="/empty-box.png" alt="empty" /> {/* Nếu bạn có ảnh */}
+
                             <p>Chưa có đơn hàng nào ở mục này.</p>
                         </div>
                     ) : (
@@ -107,8 +107,8 @@ const MyOrderPage = () => {
                                         <span className={cx('value')}>#{order.id?.substring(0, 8).toUpperCase()}</span>
                                     </div>
                                     <div className={cx('order-status-badge', order.status?.name?.toLowerCase())}>
-    {order.status?.displayName}
-</div>
+                                        {order.status?.displayName}
+                                    </div>
                                 </div>
 
                                 <div className={cx('order-body')}>
@@ -119,7 +119,7 @@ const MyOrderPage = () => {
                                             <p>📍 {order.shippingAddress}</p>
                                         </div>
                                     </div>
-                                    
+
                                     <div className={cx('payment-info')}>
                                         <div className={cx('method-tag', order.paymentMethod)}>
                                             {order.paymentMethod === 'MIDDLEMAN' ? '🛡️ Trung gian' : '🤝 Trực tiếp'}
@@ -134,23 +134,23 @@ const MyOrderPage = () => {
                                 </div>
 
                                 <div className={cx('order-footer')}>
-                                    <button 
-                                        className={cx('btn-detail')} 
+                                    <button
+                                        className={cx('btn-detail')}
                                         onClick={() => navigate(`/order/myOrder/${order.id}?role=${activeTab}`)}
                                     >
                                         Xem chi tiết
                                     </button>
-                                    
+
                                     {activeTab === 'sales' && order.status?.name === 'PENDING' && (
                                         <div className={cx('seller-actions')}>
-                                            <button 
-                                                className={cx('btn-reject')} 
+                                            <button
+                                                className={cx('btn-reject')}
                                                 onClick={() => handleUpdateStatus(order.id, 'CANCELLED')}
                                             >
                                                 Từ chối
                                             </button>
-                                            <button 
-                                                className={cx('btn-approve')} 
+                                            <button
+                                                className={cx('btn-approve')}
                                                 onClick={() => handleUpdateStatus(order.id, 'CONFIRMED')}
                                             >
                                                 Xác nhận đơn
@@ -167,8 +167,8 @@ const MyOrderPage = () => {
             {/* Phân trang */}
             {pagination.totalPages > 1 && (
                 <div className={cx('pagination')}>
-                    <button 
-                        className={cx('page-btn')} 
+                    <button
+                        className={cx('page-btn')}
                         onClick={() => handlePageChange(pagination.page - 1)}
                         disabled={pagination.page === 0}
                     >
@@ -177,8 +177,8 @@ const MyOrderPage = () => {
                     <span className={cx('page-info')}>
                         Trang {pagination.page + 1} / {pagination.totalPages}
                     </span>
-                    <button 
-                        className={cx('page-btn')} 
+                    <button
+                        className={cx('page-btn')}
                         onClick={() => handlePageChange(pagination.page + 1)}
                         disabled={pagination.page >= pagination.totalPages - 1}
                     >

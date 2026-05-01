@@ -28,6 +28,7 @@ public class ConversationResponse {
     String postTitle; // Tên sản phẩm
     String postImage; // Ảnh thu nhỏ
     BigDecimal postPrice; // Giá
+    String postStatus; // Trạng thái sản phẩm (AVAILABLE, SOLD, HIDDEN, etc.)
     Boolean isMyPost;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;

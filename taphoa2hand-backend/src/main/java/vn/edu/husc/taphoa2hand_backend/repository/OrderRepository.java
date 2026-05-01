@@ -6,9 +6,12 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import vn.edu.husc.taphoa2hand_backend.entity.Order;
+import vn.edu.husc.taphoa2hand_backend.entity.OrderStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.Users;
 
 @Repository
@@ -25,4 +28,8 @@ public interface OrderRepository extends JpaRepository<Order,String>{
     
     // Lấy tất cả đơn hàng của seller (không phân trang)
     List<Order> findBySeller(Users seller);
+    
+    // Kiểm tra xem có đơn hàng active nào cho post này từ buyer này không
+    @Query("SELECT o FROM Order o JOIN o.items oi WHERE oi.post.id = :postId AND o.buyer.id = :buyerId AND o.status != 'CANCELLED'")
+    Optional<Order> findActiveOrderByPostAndBuyer(@Param("postId") String postId, @Param("buyerId") String buyerId);
 }

@@ -15,6 +15,8 @@ import vn.edu.husc.taphoa2hand_backend.dto.request.Chat.ConversationRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Chat.ConversationResponse;
 import vn.edu.husc.taphoa2hand_backend.entity.Conversation;
 import vn.edu.husc.taphoa2hand_backend.entity.ParticipantInfo;
+import vn.edu.husc.taphoa2hand_backend.entity.PostStatusEnum;
+import vn.edu.husc.taphoa2hand_backend.entity.Posts;
 import vn.edu.husc.taphoa2hand_backend.entity.Users;
 import vn.edu.husc.taphoa2hand_backend.exception.AppException;
 import vn.edu.husc.taphoa2hand_backend.exception.ErrorCode;
@@ -50,6 +52,11 @@ public class ConversationService {
         }
         if (participantIds.contains(user.get())){
             throw new AppException(ErrorCode.THIS_IS_YOU);
+        }
+        Posts checkPost=postsRepository.findById(request.getPostId()) 
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+        if (checkPost.getStatus() == PostStatusEnum.SOLD) {
+            throw new AppException(ErrorCode.POST_ALREADY_SOLD);
         }
         List<String> userIds = new ArrayList<>();
         userIds.add(user.get().getId());
@@ -131,6 +138,7 @@ public class ConversationService {
 
                 conversationResponse.setPostId(postCurrent.getId());
                 conversationResponse.setPostPrice(postCurrent.getPrice());
+                conversationResponse.setPostStatus(postCurrent.getStatus().toString());
                 
                 conversationResponse.setPostTitle(postCurrent.getTitle());    
                 var images = postCurrent.getPostImages();

@@ -79,6 +79,13 @@ public class OrderService {
             throw new AppException(ErrorCode.POST_HIDDEN);
         if (post.getStatus().equals(PostStatusEnum.SOLD))
             throw new AppException(ErrorCode.POST_HAD_SOLD);
+        
+        // Kiểm tra xem đã có đơn hàng active cho bài viết này từ người mua này chưa
+        orderRepository.findActiveOrderByPostAndBuyer(request.getPostId(), buyer.getId())
+                .ifPresent(existingOrder -> {
+                    throw new AppException(ErrorCode.ORDER_ALREADY_EXISTS);
+                });
+        
         // 2. Dùng Mapper để biến DTO thành Entity
         Order order = orderMapper.toOrder(request);
 
