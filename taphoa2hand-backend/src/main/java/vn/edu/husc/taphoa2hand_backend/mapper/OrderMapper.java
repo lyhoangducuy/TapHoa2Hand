@@ -30,7 +30,7 @@ public interface OrderMapper {
     // Ánh xạ tự động cho InfoBank từ BankInfoDTO
     // OrderBankInfo toOrderBankInfo(OrderRequest.BankInfoDTO dto);
 
-    @Mapping(target = "buyserId", source = "buyer.id") // nhớ check tên field entity
+    @Mapping(target = "buyerId", source = "buyer.id") // nhớ check tên field entity
     @Mapping(target = "sellerId", source = "seller.id")
     @Mapping(target = "status", expression = "java(mapStatus(order.getStatus()))")
     @Mapping(target = "paymentMethod", expression = "java(mapPaymentMethod(order.getPaymentMethod()))")

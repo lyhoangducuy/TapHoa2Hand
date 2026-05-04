@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import vn.edu.husc.taphoa2hand_backend.entity.Order;
 import vn.edu.husc.taphoa2hand_backend.entity.OrderStatusEnum;
+import vn.edu.husc.taphoa2hand_backend.entity.Posts;
 import vn.edu.husc.taphoa2hand_backend.entity.Users;
 
 @Repository
@@ -32,4 +33,5 @@ public interface OrderRepository extends JpaRepository<Order,String>{
     // Kiểm tra xem có đơn hàng active nào cho post này từ buyer này không
     @Query("SELECT o FROM Order o JOIN o.items oi WHERE oi.post.id = :postId AND o.buyer.id = :buyerId AND o.status != 'CANCELLED'")
     Optional<Order> findActiveOrderByPostAndBuyer(@Param("postId") String postId, @Param("buyerId") String buyerId);
+
 }

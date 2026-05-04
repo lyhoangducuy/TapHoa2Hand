@@ -27,6 +27,7 @@ import Notificationpage from '../pages/Admin/Notification/NotificationPage';
 import ChatBox from '../pages/ChatBox/ChatBoxPage';
 import BannerSlider from '../pages/Banner/BannerSlider';
 import AdminBannerPage from '../pages/Admin/Banner/AdminBannerPage';
+import AdminFeedbackPage from '../pages/Admin/Feedback/AdminFeedbackPage';
 const publicRoutes = [
     { path: '/', component: HomePage },
     { path: '/login', component: LoginPage, layout: NoSidebarLayout },
@@ -69,6 +70,8 @@ const adminRoutes = [
     {path:'/admin/categories/create',component: CategoryCreatePage,layout: AdminLayout},
     //banner
     {path:'/admin/banners',component: AdminBannerPage, layout: AdminLayout},
+    //feedbacks
+    {path:'/admin/feedbacks',component: AdminFeedbackPage, layout: AdminLayout},
     //noti
     {path:"/admin/notifications",component:Notificationpage,layout:AdminLayout}
 ];

@@ -17,7 +17,7 @@ import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PaymentMethodEnumRespo
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class OrderResponse {
      String id;
-     String buyserId;
+     String buyerId;
      String sellerId;
      OrderStatusEnumResponse status;
      PaymentMethodEnumResponse paymentMethod;

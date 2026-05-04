@@ -1,0 +1,48 @@
+.feedback-table {
+    .empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        color: #999;
+        text-align: center;
+
+        p {
+            margin: 0;
+        }
+    }
+
+    .user-name {
+        font-weight: 500;
+        color: #333;
+    }
+
+    .rating-cell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .rating-value {
+            font-weight: 600;
+            color: #333;
+        }
+    }
+
+    .comment {
+        color: #666;
+        font-size: 13px;
+        line-height: 1.4;
+    }
+
+    .date {
+        color: #999;
+        font-size: 13px;
+    }
+
+    .delete-btn {
+        &:hover {
+            background-color: #dc3545;
+            color: white;
+        }
+    }
+}

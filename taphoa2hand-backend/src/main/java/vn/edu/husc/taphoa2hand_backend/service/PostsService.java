@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.method.P;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -86,6 +87,7 @@ public class PostsService {
                 .map(postsMapper::toPostsResponse)
                 .toList();
     }
+
 
     @Transactional(readOnly = true)
     public PostDetailResponse getDetailPost(String postId) {
@@ -298,7 +300,7 @@ public class PostsService {
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional(readOnly = true)
     public Page<PostsResponse> getAllPostsAdmin(Pageable pageable) {
-         Page<Posts> pagePosts=postsRepository.findAll(pageable);
+         Page<Posts> pagePosts=postsRepository.findInactivePosts(pageable);
         return pagePosts.map(postsMapper::toPostsResponse);
     }
 

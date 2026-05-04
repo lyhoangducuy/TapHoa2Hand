@@ -40,6 +40,9 @@ public class PostsController {
                 .result(postsService.getAllPosts())
                 .build();
     }
+  
+    
+
 
     @GetMapping("/{postId}")
     public ApiResponse<PostDetailResponse> getPostDetail(@PathVariable("postId") String postId) {

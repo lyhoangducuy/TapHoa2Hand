@@ -57,7 +57,7 @@ export default function BannerSlider() {
                             <img 
                                 src={banner.imageDesktop} 
                                 alt={banner.title || 'Banner quảng cáo'} 
-                                style={{ width: '100%', height: 'auto', objectFit: 'cover' }}
+                                style={{ width: '100%', height: '300px', objectFit: 'cover' }}
                             />
                         </a>
                     </SwiperSlide>

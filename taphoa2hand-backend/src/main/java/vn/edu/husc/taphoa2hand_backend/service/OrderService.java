@@ -140,12 +140,23 @@ public class OrderService {
     }
 
     // 4. READ: Chi tiết 1 đơn hàng
-    public OrderResponse getOrderDetails(String orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
-        return orderMapper.toResponse(order);
+    
+   public OrderResponse getOrderDetails(String orderId) {
+    Users currentUser = usersRepository.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName())
+            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+    Order order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
+
+    boolean isBuyer = order.getBuyer().getId().equals(currentUser.getId());
+    boolean isSeller = order.getSeller().getId().equals(currentUser.getId());
+
+    if (!isBuyer && !isSeller) {
+        throw new AppException(ErrorCode.UNAUTHORIZED);
     }
 
+    return orderMapper.toResponse(order);
+}
     // 5. UPDATE: Cập nhật trạng thái đơn hàng (Logic quan trọng)
     @Transactional
     public OrderResponse updateStatus(String orderId, String status) {

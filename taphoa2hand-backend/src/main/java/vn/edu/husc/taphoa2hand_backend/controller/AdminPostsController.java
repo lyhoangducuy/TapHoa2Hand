@@ -26,6 +26,7 @@ import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostDetailResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostsResponse;
 import vn.edu.husc.taphoa2hand_backend.service.PostsService;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/admin/posts")
@@ -35,7 +36,7 @@ public class AdminPostsController {
     PostsService postsService;
 
     @GetMapping
-    public ApiResponse<Page<PostsResponse> > getPosts(@PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC) 
+    public ApiResponse<Page<PostsResponse> > getPosts(@PageableDefault(page = 0, size = 10) 
             Pageable pageable) {
         return ApiResponse.<Page<PostsResponse> >builder()
                 .message("Lay toan bo bai dang thanh cong")
@@ -51,6 +52,7 @@ public class AdminPostsController {
                 .build();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping(value = "/{postId}/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<PostDetailResponse> updatePost(@PathVariable("postId") String postId,
             @RequestPart("request") PostEditRequest request,

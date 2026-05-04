@@ -136,7 +136,7 @@ const MyOrderPage = () => {
                                 <div className={cx('order-footer')}>
                                     <button
                                         className={cx('btn-detail')}
-                                        onClick={() => navigate(`/order/myOrder/${order.id}?role=${activeTab}`)}
+                                        onClick={() => navigate(`/order/myOrder/${order.id}`)}
                                     >
                                         Xem chi tiết
                                     </button>

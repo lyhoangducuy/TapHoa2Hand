@@ -7,13 +7,17 @@ import { getToken } from "./localstorageService";
         const token = getToken();
 export const getActiveBanners = async () => {
     try {
+        const token = getToken();
+        const headers = {
+            "Content-Type": "application/json"
+        };
+        if (token) {
+            headers.Authorization = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${CONFIG.API_GATEWAY}${API.GET_BANNERS}`, {
             method: "GET",
-            headers: {
-                
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            }
+            headers
         });
         return await response.json();
     } catch (error) {

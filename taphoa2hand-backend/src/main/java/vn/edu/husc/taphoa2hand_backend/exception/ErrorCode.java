@@ -59,7 +59,11 @@ public enum ErrorCode {
     ID_USER_NOT_FOUND(10004, "User ID not found",HttpStatus.BAD_REQUEST),
     SELLER_NOT_FOUND(10005, "Seller not found",HttpStatus.BAD_REQUEST), 
     POST_ALREADY_SOLD(9006,"Bai viet da ban",HttpStatus.BAD_REQUEST),
-    ORDER_ALREADY_EXISTS(9007,"Da co don hang cho bai viet nay, khong the tao don hang moi",HttpStatus.BAD_REQUEST)
+    ORDER_ALREADY_EXISTS(9007,"Da co don hang cho bai viet nay, khong the tao don hang moi",HttpStatus.BAD_REQUEST),
+    FEEDBACK_NOT_FOUND(11001, "Feedback not found",HttpStatus.NOT_FOUND),
+    FEEDBACK_ALREADY_EXISTS(11002, "Feedback already exists for this order",HttpStatus.BAD_REQUEST),
+    ORDER_NOT_FOUND(11003, "Order not found",HttpStatus.NOT_FOUND),
+    INVALID_ORDER_STATUS(11004, "Order status is invalid for feedback",HttpStatus.BAD_REQUEST)
     ;
     private int code;
     private String message;

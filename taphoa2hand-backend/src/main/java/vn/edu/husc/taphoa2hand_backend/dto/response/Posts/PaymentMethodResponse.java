@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PaymentMethodResponse {
-    String value;        // Ví dụ: "CASH", "BANK_TRANSFER"
-    String label; // Ví dụ: "Tiền mặt", "Chuyển khoản ngân hàng"
+    String name;        // Ví dụ: "CASH", "BANK_TRANSFER"
+    String description; // Ví dụ: "Tiền mặt", "Chuyển khoản ngân hàng"
 }

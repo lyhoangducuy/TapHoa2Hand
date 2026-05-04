@@ -35,7 +35,6 @@ public class PostDetailResponse {
     String title;
     Long price;
     PostStatusEnum status;
-    Long viewCount;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
 

@@ -1,4 +1,3 @@
-// src/pages/PostEditPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -8,19 +7,21 @@ import {
 import CIcon from '@coreui/icons-react';
 import { cilCloudUpload } from '@coreui/icons';
 
-// Import đúng service của bạn
-import { adminGetPostDetail, adminUpdatePost } from '../../../../../services/postService'; 
+import { adminGetPostDetail, adminUpdatePost } from '../../../../../services/postService';
+import { getAllCategories } from '../../../../../services/categoryService';
 
 const PostEditPage = () => {
   const { postId } = useParams(); 
   const navigate = useNavigate();
 
-  // Hàm map status displayName sang name
+  // State lưu danh sách categories và payment methods
+  const [categories, setCategories] = useState([]);
+  const paymentMethods = ['DIRECT', 'MIDDLEMAN', 'BANK_TRANSFER'];
+  
   const mapStatusToName = (status) => {
     if (typeof status === 'object' && status !== null) {
       return status.name || 'AVAILABLE';
     }
-    // Nếu là string displayName
     switch (status) {
       case 'Đang bán': return 'AVAILABLE';
       case 'Đã bán': return 'SOLD';
@@ -36,6 +37,12 @@ const PostEditPage = () => {
     postTypeName: 'SELL',
     status: 'AVAILABLE',
     content: '', // Giả định có trường content/mô tả
+    listCategoriesId: [],
+    listAcceptedPaymentMethodsValue: [],
+    city: '',
+    ward: '',
+    postalAddress: '',
+    condition: 'LIKE_NEW',
   });
   
   // State quản lý hình ảnh
@@ -46,6 +53,21 @@ const PostEditPage = () => {
   const [isFetching, setIsFetching] = useState(true); 
   const [isSaving, setIsSaving] = useState(false);    
 
+  // Load categories từ server
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await getAllCategories();
+        if (res && res.result) {
+          setCategories(res.result);
+        }
+      } catch (error) {
+        console.error("Lỗi khi tải danh mục:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
   // 1. GỌI API LẤY DATA BÀI VIẾT
   useEffect(() => {
     const fetchPostData = async () => {
@@ -54,13 +76,26 @@ const PostEditPage = () => {
         const res = await adminGetPostDetail(postId);
         const post = res.result || res; // Tùy cấu trúc API trả về
         
+        const categoriesIds = post.categories && post.categories.length > 0 
+          ? post.categories.map(cat => cat.id || cat)
+          : [];
+        
+        const paymentMethods = post.acceptedPaymentMethods && post.acceptedPaymentMethods.length > 0
+          ? post.acceptedPaymentMethods
+          : [];
+        
         setFormData({
           title: post.title || '',
           price: post.price || '',
-          postTypeName: post.postType?.name || 'SELL',
-          // Map displayName trở lại name để gửi backend
+          postTypeName: post.postType?.name || post.postType || 'SELL',
           status: mapStatusToName(post.status),
-          content: post.content || '',
+          content: post.postDetail?.description || '',
+          listCategoriesId: categoriesIds,
+          listAcceptedPaymentMethodsValue: paymentMethods,
+          city: post.postAddress?.city || '',
+          ward: post.postAddress?.ward || '',
+          postalAddress: post.postAddress?.postalAddress || '',
+          condition: post.postDetail?.condition || 'LIKE_NEW',
         });
         
         // Lưu mảng ảnh cũ để hiển thị
@@ -86,6 +121,42 @@ const PostEditPage = () => {
     setFormData({ ...formData, [name]: value });
   };
 
+  // Xử lý chọn/bỏ chọn danh mục
+  const handleCategoryChange = (categoryId) => {
+    setFormData(prev => {
+      const currentCategories = prev.listCategoriesId || [];
+      if (currentCategories.includes(categoryId)) {
+        return {
+          ...prev,
+          listCategoriesId: currentCategories.filter(id => id !== categoryId)
+        };
+      } else {
+        return {
+          ...prev,
+          listCategoriesId: [...currentCategories, categoryId]
+        };
+      }
+    });
+  };
+
+  // Xử lý chọn/bỏ chọn phương thức thanh toán
+  const handlePaymentMethodChange = (method) => {
+    setFormData(prev => {
+      const currentMethods = prev.listAcceptedPaymentMethodsValue || [];
+      if (currentMethods.includes(method)) {
+        return {
+          ...prev,
+          listAcceptedPaymentMethodsValue: currentMethods.filter(m => m !== method)
+        };
+      } else {
+        return {
+          ...prev,
+          listAcceptedPaymentMethodsValue: [...currentMethods, method]
+        };
+      }
+    });
+  };
+
   // 3. XỬ LÝ CHỌN NHIỀU ẢNH MỚI
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -108,7 +179,16 @@ const PostEditPage = () => {
       // Lưu ý: Đảm bảo price được ép về kiểu số nếu Backend yêu cầu
       const postDataToSubmit = {
         ...formData,
-        price: Number(formData.price)
+        price: Number(formData.price),
+        postDetail: {
+          description: formData.content,
+          condition: formData.condition,
+        },
+        postAddress: {
+          city: formData.city,
+          ward: formData.ward,
+          postalAddress: formData.postalAddress,
+        }
       };
 
       await adminUpdatePost(postId, postDataToSubmit, newImages);
@@ -155,7 +235,7 @@ const PostEditPage = () => {
               <CFormSelect name="status" value={formData.status} onChange={handleChange}>
                 <option value="AVAILABLE">Hiển thị (AVAILABLE)</option>
                 <option value="HIDDEN">Đã ẩn (HIDDEN)</option>
-                {/* Có thể thêm các trạng thái khác như PENDING, SOLD tùy logic của bạn */}
+                <option value="SOLD">Đã bán (SOLD)</option>
               </CFormSelect>
             </CCol>
             <CCol md={4} className="mb-3">
@@ -176,6 +256,110 @@ const PostEditPage = () => {
                 value={formData.price} 
                 onChange={handleChange} 
                 required 
+              />
+            </CCol>
+            <CCol md={6} className="mb-3">
+              <CFormLabel>Tình trạng sản phẩm</CFormLabel>
+              <CFormSelect name="condition" value={formData.condition} onChange={handleChange}>
+                <option value="LIKE_NEW">Như mới</option>
+                <option value="GOOD">Tốt</option>
+                <option value="FAIR">Bình thường</option>
+                <option value="FOR_PARTS">Lấy linh kiện</option>
+              </CFormSelect>
+            </CCol>
+          </CRow>
+
+          <CRow>
+            <CCol md={12} className="mb-3">
+              <CFormLabel>Danh mục</CFormLabel>
+              <div className="border rounded p-3" style={{ minHeight: '100px', backgroundColor: '#f8f9fa' }}>
+                {categories && categories.length > 0 ? (
+                  categories.map(cat => (
+                    <div key={cat.id} className="form-check mb-2">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        id={`category-${cat.id}`}
+                        checked={formData.listCategoriesId?.includes(cat.id) || false}
+                        onChange={() => handleCategoryChange(cat.id)}
+                      />
+                      <label className="form-check-label" htmlFor={`category-${cat.id}`}>
+                        {cat.name}
+                      </label>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-muted small">Không có danh mục nào</p>
+                )}
+              </div>
+            </CCol>
+          </CRow>
+
+          <CRow>
+            <CCol md={12} className="mb-3">
+              <CFormLabel>Phương thức thanh toán chấp nhận</CFormLabel>
+              <div className="border rounded p-3" style={{ backgroundColor: '#f8f9fa' }}>
+                {paymentMethods.map(method => (
+                  <div key={method} className="form-check mb-2">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id={`payment-${method}`}
+                      checked={formData.listAcceptedPaymentMethodsValue?.includes(method) || false}
+                      onChange={() => handlePaymentMethodChange(method)}
+                    />
+                    <label className="form-check-label" htmlFor={`payment-${method}`}>
+                      {method === 'DIRECT' ? 'Giao dịch trực tiếp' : method === 'MIDDLEMAN' ? 'Giao dịch qua trung gian' : 'Chuyển khoản'}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </CCol>
+          </CRow>
+
+          <CRow>
+            <CCol md={12} className="mb-3">
+              <CFormLabel>Mô tả chi tiết</CFormLabel>
+              <CFormTextarea 
+                name="content" 
+                value={formData.content} 
+                onChange={handleChange} 
+                rows={4}
+                placeholder="Nhập mô tả chi tiết sản phẩm..."
+              />
+            </CCol>
+          </CRow>
+
+          <CRow>
+            <CCol md={6} className="mb-3">
+              <CFormLabel>Thành phố/Tỉnh</CFormLabel>
+              <CFormInput 
+                name="city" 
+                value={formData.city} 
+                onChange={handleChange}
+                placeholder="VD: Hà Nội"
+              />
+            </CCol>
+            <CCol md={6} className="mb-3">
+              <CFormLabel>Quận/Huyện</CFormLabel>
+              <CFormInput 
+                name="ward" 
+                value={formData.ward} 
+                onChange={handleChange}
+                placeholder="VD: Hoàn Kiếm"
+              />
+            </CCol>
+          </CRow>
+
+          <CRow>
+            <CCol md={12} className="mb-3">
+              <CFormLabel>Địa chỉ chi tiết</CFormLabel>
+              <CFormTextarea 
+                name="postalAddress" 
+                value={formData.postalAddress} 
+                onChange={handleChange} 
+                rows={2}
+                placeholder="Nhập địa chỉ chi tiết..."
               />
             </CCol>
           </CRow>
@@ -233,7 +417,6 @@ const PostEditPage = () => {
                       hidden 
                     />
                   </CFormLabel>
-                  <CFormTextarea className="d-none" /> {/* Hack nhỏ giữ layout CoreUI */}
                   <span className="ms-3 small text-muted">Nếu chọn ảnh mới, toàn bộ ảnh cũ sẽ bị thay thế.</span>
               </div>
             </CCol>

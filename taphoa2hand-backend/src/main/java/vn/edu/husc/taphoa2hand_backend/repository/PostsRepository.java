@@ -11,7 +11,6 @@ import vn.edu.husc.taphoa2hand_backend.entity.Users;
 import vn.edu.husc.taphoa2hand_backend.entity.PostStatusEnum; // Thêm import này
 import java.util.List;
 
-
 @Repository
 public interface PostsRepository extends JpaRepository<Posts, String> {
 
@@ -37,6 +36,14 @@ public interface PostsRepository extends JpaRepository<Posts, String> {
                         @Param("categoryName") String categoryName,
                         @Param("status") PostStatusEnum status,
                         Pageable pageable);
-        Page<Posts> findByUser(Users user,Pageable pageable);
+
+        Page<Posts> findByUser(Users user, Pageable pageable);
+
+        @Query(
+        value = "SELECT * FROM posts WHERE active = 1 ORDER BY created_at DESC", 
+        countQuery = "SELECT count(*) FROM posts WHERE active = 1", 
+        nativeQuery = true
+    )
+    Page<Posts> findInactivePosts(Pageable pageable);
 
 }
