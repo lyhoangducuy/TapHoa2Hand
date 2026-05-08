@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
@@ -52,6 +53,16 @@ public class OrderController {
         return ApiResponse.<Page<OrderResponse>>builder()
                 .message("Lấy đơn hàng mình là người bán thanh cong")
                 .result(orderService.getSales(pageable))
+                .build();
+    }
+
+    // Lấy tất cả đơn hàng cho admin (phân trang)
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin")
+    public ApiResponse<Page<OrderResponse>> getAllOrders(Pageable pageable) {
+        return ApiResponse.<Page<OrderResponse>>builder()
+                .message("Lấy tất cả đơn hàng thành công")
+                .result(orderService.getAllOrders(pageable))
                 .build();
     }
 

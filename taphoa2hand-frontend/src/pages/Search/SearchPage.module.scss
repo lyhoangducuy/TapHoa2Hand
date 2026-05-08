@@ -66,15 +66,13 @@
 
     /* Badge trạng thái tin đăng (ví dụ: Đang bán) */
     .status-badge {
-        position: absolute;
-        bottom: 8px;
-        left: 8px;
-        background: rgba(0, 0, 0, 0.6); /* Nền đen mờ */
-        color: #fff;
-        padding: 2px 8px;
-        font-size: 10px;
+        padding: 3px 8px;
+        font-size: 11px;
         border-radius: 4px;
         text-transform: uppercase;
+        font-weight: 500;
+        background: rgba(0, 0, 0, 0.6);
+        color: #fff;
     }
 
     /* Hiển thị khi không có ảnh */
@@ -95,6 +93,42 @@
     display: flex;
     flex-direction: column;
     flex: 1;
+
+    .badges {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+
+    /* Badge styles inside info area */
+    .badges {
+        align-items: center;
+    }
+
+    .badges .type-badge,
+    .badges .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        font-size: 11px;
+        border-radius: 999px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .badges .type-badge {
+        text-transform: none;
+        color: #fff;
+    }
+
+    .badges .type-badge.sell { background: #2d9cdb; }
+    .badges .type-badge.buy { background: #f39c12; }
+
+    .badges .status-badge { background: rgba(0,0,0,0.08); color: #222; font-weight: 500; }
+    .badges .status-badge.available { background: #dff7e0; color: #227f3a; }
+    .badges .status-badge.sold { background: #ffe6e6; color: #c0392b; }
+    .badges .status-badge.pending { background: #fff7e6; color: #b9770e; }
 
     .post-title {
         font-size: 14px;

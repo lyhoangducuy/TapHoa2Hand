@@ -5,6 +5,12 @@ import { getAllPostsType } from "../../../services/postTypeService";
 import { createPost } from "../../../services/postService";
 import classNames from 'classnames/bind';
 import styles from './CreatePostPage.module.scss';
+import BasicInfoSection from "./components/BasicInfoSection";
+import CategoriesSection from "./components/CategoriesSection";
+import PaymentMethodsSection from "./components/PaymentMethodsSection";
+import ProductDetailsSection from "./components/ProductDetailsSection";
+import AddressSection from "./components/AddressSection";
+import ImageUploadSection from "./components/ImageUploadSection";
 
 const cx = classNames.bind(styles);
 
@@ -14,6 +20,9 @@ function CreatePostPage() {
     const [postTypes, setPostTypes] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [images, setImages] = useState([]);
+    
+    // Field errors state
+    const [fieldErrors, setFieldErrors] = useState({});
 
     const [formData, setFormData] = useState({
         title: "",
@@ -109,8 +118,85 @@ function CreatePostPage() {
         setImages(e.target.files);
     };
 
+    const validateForm = () => {
+        const errors = {};
+
+        // Validate basic fields
+        if (!formData.title.trim()) {
+            errors.title = "Tiêu đề không được để trống";
+        } else if (formData.title.trim().length < 5) {
+            errors.title = "Tiêu đề phải có ít nhất 5 ký tự";
+        }
+
+        if (!formData.price) {
+            errors.price = "Giá không được để trống";
+        } else if (formData.price <= 0) {
+            errors.price = "Giá phải lớn hơn 0";
+        }
+
+        // Validate categories
+        if (formData.listCategoriesId.length === 0) {
+            errors.categories = "Phải chọn ít nhất 1 danh mục";
+        }
+
+        // Validate payment methods
+        if (formData.acceptedPaymentMethods.length === 0) {
+            errors.payments = "Phải chọn ít nhất 1 phương thức thanh toán";
+        }
+
+        // Validate product details
+        if (!formData.postDetail.description.trim()) {
+            errors.description = "Mô tả chi tiết không được để trống";
+        } else if (formData.postDetail.description.trim().length < 10) {
+            errors.description = "Mô tả chi tiết phải có ít nhất 10 ký tự";
+        }
+
+        if (!formData.postDetail.itemCondition.trim()) {
+            errors.itemCondition = "Tình trạng sản phẩm không được để trống";
+        }
+
+        // Validate address
+        if (!formData.postAddress.city.trim()) {
+            errors.city = "Tỉnh / Thành phố không được để trống";
+        }
+
+        if (!formData.postAddress.ward.trim()) {
+            errors.ward = "Quận / Huyện / Phường / Xã không được để trống";
+        }
+
+        if (!formData.postAddress.street.trim()) {
+            errors.street = "Số nhà / Tên đường không được để trống";
+        }
+
+        // Validate images
+        if (!images || images.length === 0) {
+            errors.images = "Phải chọn ít nhất 1 hình ảnh";
+        } else if (images.length > 10) {
+            errors.images = "Chỉ có thể chọn tối đa 10 hình ảnh";
+        }
+
+        return errors;
+    };
+
+    const showError = (message, errorArray = []) => {
+        setErrorMessage(message);
+        setErrorList(errorArray);
+        setShowErrorModal(true);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // Validate form
+        const errors = validateForm();
+        if (Object.keys(errors).length > 0) {
+            setFieldErrors(errors);
+            return;
+        }
+
+        // Clear errors if validation passes
+        setFieldErrors({});
+
         setIsLoading(true);
 
         try {
@@ -141,11 +227,33 @@ function CreatePostPage() {
             alert("Tạo bài viết thành công!");
             console.log("Success:", response);
 
-            // Optional: Thêm code reset form hoặc chuyển trang (redirect) ở đây sau khi tạo thành công
+            // Optional: Reset form or redirect after success
+            setFormData({
+                title: "",
+                price: "",
+                postTypeName: "SELL",
+                listCategoriesId: [],
+                acceptedPaymentMethods: [],
+                postDetail: {
+                    description: "",
+                    brand: "",
+                    model: "",
+                    itemCondition: "",
+                    usedDuration: "",
+                    reasonForSelling: ""
+                },
+                postAddress: {
+                    city: "",
+                    ward: "",
+                    street: ""
+                }
+            });
+            setImages([]);
 
         } catch (error) {
             console.error("Lỗi khi tạo bài", error);
-            alert("Tạo bài viết thất bại, vui lòng kiểm tra console!");
+            const errorMsg = error.response?.data?.message || "Tạo bài viết thất bại";
+            alert(errorMsg);
         } finally {
             setIsLoading(false);
         }
@@ -154,108 +262,44 @@ function CreatePostPage() {
         <div className={cx('wrapper')}>
             <h2 className={cx('pageTitle')}>Đăng Tin Tạp Hóa 2Hand</h2>
             <form onSubmit={handleSubmit}>
+                <BasicInfoSection
+                    formData={formData}
+                    postTypes={postTypes}
+                    fieldErrors={fieldErrors}
+                    onBasicChange={handleBasicChange}
+                />
 
-                {/* --- THÔNG TIN CƠ BẢN --- */}
-                <fieldset className={cx('fieldset')}>
-                    <legend className={cx('legend')}>Thông tin cơ bản</legend>
-                    <div className={cx('formGroup')}>
-                        <label>Loại tin:</label>
-                        <select 
-                            className={cx('inputControl')} 
-                            name="postTypeName" 
-                            value={formData.postTypeName} 
-                            onChange={handleBasicChange}
-                            required
-                        >
-                            {postTypes.map((type) => (
-                                <option key={type.name} value={type.name}>
-                                    {type.displayName}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className={cx('formGroup')}>
-                        <label>Tiêu đề:</label>
-                        <input className={cx('inputControl')} name="title" value={formData.title} onChange={handleBasicChange} required />
-                    </div>
-                    <div className={cx('formGroup')}>
-                        <label>Giá (VNĐ):</label>
-                        <input className={cx('inputControl')} type="number" name="price" value={formData.price} onChange={handleBasicChange} required />
-                    </div>
-                </fieldset>
+                <CategoriesSection
+                    categories={categories}
+                    listCategoriesId={formData.listCategoriesId}
+                    fieldErrors={fieldErrors}
+                    onCategoryToggle={handleCategoryToggle}
+                />
 
-                {/* --- DANH MỤC --- */}
-                <fieldset className={cx('fieldset')}>
-                    <legend className={cx('legend')}>Danh mục</legend>
-                    <div className={cx('checkboxGroup')}>
-                        {categories.map((cat) => (
-                            <label key={cat.id} className={cx('checkboxLabel')}>
-                                <input
-                                    type="checkbox"
-                                    onChange={() => handleCategoryToggle(cat.id)}
-                                /> {cat.name}
-                            </label>
-                        ))}
-                    </div>
-                </fieldset>
+                <PaymentMethodsSection
+                    payments={payments}
+                    acceptedPaymentMethods={formData.acceptedPaymentMethods}
+                    fieldErrors={fieldErrors}
+                    onPaymentToggle={handlePaymentToggle}
+                />
 
-                {/* --- THANH TOÁN --- */}
-                <fieldset className={cx('fieldset')}>
-                    <legend className={cx('legend')}>Phương thức thanh toán chấp nhận</legend>
-                    <div className={cx('checkboxGroup')}>
-                        {(payments || []).map((pay) => (
-    <label key={pay.name} className={cx('checkboxLabel')}>
-        <input
-            type="checkbox"
-            checked={formData.acceptedPaymentMethods.some(p => p.name === pay.name)}
-            onChange={() => handlePaymentToggle(pay)}
-        />
-        {pay.description}
-    </label>
-))}
-                    </div>
-                </fieldset>
+                <ProductDetailsSection
+                    postDetail={formData.postDetail}
+                    fieldErrors={fieldErrors}
+                    onDetailChange={handleDetailChange}
+                />
 
-                {/* --- CHI TIẾT SẢN PHẨM --- */}
-                <fieldset className={cx('fieldset')}>
-                    <legend className={cx('legend')}>Chi tiết sản phẩm</legend>
-                    <div className={cx('grid2Cols')}>
-                        <div className={cx('formGroup')}><label>Thương hiệu:</label> <input className={cx('inputControl')} name="brand" value={formData.postDetail.brand} onChange={handleDetailChange} /></div>
-                        <div className={cx('formGroup')}><label>Model:</label> <input className={cx('inputControl')} name="model" value={formData.postDetail.model} onChange={handleDetailChange} /></div>
-                        <div className={cx('formGroup')}><label>Tình trạng:</label> <input className={cx('inputControl')} name="itemCondition" value={formData.postDetail.itemCondition} onChange={handleDetailChange} placeholder="Ví dụ: Mới 90%" /></div>
-                        <div className={cx('formGroup')}><label>Thời gian đã sử dụng:</label> <input className={cx('inputControl')} name="usedDuration" value={formData.postDetail.usedDuration} onChange={handleDetailChange} placeholder="Ví dụ: 6 tháng" /></div>
-                    </div>
-                    <div className={cx('formGroup')}><label>Lý do bán:</label> <input className={cx('inputControl')} name="reasonForSelling" value={formData.postDetail.reasonForSelling} onChange={handleDetailChange} /></div>
-                    <div className={cx('formGroup')}>
-                        <label>Mô tả chi tiết:</label>
-                        <textarea className={cx('textareaControl')} name="description" value={formData.postDetail.description} onChange={handleDetailChange} rows="4"></textarea>
-                    </div>
-                </fieldset>
+                <AddressSection
+                    postAddress={formData.postAddress}
+                    fieldErrors={fieldErrors}
+                    onAddressChange={handleAddressChange}
+                />
 
-                {/* --- ĐỊA CHỈ --- */}
-                <fieldset className={cx('fieldset')}>
-                    <legend className={cx('legend')}>Địa chỉ người bán</legend>
-                    <div className={cx('grid2Cols')}>
-                        <div className={cx('formGroup')}><label>Tỉnh / Thành phố:</label> <input className={cx('inputControl')} name="city" value={formData.postAddress.city} onChange={handleAddressChange} /></div>
-                        <div className={cx('formGroup')}><label>Quận / Huyện / Phường / Xã:</label> <input className={cx('inputControl')} name="ward" value={formData.postAddress.ward} onChange={handleAddressChange} /></div>
-                    </div>
-                    <div className={cx('formGroup')}><label>Số nhà / Tên đường:</label> <input className={cx('inputControl')} name="street" value={formData.postAddress.street} onChange={handleAddressChange} /></div>
-                </fieldset>
-
-                {/* --- HÌNH ẢNH --- */}
-                <fieldset className={cx('fieldset')}>
-                    <legend className={cx('legend')}>Hình ảnh sản phẩm</legend>
-                    <div className={cx('formGroup')}>
-                        <input
-                            className={cx('fileInput')}
-                            type="file"
-                            multiple
-                            accept="image/*"
-                            onChange={handleFileChange}
-                        />
-                        <small className={cx('helperText')}>Bạn có thể chọn nhiều ảnh cùng lúc.</small>
-                    </div>
-                </fieldset>
+                <ImageUploadSection
+                    images={images}
+                    fieldErrors={fieldErrors}
+                    onFileChange={handleFileChange}
+                />
 
                 <button
                     type="submit"

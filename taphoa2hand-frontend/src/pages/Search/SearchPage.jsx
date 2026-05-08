@@ -7,19 +7,39 @@ import styles from "./SearchPage.module.scss";
 import { searchPosts } from "../../services/postService";
 import { getAllCategories } from "../../services/categoryService";
 
-const cx = classNames.bind(styles);
+// Hàm format thời gian
+const formatTimeAgo = (dateString) => {
+    const now = new Date();
+    const postDate = new Date(dateString);
+    const diffInMs = now - postDate;
+    const diffInHours = diffInMs / (1000 * 60 * 60);
+    const diffInDays = diffInHours / 24;
+
+    if (diffInHours < 1) {
+        const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+        return `${diffInMinutes} phút trước`;
+    } else if (diffInHours < 24) {
+        const hours = Math.floor(diffInHours);
+        return `${hours} giờ trước`;
+    } else {
+        return postDate.toLocaleDateString('vi-VN');
+    }
+};
 
 function SearchPage() {
+    const cx = classNames.bind(styles);
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     
     // Lấy từ khóa từ thanh tìm kiếm trên Header (nếu có)
     const keywordFromUrl = searchParams.get("keyword") || "";
+    const categoryIdFromUrl = searchParams.get("categoryId") || "";
 
     // Form tìm kiếm
     const [keyword, setKeyword] = useState(keywordFromUrl);
     const [location, setLocation] = useState("");
-    const [categoryId, setCategoryId] = useState("");
+    const [categoryId, setCategoryId] = useState(categoryIdFromUrl);
+    const [postType, setPostType] = useState("");
     
     // Dữ liệu & Phân trang
     const [categories, setCategories] = useState([]);
@@ -39,17 +59,36 @@ function SearchPage() {
         fetchCategories();
     }, []);
 
+    // Cập nhật categoryId khi có categoryIdFromUrl
+    useEffect(() => {
+        if (categoryIdFromUrl) {
+            setCategoryId(categoryIdFromUrl);
+        }
+    }, [categoryIdFromUrl]);
+
     // Hàm gọi API dùng chung
     const fetchSearchResults = async (targetPage = 0, currentKeyword = keyword) => {
         setIsLoading(true);
         try {
-            const data = await searchPosts(currentKeyword, location, categoryId, targetPage, 10);
+            console.log("Searching with params:", {
+                keyword: currentKeyword,
+                location,
+                categoryId,
+                postType,
+                page: targetPage,
+                size: 10
+            });
+
+            const data = await searchPosts(currentKeyword, location, categoryId, postType, targetPage, 10);
             
+            console.log("Search response:", data);
             const pageData = data.result; 
             setResults(pageData.content || []);
             setTotalPages(pageData.totalPages || 0);
             setCurrentPage(targetPage);
             setHasSearched(true);
+
+            console.log("Search results:", pageData.content?.length || 0, "posts found");
         } catch (error) {
             console.error("Lỗi tìm kiếm", error);
         } finally {
@@ -57,12 +96,12 @@ function SearchPage() {
         }
     };
 
-    // Tự động tìm kiếm khi vừa chuyển từ Header sang có kèm keyword
+    // Tự động tìm kiếm khi vừa chuyển từ Header sang có kèm keyword hoặc categoryId
     useEffect(() => {
-        if (keywordFromUrl) {
+        if (keywordFromUrl || categoryIdFromUrl) {
             fetchSearchResults(0, keywordFromUrl);
         }
-    }, [keywordFromUrl]);
+    }, [keywordFromUrl, categoryIdFromUrl]);
 
     // Khi người dùng bấm nút Tìm kiếm trên trang này
     const handleSearchSubmit = (e) => {
@@ -83,9 +122,37 @@ function SearchPage() {
         navigate(`/post-detail/${id}`);
     };
 
+    // Tìm tên category từ categoryId
+    const getCategoryName = (catId) => {
+        const category = categories.find(cat => cat.id === catId);
+        return category ? category.name : "";
+    };
+
     return (  
         <div className={cx('wrapper')} style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
-            <h2 className={cx('page-title')}>Tìm kiếm sản phẩm</h2>
+            <h2 className={cx('page-title')}>
+                {categoryIdFromUrl ? `Tìm kiếm trong danh mục: ${getCategoryName(categoryIdFromUrl)}` : 'Tìm kiếm sản phẩm'}
+                {categoryIdFromUrl && (
+                    <button 
+                        onClick={() => {
+                            setCategoryId("");
+                            navigate('/search');
+                        }}
+                        style={{ 
+                            marginLeft: "10px", 
+                            padding: "5px 10px", 
+                            background: "#ff4444", 
+                            color: "white", 
+                            border: "none", 
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                            fontSize: "12px"
+                        }}
+                    >
+                        Xóa bộ lọc
+                    </button>
+                )}
+            </h2>
             
             {/* Form tìm kiếm */}
             <form onSubmit={handleSearchSubmit} style={{ display: "flex", gap: "10px", marginBottom: "30px", flexWrap: "wrap" }}>
@@ -108,6 +175,15 @@ function SearchPage() {
                     {categories.map((cat) => (
                         <option key={cat.id} value={cat.id}>{cat.name}</option>
                     ))}
+                </select>
+                <select 
+                    value={postType} 
+                    onChange={(e) => setPostType(e.target.value)} 
+                    style={{ flex: "1 1 200px", padding: "10px", borderRadius: "5px", border: "1px solid #ccc" }}
+                >
+                    <option value="">Tất cả loại</option>
+                    <option value="SELL">Tin rao bán</option>
+                    <option value="BUY">Tin cần mua</option>
                 </select>
                 <button type="submit" disabled={isLoading} style={{ padding: "10px 20px", cursor: "pointer", background: "#ff9900", color: "#fff", border: "none", borderRadius: "5px", fontWeight: "bold" }}>
                     Tìm kiếm
@@ -138,13 +214,15 @@ function SearchPage() {
                                             ) : (
                                                 <div className={cx('no-image')}>Không ảnh</div>
                                             )}
-
-                                            <span className={cx('status-badge', post.status?.toLowerCase())}>
-                                                {post.status}
-                                            </span>
                                         </div>
 
                                         <div className={cx('info-wrapper')}>
+                                            <div className={cx('badges')}>
+                                                <span className={cx('status-badge', String(post.status?.name || '').toLowerCase())}>
+                                                    {post.status?.displayName || post.status}
+                                                </span>
+                                            </div>
+
                                             <h3 className={cx('post-title')}>{post.title}</h3>
                                             <p className={cx('price')}>
                                                 {post.price?.toLocaleString('vi-VN')} đ
@@ -153,7 +231,7 @@ function SearchPage() {
                                             <div className={cx('meta-info')}>
                                                 <span>{post.viewCount || 0} lượt xem</span>
                                                 <span>•</span>
-                                                <span>{new Date(post.createdAt).toLocaleDateString('vi-VN')}</span>
+                                                <span>{formatTimeAgo(post.createdAt)}</span>
                                             </div>
                                         </div>
                                     </div>

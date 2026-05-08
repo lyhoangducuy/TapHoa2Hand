@@ -63,7 +63,10 @@ public enum ErrorCode {
     FEEDBACK_NOT_FOUND(11001, "Feedback not found",HttpStatus.NOT_FOUND),
     FEEDBACK_ALREADY_EXISTS(11002, "Feedback already exists for this order",HttpStatus.BAD_REQUEST),
     ORDER_NOT_FOUND(11003, "Order not found",HttpStatus.NOT_FOUND),
-    INVALID_ORDER_STATUS(11004, "Order status is invalid for feedback",HttpStatus.BAD_REQUEST)
+    INVALID_ORDER_STATUS(11004, "Order status is invalid for feedback",HttpStatus.BAD_REQUEST),
+    INVALID_POST_TYPE(7004, "Post type is invalid",HttpStatus.BAD_REQUEST),
+    FILE_UPLOAD_LIMIT_EXCEEDED(10006, "Maximum 10 images allowed",HttpStatus.BAD_REQUEST),
+    INVALID_PAYMENT_METHOD(12001, "Payment method is invalid",HttpStatus.BAD_REQUEST)
     ;
     private int code;
     private String message;

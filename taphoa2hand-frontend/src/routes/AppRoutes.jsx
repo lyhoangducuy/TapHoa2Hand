@@ -28,6 +28,7 @@ import ChatBox from '../pages/ChatBox/ChatBoxPage';
 import BannerSlider from '../pages/Banner/BannerSlider';
 import AdminBannerPage from '../pages/Admin/Banner/AdminBannerPage';
 import AdminFeedbackPage from '../pages/Admin/Feedback/AdminFeedbackPage';
+import OrderAdminPage from '../pages/Admin/Orders/OrderAdminPage';
 const publicRoutes = [
     { path: '/', component: HomePage },
     { path: '/login', component: LoginPage, layout: NoSidebarLayout },
@@ -55,6 +56,7 @@ const privateRoutes = [
 // 3. DÀNH RIÊNG CHO ADMIN
 const adminRoutes = [
     { path: '/admin', component: DashboardPage, layout: AdminLayout },
+    { path: '/admin/dashboard', component: DashboardPage, layout: AdminLayout },
     { path: '/admin/users', component: UserAdminPage, layout: AdminLayout },
     { path: '/admin/users/detail/:userId', component: UserEditPage, layout: AdminLayout },
     { path: '/admin/users/create', component: UserCreatePage, layout: AdminLayout },
@@ -72,6 +74,9 @@ const adminRoutes = [
     {path:'/admin/banners',component: AdminBannerPage, layout: AdminLayout},
     //feedbacks
     {path:'/admin/feedbacks',component: AdminFeedbackPage, layout: AdminLayout},
+    //order admin
+    {path:'/admin/orders', component: OrderAdminPage, layout: AdminLayout},
+    {path:'/admin/orders/:orderId', component: OrderDetailPage, layout: AdminLayout},
     //noti
     {path:"/admin/notifications",component:Notificationpage,layout:AdminLayout}
 ];

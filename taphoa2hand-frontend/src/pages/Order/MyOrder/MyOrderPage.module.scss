@@ -150,6 +150,13 @@
                     &:hover { background: #f8f9fa; border-color: #adb5bd; }
                 }
 
+                .btn-feedback {
+                    background: #ffd43b;
+                    border: none;
+                    color: #212529;
+                    &:hover { background: #fab005; box-shadow: 0 4px 12px rgba(250, 176, 5, 0.2); }
+                }
+
                 .seller-actions {
                     display: flex;
                     gap: 8px;
@@ -211,5 +218,48 @@
     .page-info {
         font-size: 14px;
         color: #57606f;
+    }
+}
+
+// Feedback Modal Styles
+.feedback-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+.feedback-modal {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }

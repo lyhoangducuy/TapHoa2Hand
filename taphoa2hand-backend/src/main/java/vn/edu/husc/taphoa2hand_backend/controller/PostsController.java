@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import vn.edu.husc.taphoa2hand_backend.dto.request.PostsDTO.PostCreateRequest;
@@ -40,6 +41,32 @@ public class PostsController {
                 .result(postsService.getAllPosts())
                 .build();
     }
+
+    @GetMapping("/test-search")
+    public ApiResponse<String> testSearch() {
+        // Test search without any filters
+        Page<PostsResponse> result = postsService.searchPosts(null, null, null, null, 0, 10);
+        return ApiResponse.<String>builder()
+                .message("Test search completed")
+                .result("Found " + result.getTotalElements() + " posts")
+                .build();
+    }
+
+    @PostMapping("/create-test-data")
+    public ApiResponse<String> createTestData() {
+        try {
+            // This would create test data - but we need to implement this in service
+            return ApiResponse.<String>builder()
+                    .message("Test data creation not implemented yet")
+                    .result("Please create posts manually first")
+                    .build();
+        } catch (Exception e) {
+            return ApiResponse.<String>builder()
+                    .message("Error creating test data")
+                    .result(e.getMessage())
+                    .build();
+        }
+    }
   
     
 
@@ -53,7 +80,7 @@ public class PostsController {
 
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<PostDetailResponse> createPost(
-            @RequestPart("request") PostCreateRequest request,
+            @Valid @RequestPart("request") PostCreateRequest request,
             @RequestPart(value = "images", required = false) List<MultipartFile> images) {
 
         PostDetailResponse newPost = postsService.createPost(request, images);
@@ -72,7 +99,7 @@ public class PostsController {
 
     @PutMapping(value = "/edit/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<PostDetailResponse> editPost(@PathVariable("postId") String postId,
-            @RequestPart("request") PostEditRequest request,
+            @Valid @RequestPart("request") PostEditRequest request,
             @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
         PostDetailResponse newPost = postsService.editPost(postId, request, images);
 
@@ -86,14 +113,26 @@ public class PostsController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String location,
             @RequestParam(required = false) String categoryId,
+            @RequestParam(required = false) String postType,
             @RequestParam(defaultValue = "0") int page, // Mặc định trang 0 (trang đầu tiên)
             @RequestParam(defaultValue = "10") int size) { // Mặc định 10 bài/trang
 
         return ApiResponse.<Page<PostsResponse>>builder()
                 .message("Tìm kiếm thành công")
-                .result(postsService.searchPosts(keyword, location, categoryId, page, size))
+                .result(postsService.searchPosts(keyword, location, categoryId, postType, page, size))
                 .build();
     }
+
+    @GetMapping("/selling")
+    public ApiResponse<Page<PostsResponse>> getSellingPosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ApiResponse.<Page<PostsResponse>>builder()
+                .message("Lấy tin đang bán thành công")
+                .result(postsService.getSellingPosts(page, size))
+                .build();
+    }
+
     @GetMapping("/my-post")
     public ApiResponse<Page<PostsResponse>> myPost(
             @RequestParam(defaultValue = "0") int page, // Mặc định trang 0 (trang đầu tiên)

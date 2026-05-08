@@ -30,16 +30,16 @@ const FeedbackForm = ({ orderId, onSuccess, onCancel, targetUserName }) => {
                 imageUrl: imageUrl.trim()
             };
 
+            console.log('Gửi feedback data:', feedbackData);
             const response = await feedbackService.createFeedback(feedbackData);
+            console.log('Response từ API:', response);
             
-            if (response.data?.code === 0) {
-                toast.success('Tạo đánh giá thành công!');
-                onSuccess?.(response.data?.result);
-            } else {
-                toast.error(response.data?.message || 'Lỗi khi tạo đánh giá');
-            }
+            // Nếu không throw error, nghĩa là thành công
+            toast.success('Tạo đánh giá thành công!');
+            onSuccess?.(response.result);
         } catch (error) {
-            console.error('Lỗi:', error);
+            console.error('Lỗi khi tạo feedback:', error);
+            console.error('Error message:', error.message);
             toast.error(error.message || 'Không thể tạo đánh giá');
         } finally {
             setLoading(false);

@@ -66,19 +66,45 @@ public class PostsService {
     FileService fileService;
 
     @Transactional(readOnly = true)
-    public Page<PostsResponse> searchPosts(String keyword, String location, String categoryId, int page, int size) {
+    public Page<PostsResponse> searchPosts(String keyword, String location, String categoryId, String postType, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        
+
+        // Debug logging
+        System.out.println("SearchPosts called with:");
+        System.out.println("keyword: " + keyword);
+        System.out.println("location: " + location);
+        System.out.println("categoryId: " + categoryId);
+        System.out.println("postType: " + postType);
+        System.out.println("page: " + page + ", size: " + size);
+
+        // Convert postType string to enum if provided
+        PostTypeEnum postTypeEnum = null;
+        if (postType != null && !postType.trim().isEmpty()) {
+            try {
+                postTypeEnum = PostTypeEnum.valueOf(postType.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                System.out.println("Invalid postType: " + postType);
+            }
+        }
+
         // Cung cấp Enum trực tiếp từ Service
         Page<Posts> postsPage = postsRepository.searchPosts(
-                keyword, 
-                location, 
-                categoryId, 
-                PostStatusEnum.AVAILABLE, // <--- Thêm cái này
+                keyword,
+                location,
+                categoryId,
+                postTypeEnum,
+                PostStatusEnum.AVAILABLE,
                 pageable
         );
-        
+
+        System.out.println("Found " + postsPage.getTotalElements() + " posts");
+
         return postsPage.map(postsMapper::toPostsResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PostsResponse> getSellingPosts(int page, int size) {
+        return searchPosts(null, null, null, PostTypeEnum.SELL.name(), page, size);
     }
 
     @Transactional(readOnly = true)
@@ -105,6 +131,15 @@ public class PostsService {
     @Transactional
     public PostDetailResponse createPost(PostCreateRequest request, List<MultipartFile> images) {
         System.out.println("enter create post service");
+        
+        // Validate images
+        if (images == null || images.isEmpty()) {
+            throw new AppException(ErrorCode.FILE_NOT_FOUND);
+        }
+        if (images.size() > 10) {
+            throw new AppException(ErrorCode.FILE_UPLOAD_LIMIT_EXCEEDED);
+        }
+        
         // 1. Lấy thông tin user
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         Users currentUser = usersRepository.findByUsername(currentUsername)
@@ -114,13 +149,17 @@ public class PostsService {
         Posts newPost = postsMapper.toPosts(request);
         newPost.setUser(currentUser);
 
+        // Validate and convert payment methods with error handling
         if (request.getListAcceptedPaymentMethodsValue() != null
                 && !request.getListAcceptedPaymentMethodsValue().isEmpty()) {
-            List<PaymentMethodEnum> paymentEnums = request.getListAcceptedPaymentMethodsValue().stream()
-                    .map(PaymentMethodEnum::valueOf) // Ép từ String ("DIRECT") sang kiểu Enum
-                    .toList();
-
-            newPost.setAcceptedPaymentMethods(paymentEnums); // Nhét vào Entity trước khi lưu
+            try {
+                List<PaymentMethodEnum> paymentEnums = request.getListAcceptedPaymentMethodsValue().stream()
+                        .map(PaymentMethodEnum::valueOf) // Ép từ String ("DIRECT") sang kiểu Enum
+                        .toList();
+                newPost.setAcceptedPaymentMethods(paymentEnums); // Nhét vào Entity trước khi lưu
+            } catch (IllegalArgumentException e) {
+                throw new AppException(ErrorCode.INVALID_PAYMENT_METHOD);
+            }
         }
 
         // BÍ QUYẾT Ở ĐÂY: MapStruct ĐÃ tự tạo sẵn PostDetail và PostAddress bên trong
@@ -144,29 +183,33 @@ public class PostsService {
         }
         newPost.setCategories(attachedCategories);
         newPost.setStatus(PostStatusEnum.AVAILABLE); // Mặc định khi tạo là ACTIVE, có thể đổi sau
-        newPost.setPostType(PostTypeEnum.valueOf(request.getPostTypeName().trim()));
+        
+        // Validate and convert PostType with error handling
+        try {
+            newPost.setPostType(PostTypeEnum.valueOf(request.getPostTypeName().trim()));
+        } catch (IllegalArgumentException e) {
+            throw new AppException(ErrorCode.INVALID_POST_TYPE);
+        }
 
         // 4. Xử lý Ảnh
-        if (images != null && !images.isEmpty()) {
-            List<PostImage> postImages = new ArrayList<>();
-            int sortOrder = 0;
-            for (MultipartFile image : images) {
-                try {
-                    var imageUrl = fileService.uploadMedia(image);
-                    PostImage postImage = new PostImage();
-                    postImage.setImageUrl(imageUrl.getUrl());
-                    postImage.setIsThumbnail(sortOrder == 0);
-                    postImage.setSortOrder(sortOrder++);
+        List<PostImage> postImages = new ArrayList<>();
+        int sortOrder = 0;
+        for (MultipartFile image : images) {
+            try {
+                var imageUrl = fileService.uploadMedia(image);
+                PostImage postImage = new PostImage();
+                postImage.setImageUrl(imageUrl.getUrl());
+                postImage.setIsThumbnail(sortOrder == 0);
+                postImage.setSortOrder(sortOrder++);
 
-                    // Set khóa ngoại
-                    postImage.setPost(newPost);
-                    postImages.add(postImage);
-                } catch (IOException e) {
-                    throw new AppException(ErrorCode.FILE_NOT_FOUND);
-                }
+                // Set khóa ngoại
+                postImage.setPost(newPost);
+                postImages.add(postImage);
+            } catch (IOException e) {
+                throw new AppException(ErrorCode.FILE_NOT_FOUND);
             }
-            newPost.setPostImages(postImages);
         }
+        newPost.setPostImages(postImages);
 
         // 5. CHỐT HẠ: Lưu đúng 1 lần duy nhất!
         // Tránh lưu lắt nhắt gây lỗi Update/Delete không đáng có

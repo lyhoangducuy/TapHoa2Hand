@@ -1,0 +1,39 @@
+.error-modal {
+  .error-header {
+    background-color: #f8d7da;
+    border-bottom: 2px solid #f5c6cb;
+  }
+
+  .error-header .modal-title {
+    color: #721c24;
+    font-weight: 600;
+  }
+
+  .error-message {
+    color: #721c24;
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #f8d7da;
+    border-left: 4px solid #f5c6cb;
+    border-radius: 4px;
+  }
+
+  .error-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+
+    li {
+      color: #721c24;
+      margin-bottom: 8px;
+      padding: 8px 12px;
+      background-color: #f8d7da;
+      border-left: 4px solid #f5c6cb;
+      border-radius: 4px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}

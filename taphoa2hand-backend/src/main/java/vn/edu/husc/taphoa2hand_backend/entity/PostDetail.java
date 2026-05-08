@@ -30,7 +30,6 @@ public class PostDetail {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
-
     String description;
     String brand;
     String model;

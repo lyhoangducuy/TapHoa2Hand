@@ -2,12 +2,33 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import classNames from 'classnames/bind';
+import { jwtDecode } from 'jwt-decode';
 import styles from './OrderDetailPage.module.scss';
 import orderService from '../../../services/orderService';
 import * as feedbackService from '../../../services/feedbackService';
 import { FeedbackForm, FeedbackList } from '../../../components/Feedback';
 
 const cx = classNames.bind(styles);
+
+const getCurrentUserId = () => {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+
+    try {
+        const decoded = jwtDecode(token);
+        return decoded?.id || decoded?.userId || decoded?.sub || null;
+    } catch (error) {
+        console.error('Token decode failed:', error);
+        return null;
+    }
+};
+
+const statusSteps = [
+    { key: 'PENDING', label: 'Chờ xác nhận' },
+    { key: 'CONFIRMED', label: 'Đã xác nhận' },
+    { key: 'DELIVERED', label: 'Đã giao thành công' },
+    { key: 'CANCELLED', label: 'Đã hủy' },
+];
 
 const OrderDetailPage = () => {
     const { orderId } = useParams();
@@ -19,7 +40,7 @@ const OrderDetailPage = () => {
     const [showFeedbackForm, setShowFeedbackForm] = useState(false);
     const [existingFeedback, setExistingFeedback] = useState(null);
 
-    const currentUserId = localStorage.getItem("userId");
+    const currentUserId = getCurrentUserId();
 
     useEffect(() => {
         const fetchOrder = async () => {
@@ -44,10 +65,11 @@ const OrderDetailPage = () => {
     const fetchFeedback = async (orderId) => {
         try {
             const res = await feedbackService.getFeedbackByOrderId(orderId);
-            if (res.data?.result) {
-                setExistingFeedback(res.data?.result);
+            if (res.result) {
+                setExistingFeedback(res.result);
             }
-        } catch {
+        } catch (error) {
+            // Không có feedback hoặc lỗi, set null
             setExistingFeedback(null);
         }
     };
@@ -98,7 +120,7 @@ const OrderDetailPage = () => {
         const statusMap = {
             PENDING: { color: '#ff9800', text: '⏳ Chờ xác nhận' },
             CONFIRMED: { color: '#2196f3', text: '✓ Đã xác nhận' },
-            COMPLETED: { color: '#4caf50', text: '✓ Đã hoàn thành' },
+            DELIVERED: { color: '#4caf50', text: '✓ Đã giao thành công' },
             CANCELLED: { color: '#f44336', text: '✗ Đã hủy' },
         };
         return statusMap[status] || { color: '#999', text: status };
@@ -113,7 +135,7 @@ const OrderDetailPage = () => {
 
     const orderStatus = order.status?.name;
     const statusInfo = getStatusBadge(orderStatus);
-    const isBuyer = order.buyserId === currentUserId;
+    const isBuyer = order.buyerId === currentUserId;
     const isSeller = order.sellerId === currentUserId;
 
     const paymentMethod = order.paymentMethod?.name === 'MIDDLEMAN' ? 'Trung gian (Bảo vệ)' : 'Trực tiếp';
@@ -136,6 +158,30 @@ const OrderDetailPage = () => {
             <div className={cx('content')}>
                 {/* Order Info Grid */}
                 <div className={cx('info-grid')}>
+                    {/* Order Status Timeline */}
+                    <div className={cx('card')}>
+                        <div className={cx('card-header')}>
+                            <h3>📍 Trạng thái đơn hàng</h3>
+                        </div>
+                        <div className={cx('card-body')}>
+                            {statusSteps.map((step, index) => {
+                                const currentIndex = statusSteps.findIndex((item) => item.key === order.status?.name);
+                                const active = currentIndex >= index && order.status?.name !== 'CANCELLED';
+                                const cancelled = order.status?.name === 'CANCELLED' && step.key === 'CANCELLED';
+                                return (
+                                    <div key={step.key} className={cx('info-row')}>
+                                        <span className={cx('label')}>
+                                            {index + 1}. {step.label}
+                                        </span>
+                                        <span className={cx('value')}>
+                                            {cancelled ? 'Đã hủy' : active ? 'Hoàn thành' : 'Chưa'}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     {/* Shipping Info */}
                     <div className={cx('card')}>
                         <div className={cx('card-header')}>
@@ -187,7 +233,7 @@ const OrderDetailPage = () => {
                         </div>
                         <div className={cx('card-body')}>
                             <div className={cx('user-info')}>
-                                <p className={cx('user-id')}>{order.buyserId}</p>
+                                <p className={cx('user-id')}>{order.buyerId}</p>
                                 {isBuyer && <span className={cx('you-badge')}>Bạn</span>}
                             </div>
                         </div>
@@ -282,7 +328,7 @@ const OrderDetailPage = () => {
                 )}
 
                 {/* Feedback Section - For Seller */}
-                {isSeller && (
+                {isSeller && orderStatus === 'DELIVERED' && (
                     <div className={cx('feedback-section')}>
                         <div className={cx('section-header')}>
                             <h2>⭐ Đánh giá từ khách hàng</h2>

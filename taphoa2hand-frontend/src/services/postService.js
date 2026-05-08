@@ -93,18 +93,35 @@ export const editPost = async (postId, postData, images) => {
         throw error;
     }
 };
-export const searchPosts = async (keyword, location, categoryId, page = 0, size = 10) => {
+export const searchPosts = async (keyword, location, categoryId, postType, page = 0, size = 10) => {
     try {
         const params = { page, size }; // Spring nhận page từ 0
         if (keyword) params.keyword = keyword;
         if (location) params.location = location;
         if (categoryId) params.categoryId = categoryId;
+        if (postType) params.postType = postType;
 
         const response = await httpClient.get(`${API.SEARCH}`, { params });
         
         return response.data; 
     } catch (error) {
         console.error("Lỗi khi tìm kiếm:", error);
+        throw error;
+    }
+};
+
+export const getSellingPosts = async (page = 0, size = 10) => {
+    try {
+        const response = await httpClient.get(`${API.SEARCH}`, {
+            params: {
+                page,
+                size,
+                postType: 'SELL'
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Lỗi khi lấy tin đăng đang bán:", error);
         throw error;
     }
 };

@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -139,6 +140,12 @@ public class OrderService {
         return orders.map(orderMapper::toResponse);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    public Page<OrderResponse> getAllOrders(Pageable pageable) {
+        return orderRepository.findAll(pageable)
+                .map(orderMapper::toResponse);
+    }
+
     // 4. READ: Chi tiết 1 đơn hàng
     
    public OrderResponse getOrderDetails(String orderId) {
@@ -150,8 +157,10 @@ public class OrderService {
 
     boolean isBuyer = order.getBuyer().getId().equals(currentUser.getId());
     boolean isSeller = order.getSeller().getId().equals(currentUser.getId());
+    boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+            .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
 
-    if (!isBuyer && !isSeller) {
+    if (!isBuyer && !isSeller && !isAdmin) {
         throw new AppException(ErrorCode.UNAUTHORIZED);
     }
 

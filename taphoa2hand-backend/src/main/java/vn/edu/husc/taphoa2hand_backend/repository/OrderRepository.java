@@ -31,7 +31,7 @@ public interface OrderRepository extends JpaRepository<Order,String>{
     List<Order> findBySeller(Users seller);
     
     // Kiểm tra xem có đơn hàng active nào cho post này từ buyer này không
-    @Query("SELECT o FROM Order o JOIN o.items oi WHERE oi.post.id = :postId AND o.buyer.id = :buyerId AND o.status != 'CANCELLED'")
+    @Query("SELECT o FROM Order o JOIN o.items oi WHERE oi.post.id = :postId AND o.buyer.id = :buyerId AND o.status != OrderStatusEnum.CANCELLED ")
     Optional<Order> findActiveOrderByPostAndBuyer(@Param("postId") String postId, @Param("buyerId") String buyerId);
 
 }

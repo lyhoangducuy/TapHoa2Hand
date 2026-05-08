@@ -42,6 +42,11 @@ export const getOrderDetail = async (orderId) => {
     // API.GET_DETAIL_ORDER(orderId) trả về string URL
     return await httpClient.get(API.GET_DETAIL_ORDER(orderId), getAuthHeaders());
 };
+
+export const getAdminOrders = async (page = 0, size = 10, sort = 'createdAt,desc') => {
+    return await httpClient.get(`${API.ADMIN_GET_ORDERS}?page=${page}&size=${size}&sort=${sort}`, getAuthHeaders());
+};
+
 export const updateOrderStatus = async (orderId, newStatus) => {
     return await httpClient.patch(
         `${API.UPDATE_ORDER_STATUS(orderId)}?newStatus=${newStatus}`,
@@ -60,7 +65,10 @@ export const updateOrderStatusPost = async (orderId, newStatus) => {
 // Thêm cục này vào cuối cùng file orderService.js của bạn
 const orderService = {
     createOrder,
+    getPurchases,
+    getSales,
     getOrderDetail,
+    getAdminOrders,
     updateOrderStatus,
     updateOrderStatusPost
 };

@@ -4,7 +4,8 @@ import styles from "./Sidebar.module.scss";
 import { 
     FiMenu, FiX, FiSmartphone, FiMonitor, FiHome, 
     FiTruck, FiShoppingBag, FiCoffee, FiChevronRight, FiList 
-} from 'react-icons/fi';// Nhớ sửa lại đường dẫn import cho đúng với project của bạn
+} from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 import { getAllCategories } from "../../../../services/categoryService";
 
 const cx = classNames.bind(styles);
@@ -27,6 +28,7 @@ const getCategoryIcon = (categoryName) => {
 function Sidebar() {
     const [isOpen, setIsOpen] = useState(false);
     const [categories, setCategories] = useState([]); // Chứa danh sách danh mục từ API
+    const navigate = useNavigate();
 
     // Xử lý scroll body khi mở Sidebar
     useEffect(() => {
@@ -57,6 +59,12 @@ function Sidebar() {
         fetchCategories();
     }, []);
 
+    // Xử lý khi click vào danh mục
+    const handleCategoryClick = (categoryId) => {
+        setIsOpen(false); // Đóng sidebar
+        navigate(`/search?categoryId=${categoryId}`); // Chuyển đến trang search với category filter
+    };
+
     return (
         <>
             {/* 1. NÚT ĐỂ MỞ SIDEBAR */}
@@ -85,7 +93,11 @@ function Sidebar() {
                     <h3 className={cx("title")}>Khám phá danh mục</h3>
                     <ul className={cx("category-list")}>
                         {categories.map((item) => (
-                            <li key={item.id} className={cx("category-item")}>
+                            <li 
+                                key={item.id} 
+                                className={cx("category-item")}
+                                onClick={() => handleCategoryClick(item.id)}
+                            >
                                 <div className={cx("item-left")}>
                                     {/* Render icon động */}
                                     <span className={cx("icon")}>{getCategoryIcon(item.name)}</span>

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import vn.edu.husc.taphoa2hand_backend.entity.Posts;
 import vn.edu.husc.taphoa2hand_backend.entity.Users;
 import vn.edu.husc.taphoa2hand_backend.entity.PostStatusEnum; // Thêm import này
+import vn.edu.husc.taphoa2hand_backend.entity.PostTypeEnum; // Thêm import này
 import java.util.List;
 
 @Repository
@@ -20,7 +21,8 @@ public interface PostsRepository extends JpaRepository<Posts, String> {
                         "WHERE (:keyword IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
                         "AND (:location IS NULL OR :location = '' OR LOWER(a.city) LIKE LOWER(CONCAT('%', :location, '%')) OR LOWER(a.ward) LIKE LOWER(CONCAT('%', :location, '%'))) "
                         +
-                        "AND (:categoryName IS NULL OR :categoryName = '' OR c.name = :categoryName) " +
+                        "AND (:categoryId IS NULL OR :categoryId = '' OR c.id = :categoryId) " +
+                        "AND (:postType IS NULL OR p.postType = :postType) " +
                         "AND (:status IS NULL OR p.status = :status)", countQuery = "SELECT COUNT(DISTINCT p) FROM Posts p "
                                         +
                                         "LEFT JOIN p.postAddress a " +
@@ -29,11 +31,13 @@ public interface PostsRepository extends JpaRepository<Posts, String> {
                                         +
                                         "AND (:location IS NULL OR :location = '' OR LOWER(a.city) LIKE LOWER(CONCAT('%', :location, '%')) OR LOWER(a.ward) LIKE LOWER(CONCAT('%', :location, '%'))) "
                                         +
-                                        "AND (:categoryName IS NULL OR :categoryName = '' OR c.name = :categoryName) " +
-                                        "AND (:status IS NULL OR p.status = :status)")
+                                        "AND (:categoryId IS NULL OR :categoryId = '' OR c.id = :categoryId) " +
+                        "AND (:postType IS NULL OR p.postType = :postType) " +
+                        "AND (:status IS NULL OR p.status = :status)")
         Page<Posts> searchPosts(@Param("keyword") String keyword,
                         @Param("location") String location,
-                        @Param("categoryName") String categoryName,
+                        @Param("categoryId") String categoryId,
+                        @Param("postType") PostTypeEnum postType,
                         @Param("status") PostStatusEnum status,
                         Pageable pageable);
 

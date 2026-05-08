@@ -1,19 +1,12 @@
 import { API, CONFIG } from "../configurations/configuration";
-import httpClient from "../configurations/httpClient";
 import { getToken } from "./localStorageService";
 
-// Helper để lấy headers có kèm Token
-const getAuthHeaders = () => ({
-    headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getToken()}`
-    }
-});
 
 // Tạo đánh giá mới
 export const createFeedback = async (feedbackData) => {
     try {
-        const response = await fetch(`${CONFIG.API_GATEWAY}/api/feedbacks/create`, {
+        console.log('Gọi API createFeedback với data:', feedbackData);
+        const response = await fetch(`${CONFIG.API_GATEWAY}${API.CREATE_FEEDBACK}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -21,7 +14,18 @@ export const createFeedback = async (feedbackData) => {
             },
             body: JSON.stringify(feedbackData)
         });
-        return await response.json();
+
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        if (!response.ok) {
+            // Lấy message từ ApiResponse
+            const errorMessage = data?.message || data?.error || 'Lỗi khi tạo đánh giá';
+            throw new Error(errorMessage);
+        }
+
+        return data;
     } catch (error) {
         console.error("Lỗi khi tạo đánh giá:", error);
         throw error;
@@ -32,14 +36,23 @@ export const createFeedback = async (feedbackData) => {
 export const getFeedbackByOrderId = async (orderId) => {
     try {
         const token = getToken();
-        const response = await fetch(`${CONFIG.API_GATEWAY}/api/feedbacks/${orderId}`, {
+        const response = await fetch(`${CONFIG.API_GATEWAY}${API.GET_FEEDBACK_BY_ORDER(orderId)}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             }
         });
-        return await response.json();
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            // Lấy message từ ApiResponse
+            const errorMessage = data?.message || data?.error || 'Lỗi khi lấy đánh giá';
+            throw new Error(errorMessage);
+        }
+
+        return data;
     } catch (error) {
         console.error("Lỗi khi lấy đánh giá:", error);
         throw error;
@@ -48,66 +61,252 @@ export const getFeedbackByOrderId = async (orderId) => {
 
 // Lấy danh sách đánh giá của một người dùng (người bị đánh giá)
 export const getFeedbackByTargetUser = async (userId, page = 0, size = 20) => {
-    return await httpClient.get(
-        `/api/feedbacks/user/${userId}?page=${page}&size=${size}&sort=createdAt,desc`,
-        getAuthHeaders()
-    );
+    try {
+        const response = await fetch(`${CONFIG.API_GATEWAY}${API.GET_FEEDBACK_BY_USER(userId)}?page=${page}&size=${size}&sort=createdAt,desc`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            const errorMessage = data?.message || data?.error || 'Lỗi khi lấy danh sách đánh giá';
+            throw new Error(errorMessage);
+        }
+
+        return data;
+    } catch (error) {
+        console.error("Lỗi khi lấy danh sách đánh giá:", error);
+        throw error;
+    }
 };
 
 // Lấy danh sách đánh giá của người dùng hiện tại (người đánh giá)
 export const getFeedbackByReviewer = async (userId, page = 0, size = 20) => {
-    return await httpClient.get(
-        `/api/feedbacks/reviewer/${userId}?page=${page}&size=${size}&sort=createdAt,desc`,
-        getAuthHeaders()
-    );
+    try {
+        const response = await fetch(`${CONFIG.API_GATEWAY}${API.GET_FEEDBACK_BY_REVIEWER(userId)}?page=${page}&size=${size}&sort=createdAt,desc`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            const errorMessage = data?.message || data?.error || 'Lỗi khi lấy danh sách đánh giá';
+            throw new Error(errorMessage);
+        }
+
+        return data;
+    } catch (error) {
+        console.error("Lỗi khi lấy danh sách đánh giá:", error);
+        throw error;
+    }
 };
 
 // Lấy điểm đánh giá trung bình của một người dùng
 export const getAverageRating = async (userId) => {
-    return await httpClient.get(`/api/feedbacks/rating/${userId}`, getAuthHeaders());
+    try {
+        const response = await fetch(`${CONFIG.API_GATEWAY}${API.GET_AVERAGE_RATING(userId)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            const errorMessage = data?.message || data?.error || 'Lỗi khi lấy điểm đánh giá';
+            throw new Error(errorMessage);
+        }
+
+        return data;
+    } catch (error) {
+        console.error("Lỗi khi lấy điểm đánh giá:", error);
+        throw error;
+    }
 };
 
 // Lấy số lượng đánh giá của một người dùng
 export const countFeedback = async (userId) => {
-    return await httpClient.get(`/api/feedbacks/count/${userId}`, getAuthHeaders());
+    try {
+        const response = await fetch(`${CONFIG.API_GATEWAY}${API.COUNT_FEEDBACK(userId)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            const errorMessage = data?.message || data?.error || 'Lỗi khi lấy số lượng đánh giá';
+            throw new Error(errorMessage);
+        }
+
+        return data;
+    } catch (error) {
+        console.error("Lỗi khi lấy số lượng đánh giá:", error);
+        throw error;
+    }
 };
 
 // Lấy danh sách đánh giá cho hồ sơ người dùng
 export const getFeedbacksForProfile = async (userId) => {
-    return await httpClient.get(`/api/feedbacks/profile/${userId}`, getAuthHeaders());
+    try {
+        const response = await fetch(`${CONFIG.API_GATEWAY}${API.GET_FEEDBACKS_FOR_PROFILE(userId)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            const errorMessage = data?.message || data?.error || 'Lỗi khi lấy đánh giá hồ sơ';
+            throw new Error(errorMessage);
+        }
+
+        return data;
+    } catch (error) {
+        console.error("Lỗi khi lấy đánh giá hồ sơ:", error);
+        throw error;
+    }
 };
 
 // Cập nhật đánh giá
 export const updateFeedback = async (feedbackId, feedbackData) => {
-    return await httpClient.put(
-        `/api/feedbacks/${feedbackId}`,
-        feedbackData,
-        getAuthHeaders()
-    );
+    try {
+        const response = await fetch(`${CONFIG.API_GATEWAY}${API.UPDATE_FEEDBACK(feedbackId)}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            },
+            body: JSON.stringify(feedbackData)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            const errorMessage = data?.message || data?.error || 'Lỗi khi cập nhật đánh giá';
+            throw new Error(errorMessage);
+        }
+
+        return data;
+    } catch (error) {
+        console.error("Lỗi khi cập nhật đánh giá:", error);
+        throw error;
+    }
 };
 
 // Xóa đánh giá
 export const deleteFeedback = async (feedbackId) => {
-    return await httpClient.delete(`/api/feedbacks/${feedbackId}`, getAuthHeaders());
+    try {
+        const response = await fetch(`${CONFIG.API_GATEWAY}${API.DELETE_FEEDBACK(feedbackId)}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            const errorMessage = data?.message || data?.error || 'Lỗi khi xóa đánh giá';
+            throw new Error(errorMessage);
+        }
+
+        return data;
+    } catch (error) {
+        console.error("Lỗi khi xóa đánh giá:", error);
+        throw error;
+    }
 };
 
 // Admin: Lấy tất cả đánh giá
 export const adminGetAllFeedbacks = async (page = 0, size = 20) => {
-    return await httpClient.get(
-        `/admin/feedbacks?page=${page}&size=${size}&sort=createdAt,desc`,
-        getAuthHeaders()
-    );
+    try {
+        const response = await fetch(`${CONFIG.API_GATEWAY}${API.ADMIN_GET_ALL_FEEDBACKS}?page=${page}&size=${size}&sort=createdAt,desc`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            const errorMessage = data?.message || data?.error || 'Lỗi khi lấy danh sách đánh giá';
+            throw new Error(errorMessage);
+        }
+
+        return data;
+    } catch (error) {
+        console.error("Lỗi khi lấy danh sách đánh giá:", error);
+        throw error;
+    }
 };
 
 // Admin: Xóa đánh giá
 export const adminDeleteFeedback = async (feedbackId) => {
-    return await httpClient.delete(`/admin/feedbacks/${feedbackId}`, getAuthHeaders());
+    try {
+        const response = await fetch(`${CONFIG.API_GATEWAY}${API.ADMIN_DELETE_FEEDBACK(feedbackId)}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            const errorMessage = data?.message || data?.error || 'Lỗi khi xóa đánh giá';
+            throw new Error(errorMessage);
+        }
+
+        return data;
+    } catch (error) {
+        console.error("Lỗi khi xóa đánh giá:", error);
+        throw error;
+    }
 };
 
 // Admin: Lấy đánh giá của một người dùng
 export const adminGetFeedbacksByUser = async (userId, page = 0, size = 20) => {
-    return await httpClient.get(
-        `/admin/feedbacks/user/${userId}?page=${page}&size=${size}&sort=createdAt,desc`,
-        getAuthHeaders()
-    );
+    try {
+        const response = await fetch(`${CONFIG.API_GATEWAY}${API.ADMIN_GET_FEEDBACKS_BY_USER(userId)}?page=${page}&size=${size}&sort=createdAt,desc`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            const errorMessage = data?.message || data?.error || 'Lỗi khi lấy đánh giá người dùng';
+            throw new Error(errorMessage);
+        }
+
+        return data;
+    } catch (error) {
+        console.error("Lỗi khi lấy đánh giá người dùng:", error);
+        throw error;
+    }
 };
+

@@ -1,0 +1,21 @@
+.order-page {
+  padding: 1rem;
+}
+
+.search-input {
+  max-width: 420px;
+}
+
+.loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 3rem 0;
+  color: #6c757d;
+}
+
+.order-id {
+  max-width: 220px;
+  word-break: break-all;
+}

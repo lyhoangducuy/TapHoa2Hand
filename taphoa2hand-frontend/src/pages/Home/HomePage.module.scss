@@ -1,12 +1,112 @@
 .wrapper {
-    padding: 20px 0;
+    padding: 0 0 20px 0;
+    margin-top: -90px;
+}
+
+/* CATEGORIES SECTION */
+.categories-section {
+    padding: 12px 0;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 0;
+}
+
+.categories-scroll {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 0 20px;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: #ddd #f0f0f0;
+
+    &::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: #f0f0f0;
+        border-radius: 10px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #ddd;
+        border-radius: 10px;
+
+        &:hover {
+            background: #bbb;
+        }
+    }
+}
+
+.category-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+
+    &:hover {
+        background: #F1C40F;
+        border-color: #F1C40F;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(241, 196, 15, 0.3);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+}
+
+.view-all-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #F1C40F;
+    border: 1px solid #F1C40F;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+
+    &:hover {
+        background: #f39c12;
+        border-color: #f39c12;
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(243, 156, 18, 0.4);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+}
+
+/* View All Section */
+.view-all-section {
+    display: flex;
+    justify-content: center;
+    margin-top: 32px;
+    margin-bottom: 20px;
 }
 
 .page-title {
     font-size: 20px;
     font-weight: 700;
     color: #333;
-    margin-bottom: 24px;
+    margin-top: 16px;
+    margin-bottom: 16px;
     text-transform: uppercase; /* Viết hoa toàn bộ */
 }
 
@@ -66,24 +166,19 @@
 
     /* Badge trạng thái tin đăng (ví dụ: Đang bán) */
     .status-badge {
-        position: absolute;
-        bottom: 8px;
-        left: 8px;
-        background: rgba(0, 0, 0, 0.6); /* Nền đen mờ */
-        color: #fff;
-        padding: 2px 8px;
-        font-size: 10px;
+        padding: 3px 8px;
+        font-size: 11px;
         border-radius: 4px;
         text-transform: uppercase;
+        font-weight: 500;
+        background: rgba(0, 0, 0, 0.6);
+        color: #fff;
     }
 
     /* Badge loại tin đăng (Tin rao bán / Tin cần mua) */
     .type-badge {
-        position: absolute;
-        top: 8px;
-        left: 8px;
-        padding: 2px 8px;
-        font-size: 10px;
+        padding: 3px 8px;
+        font-size: 11px;
         border-radius: 4px;
         text-transform: uppercase;
         font-weight: 600;
@@ -118,6 +213,42 @@
     display: flex;
     flex-direction: column;
     flex: 1;
+
+    .badges {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+
+    /* Badge styles inside info area */
+    .badges {
+        align-items: center;
+    }
+
+    .badges .type-badge,
+    .badges .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        font-size: 11px;
+        border-radius: 999px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .badges .type-badge {
+        text-transform: none;
+        color: #fff;
+    }
+
+    .badges .type-badge.sell { background: #2d9cdb; }
+    .badges .type-badge.buy { background: #f39c12; }
+
+    .badges .status-badge { background: rgba(0,0,0,0.08); color: #222; font-weight: 500; }
+    .badges .status-badge.available { background: #dff7e0; color: #227f3a; }
+    .badges .status-badge.sold { background: #ffe6e6; color: #c0392b; }
+    .badges .status-badge.pending { background: #fff7e6; color: #b9770e; }
 
     .post-title {
         font-size: 14px;

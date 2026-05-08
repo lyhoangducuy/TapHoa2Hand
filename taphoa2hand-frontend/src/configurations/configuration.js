@@ -13,6 +13,7 @@ export const API = {
 
     GET_POST:"/posts/getAll",
     CODE:"/auth/send-code",
+    ADMIN_DASHBOARD_STATS: "/admin/dashboard",
     RECODE:"/auth/re-send-code",
     UPDATE_AVATAR:"/user/update-avatar",
     DETAIL_POST:(postId) => `/posts/${postId}`,
@@ -62,6 +63,7 @@ export const API = {
     ADMIN_UPDATE_BANNER:(bannerId)=>`/admin/banner/${bannerId}`,
     ADMIN_DELETE_BANNER:(bannerId)=>`/admin/banner/${bannerId}`,
     ADMIN_CREATE_BANNER:"/admin/banner",
+    ADMIN_GET_ORDERS:"/order/admin",
     GET_BANNERS:"/banners",
 
     // Notification
@@ -79,6 +81,17 @@ export const API = {
     UPDATE_ORDER_STATUS_POST: "/order/update",
     //
     POST_CHAT_AI:"/chat-ai/chat-with-image",
-    GET_MYPOST:"/posts/my-post",
-
+    //Feedback
+    CREATE_FEEDBACK:"/api/feedbacks/create",
+    GET_FEEDBACK_BY_ORDER:(orderId)=>`/api/feedbacks/${orderId}`,
+    GET_FEEDBACK_BY_USER:(userId)=>`/api/feedbacks/user/${userId}`,
+    GET_FEEDBACK_BY_REVIEWER:(userId)=>`/api/feedbacks/reviewer/${userId}`,
+    GET_AVERAGE_RATING:(userId)=>`/api/feedbacks/rating/${userId}`,
+    COUNT_FEEDBACK:(userId)=>`/api/feedbacks/count/${userId}`,
+    GET_FEEDBACKS_FOR_PROFILE:(userId)=>`/api/feedbacks/profile/${userId}`,
+    UPDATE_FEEDBACK:(feedbackId)=>`/api/feedbacks/${feedbackId}`,
+    DELETE_FEEDBACK:(feedbackId)=>`/api/feedbacks/${feedbackId}`,
+    ADMIN_GET_ALL_FEEDBACKS:"/admin/feedbacks",
+    ADMIN_DELETE_FEEDBACK:(feedbackId)=>`/admin/feedbacks/${feedbackId}`,
+    ADMIN_GET_FEEDBACKS_BY_USER:(userId)=>`/admin/feedbacks/user/${userId}`
 };

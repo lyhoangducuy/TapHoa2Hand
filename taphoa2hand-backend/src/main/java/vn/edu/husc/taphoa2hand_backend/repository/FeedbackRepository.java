@@ -15,11 +15,14 @@ import java.util.Optional;
 @Repository
 public interface FeedbackRepository extends JpaRepository<Feedback, String> {
     
+    @Query("SELECT f FROM Feedback f LEFT JOIN FETCH f.reviewer LEFT JOIN FETCH f.targetUser WHERE f.order.id = :orderId")
     Optional<Feedback> findByOrderId(String orderId);
     
-    Page<Feedback> findByTargetUser(Users targetUser, Pageable pageable);
+    @Query("SELECT f FROM Feedback f LEFT JOIN FETCH f.reviewer LEFT JOIN FETCH f.targetUser WHERE f.targetUser.id = :targetUserId")
+    Page<Feedback> findByTargetUser(String targetUserId, Pageable pageable);
     
-    Page<Feedback> findByReviewer(Users reviewer, Pageable pageable);
+    @Query("SELECT f FROM Feedback f LEFT JOIN FETCH f.reviewer LEFT JOIN FETCH f.targetUser WHERE f.reviewer.id = :reviewerId")
+    Page<Feedback> findByReviewer(String reviewerId, Pageable pageable);
     
     @Query("SELECT AVG(f.rating) FROM Feedback f WHERE f.targetUser.id = :userId")
     Double getAverageRatingByUserId(@Param("userId") String userId);
