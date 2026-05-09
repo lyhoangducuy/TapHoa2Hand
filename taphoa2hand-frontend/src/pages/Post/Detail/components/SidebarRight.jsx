@@ -138,7 +138,7 @@ const SidebarRight = ({ post, seller, address, isFavorite, setIsFavorite, curren
                 {payments && payments.length > 0 && (
                     <div className={cx('payments')}>
                         <FiCreditCard style={{ marginRight: '8px' }} />
-                        <span>Thanh toán: <strong>{payments.map(p => p.label).join(' - ')}</strong></span>
+                        <span>Thanh toán: <strong>{payments.map(p => p.description || p.name).join(' - ')}</strong></span>
                     </div>
                 )}
             </div>

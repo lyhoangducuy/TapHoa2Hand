@@ -1,7 +1,14 @@
 // src/components/ProtectedRoute.jsx
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode'; // Import thư viện giải mã
+// Lightweight JWT decode helper (no dependency) — only parses payload
+const decodeJwt = (token) => {
+    try {
+        return JSON.parse(atob(token.split('.')[1]));
+    } catch (error) {
+        throw new Error('Invalid token');
+    }
+};
 
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
     // 1. Lấy token từ LocalStorage
@@ -14,7 +21,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
 
     try {
         // Giải mã token để lấy thông tin bên trong (giống y hệt cái bạn thấy trên Postman)
-        const decodedToken = jwtDecode(token); 
+        const decodedToken = decodeJwt(token); 
 
         // Kiểm tra 2: Đã đăng nhập, nhưng Route yêu cầu quyền Admin mà scope lại không phải ROLE_ADMIN
         if (requireAdmin && decodedToken.scope !== 'ROLE_ADMIN') {

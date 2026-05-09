@@ -31,13 +31,26 @@ public interface PostsMapper {
     @Mapping(source = "postDetail.id", target = "postDetailId")
     @Mapping(source = "postAddress.id", target = "postAddressId")
     @Mapping(source = "postType", target = "postType", qualifiedByName = "postTypeToResponse")
-    @Mapping(source = "status", target = "status", qualifiedByName = "statusToString")
+    @Mapping(target = "status", expression = "java(mapPostStatus(post))")
     PostsResponse toPostsResponse(Posts post);
 
     @Named("statusToString")
     default PostStatusResponse statusToString(PostStatusEnum status) {
         if (status == null) {
             return null;
+        }
+        return PostStatusResponse.builder()
+                .name(status.getName())
+                .displayName(status.getDisplayName())
+                .build();
+    }
+
+    default PostStatusResponse mapPostStatus(Posts post) {
+        if (post == null || post.getStatus() == null) return null;
+        PostStatusEnum status = post.getStatus();
+        // Nếu là bài cần mua và status lưu là AVAILABLE thì hiển thị SEARCHING (Đang tìm)
+        if (post.getPostType() == PostTypeEnum.BUY && status == PostStatusEnum.AVAILABLE) {
+            status = PostStatusEnum.SEARCHING;
         }
         return PostStatusResponse.builder()
                 .name(status.getName())

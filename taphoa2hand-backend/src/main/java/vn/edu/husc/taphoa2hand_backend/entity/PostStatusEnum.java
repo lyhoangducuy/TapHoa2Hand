@@ -8,7 +8,8 @@ import lombok.Getter;
 public enum PostStatusEnum {
     AVAILABLE("AVAILABLE", "Đang bán"),
     SOLD("SOLD", "Đã bán"),
-    HIDDEN("HIDDEN", "Đã ẩn");
+    HIDDEN("HIDDEN", "Đã ẩn"), 
+    SEARCHING("SEARCHING", "Đang tìm"),;
     private String name;
     private String displayName;
 }

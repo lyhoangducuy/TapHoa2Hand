@@ -5,7 +5,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -130,6 +132,11 @@ public class OrderService {
         return orders.map(orderMapper::toResponse);
     }
 
+    public Page<OrderResponse> getPurchase(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return getPurchase(pageable);
+    }
+
     // 3. READ: Danh sách đơn hàng khách đặt (Dành cho Người bán)
     public Page<OrderResponse> getSales(Pageable pageable) {
         var context = SecurityContextHolder.getContext();
@@ -138,6 +145,11 @@ public class OrderService {
                 () -> new AppException(ErrorCode.USER_NOT_FOUND));
         Page<Order> orders = orderRepository.findBySellerOrderByCreatedAtDesc(seller, pageable);
         return orders.map(orderMapper::toResponse);
+    }
+
+    public Page<OrderResponse> getSales(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return getSales(pageable);
     }
 
     @PreAuthorize("hasRole('ADMIN')")

@@ -182,13 +182,19 @@ public class PostsService {
             attachedCategories.add(cat);
         }
         newPost.setCategories(attachedCategories);
-        newPost.setStatus(PostStatusEnum.AVAILABLE); // Mặc định khi tạo là ACTIVE, có thể đổi sau
-        
+
         // Validate and convert PostType with error handling
         try {
             newPost.setPostType(PostTypeEnum.valueOf(request.getPostTypeName().trim()));
         } catch (IllegalArgumentException e) {
             throw new AppException(ErrorCode.INVALID_POST_TYPE);
+        }
+
+        // Set default status depending on post type: BUY -> SEARCHING, others -> AVAILABLE
+        if (newPost.getPostType() == PostTypeEnum.BUY) {
+            newPost.setStatus(PostStatusEnum.SEARCHING);
+        } else {
+            newPost.setStatus(PostStatusEnum.AVAILABLE);
         }
 
         // 4. Xử lý Ảnh

@@ -125,6 +125,22 @@ export const getSellingPosts = async (page = 0, size = 10) => {
         throw error;
     }
 };
+
+export const getBuyingPosts = async (page = 0, size = 10) => {
+    try {
+        const response = await httpClient.get(`${API.SEARCH}`, {
+            params: {
+                page,
+                size,
+                postType: 'BUY'
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Lỗi khi lấy tin đăng cần mua:", error);
+        throw error;
+    }
+};
 // =========================================================
 // CÁC API DÀNH CHO ADMIN QUẢN LÝ BÀI VIẾT (POSTS)
 // =========================================================

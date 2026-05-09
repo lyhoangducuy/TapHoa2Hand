@@ -40,19 +40,25 @@ public class OrderController {
 
     // Lấy đơn hàng mình đi mua (phân trang)
     @GetMapping("/purchases")
-    public ApiResponse<Page<OrderResponse>> getMyPurchases(Pageable pageable) {
+    public ApiResponse<Page<OrderResponse>> getMyPurchases(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
         return ApiResponse.<Page<OrderResponse>>builder()
                 .message("Lấy đơn hàng mình đi mua thanh cong")
-                .result(orderService.getPurchase(pageable))
+                .result(orderService.getPurchase(page, size))
                 .build();
     }
 
     // Lấy đơn hàng mình là người bán (phân trang)
     @GetMapping("/sales")
-    public ApiResponse<Page<OrderResponse>> getMySales(Pageable pageable) {
+    public ApiResponse<Page<OrderResponse>> getMySales(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
         return ApiResponse.<Page<OrderResponse>>builder()
                 .message("Lấy đơn hàng mình là người bán thanh cong")
-                .result(orderService.getSales(pageable))
+                .result(orderService.getSales(page, size))
                 .build();
     }
 

@@ -75,6 +75,16 @@ export const getInfoAdmin = async (userId) => {
     return response.data; 
 };
 
+export const getUserById = async (userId) => {
+    try {
+        const response = await httpClient.get(`/user/${userId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching user by id', error);
+        return null;
+    }
+};
+
 export const createUserAdmin = async (userData) => {
     try {
         const token = getToken();

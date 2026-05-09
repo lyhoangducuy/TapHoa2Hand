@@ -17,11 +17,18 @@ const ImageGallery = ({ images, status, postType }) => {
 
     // Helper lấy displayName cho status
     const getStatusDisplay = () => {
-        if (!status) return 'Đang bán';
-        if (typeof status === 'object') {
-            return status.displayName || status.name || 'Đang bán';
+        const statusName = status && typeof status === 'object' ? status.name : status;
+        const statusDisplay = status && typeof status === 'object' ? (status.displayName || status.name) : status;
+
+        // If postType is BUY but backend still stores AVAILABLE, show SEARCHING (Đang tìm)
+        const postTypeName = postType && typeof postType === 'object' ? postType.name : postType;
+        if (postTypeName === 'BUY' && statusName === 'AVAILABLE') return 'Đang tìm';
+
+        if (!statusDisplay) return 'Đang bán';
+        if (typeof statusDisplay === 'string') {
+            return statusDisplay === 'AVAILABLE' ? 'Đang bán' : statusDisplay;
         }
-        return status === 'AVAILABLE' ? 'Đang bán' : status;
+        return statusDisplay;
     };
 
     // Helper lấy displayName cho postType
@@ -46,9 +53,17 @@ const ImageGallery = ({ images, status, postType }) => {
                 )}
                 
                 {/* Hiển thị status badge */}
-                <span className={cx('status-tag', typeof status === 'object' ? status?.name?.toLowerCase() : status?.toLowerCase())}>
-                    {getStatusDisplay()}
-                </span>
+                {(() => {
+                    const statusName = status && typeof status === 'object' ? status.name : status;
+                    const postTypeName = postType && typeof postType === 'object' ? postType.name : postType;
+                    // normalize class name: if BUY+AVAILABLE, use 'searching'
+                    const className = (postTypeName === 'BUY' && statusName === 'AVAILABLE') ? 'searching' : (statusName || '').toString().toLowerCase();
+                    return (
+                        <span className={cx('status-tag', className)}>
+                            {getStatusDisplay()}
+                        </span>
+                    );
+                })()}
             </div>
             <div className={cx('thumb-row')}>
                 {images && images.map((img) => (

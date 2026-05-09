@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom'; // Thêm cái này để chuyển trang
 import classNames from 'classnames/bind';
 import styles from './HomePage.module.scss';
-import { getSellingPosts } from '../../services/postService';
+import { getSellingPosts, getBuyingPosts } from '../../services/postService';
 import { getAllCategories } from '../../services/categoryService';
 import BannerSlider from '../Banner/BannerSlider';
 
@@ -26,7 +26,8 @@ const formatTimeAgo = (dateString) => {
 
 const HomePage = () => {
     const cx = classNames.bind(styles);
-    const [posts, setPosts] = useState([]);
+    const [sellingPosts, setSellingPosts] = useState([]);
+    const [buyingPosts, setBuyingPosts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate(); // Hook điều hướng
@@ -39,10 +40,20 @@ const HomePage = () => {
                 setCategories(categoriesData.result || categoriesData || []);
 
                 // Fetch posts đang bán
-                const postsData = await getSellingPosts(0, 10);
-                console.log("API Response (selling posts):", postsData);
-                if (postsData && postsData.result && Array.isArray(postsData.result.content)) {
-                    setPosts(postsData.result.content);
+                const sellingData = await getSellingPosts(0, 10);
+                if (sellingData && sellingData.result && Array.isArray(sellingData.result.content)) {
+                    setSellingPosts(sellingData.result.content);
+                }
+
+                // Fetch posts cần mua
+                try {
+                    const buyingData = await getBuyingPosts(0, 10);
+                    if (buyingData && buyingData.result && Array.isArray(buyingData.result.content)) {
+                        setBuyingPosts(buyingData.result.content);
+                    }
+                } catch (e) {
+                    // If buying endpoint fails, ignore so selling still shows
+                    console.warn('Không lấy được tin cần mua:', e);
                 }
             } catch (err) {
                 console.error("Giao diện HomePage lỗi khi gọi API:", err);
@@ -86,10 +97,10 @@ const HomePage = () => {
             )}
 
             <BannerSlider></BannerSlider>
-            <h2 className={cx('page-title')}>Tin đăng đang bán</h2>
+            <h2 className={cx('page-title')}>Tin đăng đang bán mới nhất</h2>
 
             <div className={cx('product-grid')}>
-                {posts.map((post) => (
+                {sellingPosts.map((post) => (
                     <div
                         key={post.id}
                         className={cx('product-card')}
@@ -122,25 +133,93 @@ const HomePage = () => {
                                 {post.price?.toLocaleString('vi-VN')} đ
                             </p>
 
-                            <div className={cx('meta-info')}>
-                                <span>{post.viewCount || 0} lượt xem</span>
-                                <span>•</span>
-                                <span>{formatTimeAgo(post.createdAt)}</span>
-                            </div>
+                                {/* Payment methods */}
+                                {post.acceptedPaymentMethods && post.acceptedPaymentMethods.length > 0 && (
+                                    <div className={cx('payments')}>
+                                        {post.acceptedPaymentMethods.map((pm) => (
+                                            <span key={pm.name} className={cx('payment-badge')}>
+                                                {pm.description || pm.name}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
                         </div>
                     </div>
                 ))}
             </div>
 
-            {/* View All Button */}
             <div className={cx('view-all-section')}>
                 <button
                     className={cx('view-all-btn')}
-                    onClick={() => navigate('/search')}
+                    onClick={() => navigate('/search?postType=SELL')}
                 >
-                    Xem tất cả tin đăng
+                    Xem tất cả tin rao bán
                 </button>
             </div>
+
+            {/* Buying posts section */}
+            <section className={cx('section')}>
+                <h2 className={cx('page-title')}>Tin đăng cần mua mới nhất</h2>
+
+                <div className={cx('product-grid')}>
+                    {buyingPosts.map((post) => (
+                        <div
+                            key={post.id}
+                            className={cx('product-card')}
+                            onClick={() => handleProductClick(post.id)}
+                        >
+                            <div className={cx('image-wrapper')}>
+                                {post.postImages && post.postImages.length > 0 ? (
+                                    <img src={post.postImages[0].imageUrl} alt={post.title} />
+                                ) : (
+                                    <div className={cx('no-image')}>Không ảnh</div>
+                                )}
+                            </div>
+
+                            <div className={cx('info-wrapper')}>
+                                <div className={cx('badges')}>
+                                    {post.postType && (
+                                        <span className={cx('type-badge', post.postType.name?.toLowerCase() || 'buy')}>
+                                            {post.postType.displayName || post.postType.name || 'Tin cần mua'}
+                                        </span>
+                                    )}
+                                    {post.status && (
+                                        <span className={cx('status-badge', post.status.name?.toLowerCase() || 'available')}>
+                                            {post.status.displayName || post.status.name || 'Đang tìm chủ'}
+                                        </span>
+                                    )}
+                                </div>
+
+                                <h3 className={cx('post-title')}>{post.title}</h3>
+                                <p className={cx('price')}>
+                                    {post.price?.toLocaleString('vi-VN')} đ
+                                </p>
+
+                                    {/* Payment methods */}
+                                    {post.acceptedPaymentMethods && post.acceptedPaymentMethods.length > 0 && (
+                                        <div className={cx('payments')}>
+                                            {post.acceptedPaymentMethods.map((pm) => (
+                                                <span key={pm.name} className={cx('payment-badge')}>
+                                                    {pm.description || pm.name}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className={cx('view-all-section')}>
+                    <button
+                        className={cx('view-all-btn')}
+                        onClick={() => navigate('/search?postType=BUY')}
+                    >
+                        Xem tất cả tin cần mua
+                    </button>
+                </div>
+            </section>
         </div>
     );
 };
