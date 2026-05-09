@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import vn.edu.husc.taphoa2hand_backend.dto.request.Noti.NotificationRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.Order.OrderRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.response.AdminUsers.AdminUsersResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Order.OrderResponse;
@@ -45,6 +46,7 @@ public class OrderService {
     PostsRepository postsRepository;
     OrderMapper orderMapper; // Inject Mapper vào đây\
     ConversationRepository conversationRepository;
+    NotificationService notificationService;
 
     private String getUserStringId() {
         var context = SecurityContextHolder.getContext();
@@ -118,7 +120,15 @@ public class OrderService {
                 .build();
         order.setItems(List.of(item));
 
+
         order = orderRepository.save(order);
+        String orderLink = "/order/myOrder/" + order.getId();
+        notificationService.createNotification(NotificationRequest.builder()
+                .content("Bạn có một đơn hàng mới từ " + buyer.getUsername())
+                .userIds(List.of(seller.getId()))
+                .link(orderLink)
+                .build());
+        
         return orderMapper.toResponse(order);
     }
 

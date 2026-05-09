@@ -36,7 +36,6 @@ public class NotificationService {
     WebSocketSessionService webSocketSessionService;
 
     @Transactional
-    @PreAuthorize("hasRole('ADMIN')")
     public NotificationResponse createNotification(NotificationRequest request) {
         // 1. Map Request sang Entity
         Notification notification = notificationMapper.toNotification(request);
