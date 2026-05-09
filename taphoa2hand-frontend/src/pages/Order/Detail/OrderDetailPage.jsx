@@ -2,20 +2,29 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import classNames from 'classnames/bind';
-import { jwtDecode } from 'jwt-decode';
 import styles from './OrderDetailPage.module.scss';
 import orderService from '../../../services/orderService';
+import { getUserById } from '../../../services/userService';
 import * as feedbackService from '../../../services/feedbackService';
 import { FeedbackForm, FeedbackList } from '../../../components/Feedback';
 
 const cx = classNames.bind(styles);
+
+const decodeJwt = (token) => {
+    try {
+        return JSON.parse(atob(token.split('.')[1]));
+    } catch (error) {
+        console.error('Invalid token when decoding JWT:', error);
+        return null;
+    }
+};
 
 const getCurrentUserId = () => {
     const token = localStorage.getItem('token');
     if (!token) return null;
 
     try {
-        const decoded = jwtDecode(token);
+        const decoded = decodeJwt(token);
         return decoded?.id || decoded?.userId || decoded?.sub || null;
     } catch (error) {
         console.error('Token decode failed:', error);
@@ -39,18 +48,48 @@ const OrderDetailPage = () => {
     const [actionLoading, setActionLoading] = useState(false);
     const [showFeedbackForm, setShowFeedbackForm] = useState(false);
     const [existingFeedback, setExistingFeedback] = useState(null);
+    const [buyerInfo, setBuyerInfo] = useState({});
+    const [sellerInfo, setSellerInfo] = useState({});
 
     const currentUserId = getCurrentUserId();
+
+    const getUserIdFromOrder = (orderData, userIdField) => {
+        if (!orderData) return null;
+        if (orderData[userIdField]) return orderData[userIdField];
+        const userObj = orderData[userIdField.replace('Id', '')];
+        if (typeof userObj === 'string') return userObj;
+        if (userObj && typeof userObj === 'object') return userObj.id;
+        return null;
+    };
+
+    const fetchUserInfo = async (userId, setter) => {
+        if (!userId) return;
+        try {
+            const res = await getUserById(userId);
+            const data = res?.result || res?.data || res;
+            if (data) setter(data);
+        } catch (error) {
+            console.error('Error fetching user info', userId, error);
+        }
+    };
 
     useEffect(() => {
         const fetchOrder = async () => {
             try {
                 setLoading(true);
                 const res = await orderService.getOrderDetail(orderId);
-                setOrder(res.data?.result);
-                
-                if (res.data?.result?.id) {
-                    fetchFeedback(res.data?.result?.id);
+                const responseOrder = res.data?.result || res.data || res;
+                setOrder(responseOrder);
+
+                const buyerId = getUserIdFromOrder(responseOrder, 'buyerId');
+                const sellerId = getUserIdFromOrder(responseOrder, 'sellerId');
+                setBuyerInfo({});
+                setSellerInfo({});
+                await fetchUserInfo(buyerId, setBuyerInfo);
+                await fetchUserInfo(sellerId, setSellerInfo);
+
+                if (responseOrder?.id) {
+                    fetchFeedback(responseOrder.id);
                 }
             } catch {
                 toast.error("Không tải được đơn hàng");
@@ -68,7 +107,7 @@ const OrderDetailPage = () => {
             if (res.result) {
                 setExistingFeedback(res.result);
             }
-        } catch (error) {
+        } catch {
             // Không có feedback hoặc lỗi, set null
             setExistingFeedback(null);
         }
@@ -76,8 +115,15 @@ const OrderDetailPage = () => {
 
     const refreshOrder = async () => {
         const res = await orderService.getOrderDetail(orderId);
-        setOrder(res.data?.result);
-        fetchFeedback(res.data?.result?.id);
+        const responseOrder = res.data?.result || res.data || res;
+        setOrder(responseOrder);
+        fetchFeedback(responseOrder?.id);
+        const buyerId = getUserIdFromOrder(responseOrder, 'buyerId');
+        const sellerId = getUserIdFromOrder(responseOrder, 'sellerId');
+        setBuyerInfo({});
+        setSellerInfo({});
+        await fetchUserInfo(buyerId, setBuyerInfo);
+        await fetchUserInfo(sellerId, setSellerInfo);
     };
 
     const handleConfirm = async () => {
@@ -135,8 +181,10 @@ const OrderDetailPage = () => {
 
     const orderStatus = order.status?.name;
     const statusInfo = getStatusBadge(orderStatus);
-    const isBuyer = order.buyerId === currentUserId;
-    const isSeller = order.sellerId === currentUserId;
+    const buyerId = getUserIdFromOrder(order, 'buyerId');
+    const sellerId = getUserIdFromOrder(order, 'sellerId');
+    const isBuyer = buyerId === currentUserId;
+    const isSeller = sellerId === currentUserId;
 
     const paymentMethod = order.paymentMethod?.name === 'MIDDLEMAN' ? 'Trung gian (Bảo vệ)' : 'Trực tiếp';
     const paymentStatus = order.paymentStatus?.displayName || 'Chưa thanh toán';
@@ -233,7 +281,16 @@ const OrderDetailPage = () => {
                         </div>
                         <div className={cx('card-body')}>
                             <div className={cx('user-info')}>
-                                <p className={cx('user-id')}>{order.buyerId}</p>
+                                <div className={cx('user-meta')}>
+                                    <div className={cx('avatar')}>
+                                        {buyerInfo.avatar ? <img src={buyerInfo.avatar} alt="avatar" /> : '👤'}
+                                    </div>
+                                    <div>
+                                        <p className={cx('user-id')}>{buyerInfo.fullName || buyerInfo.username || order.buyerId}</p>
+                                        {buyerInfo.username && <p className={cx('user-username')}>@{buyerInfo.username}</p>}
+                                        {buyerInfo.email && <p className={cx('user-email')}>{buyerInfo.email}</p>}
+                                    </div>
+                                </div>
                                 {isBuyer && <span className={cx('you-badge')}>Bạn</span>}
                             </div>
                         </div>
@@ -246,7 +303,16 @@ const OrderDetailPage = () => {
                         </div>
                         <div className={cx('card-body')}>
                             <div className={cx('user-info')}>
-                                <p className={cx('user-id')}>{order.sellerId}</p>
+                                <div className={cx('user-meta')}>
+                                    <div className={cx('avatar')}>
+                                        {sellerInfo.avatar ? <img src={sellerInfo.avatar} alt="avatar" /> : '🏪'}
+                                    </div>
+                                    <div>
+                                        <p className={cx('user-id')}>{sellerInfo.fullName || sellerInfo.username || order.sellerId}</p>
+                                        {sellerInfo.username && <p className={cx('user-username')}>@{sellerInfo.username}</p>}
+                                        {sellerInfo.email && <p className={cx('user-email')}>{sellerInfo.email}</p>}
+                                    </div>
+                                </div>
                                 {isSeller && <span className={cx('you-badge')}>Bạn</span>}
                             </div>
                         </div>
