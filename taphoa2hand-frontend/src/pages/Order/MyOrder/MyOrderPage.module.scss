@@ -175,6 +175,13 @@
                         &:hover { background: #00a082; box-shadow: 0 4px 12px rgba(0, 184, 148, 0.2); }
                     }
                 }
+
+                .btn-deliver {
+                    background: #1e90ff;
+                    color: #fff;
+                    border: none;
+                    &:hover { background: #1873cc; box-shadow: 0 4px 12px rgba(30, 144, 255, 0.2); }
+                }
             }
         }
     }

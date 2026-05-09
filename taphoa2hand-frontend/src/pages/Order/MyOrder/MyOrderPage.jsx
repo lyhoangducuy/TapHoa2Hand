@@ -162,7 +162,7 @@ const MyOrderPage = () => {
                                             Xem chi tiết
                                         </button>
 
-                                        {activeTab === 'purchases' && (
+                                        {activeTab === 'purchases' && order.status?.name === 'DELIVERED' && (
                                             <button
                                                 className={cx('btn-feedback')}
                                                 onClick={() => handleFeedbackClick(order)}
@@ -186,6 +186,15 @@ const MyOrderPage = () => {
                                                     Xác nhận đơn
                                                 </button>
                                             </div>
+                                        )}
+
+                                        {activeTab === 'sales' && order.status?.name === 'CONFIRMED' && (
+                                            <button
+                                                className={cx('btn-deliver')}
+                                                onClick={() => handleUpdateStatus(order.id, 'DELIVERED')}
+                                            >
+                                                📦 Chuyển sang giao hàng thành công
+                                            </button>
                                         )}
                                     </div>
                                 </div>
