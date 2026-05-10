@@ -4,6 +4,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import vn.edu.husc.taphoa2hand_backend.dto.request.Order.OrderRequest;
+import vn.edu.husc.taphoa2hand_backend.dto.response.Order.BankInfoResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Order.OrderResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Order.OrderStatusEnumResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Order.PaymentStatusEnumResponse;
@@ -22,8 +23,8 @@ public interface OrderMapper {
     @Mapping(target = "seller", ignore = true)
     @Mapping(target = "status", constant = "PENDING")
     // @Mapping(target = "paymentStatus", constant = "UNPAID")
-    // @Mapping(target = "buyerBankInfo", source = "buyerBank")
-    // @Mapping(target = "sellerBankInfo", source = "sellerBank")
+    @Mapping(target = "buyerBankInfo", source = "buyerBank")
+    @Mapping(target = "sellerBankInfo", source = "sellerBank")
     @Mapping(target = "paymentMethod", ignore = true) // Bỏ ánh xạ tự động cho paymentMethod
     Order toOrder(OrderRequest dto);
 
@@ -36,6 +37,9 @@ public interface OrderMapper {
     @Mapping(target = "paymentMethod", expression = "java(mapPaymentMethod(order.getPaymentMethod()))")
     @Mapping(target = "paymentStatus", expression = "java(mapPaymentStatus(order.getPaymentStatus()))")
     OrderResponse toResponse(Order order);
+
+    OrderBankInfo toOrderBankInfo(OrderRequest.BankInfoDTO dto);
+    BankInfoResponse orderBankInfoToBankInfoResponse(OrderBankInfo bankInfo);
 
     // ================= ENUM → RESPONSE =================
 

@@ -21,8 +21,14 @@ public interface OrderRepository extends JpaRepository<Order,String>{
     // Danh sách đơn hàng đã mua (Buyer)
     Page<Order> findByBuyerOrderByCreatedAtDesc(Users buyer, Pageable pageable);
     
+    // Danh sách đơn hàng đã mua lọc theo trạng thái
+    Page<Order> findByBuyerAndStatusOrderByCreatedAtDesc(Users buyer, OrderStatusEnum status, Pageable pageable);
+    
     // Danh sách đơn hàng khách đặt (Seller)
     Page<Order> findBySellerOrderByCreatedAtDesc(Users seller, Pageable pageable);
+
+    // Danh sách đơn hàng khách đặt (Seller) lọc theo trạng thái
+    Page<Order> findBySellerAndStatusOrderByCreatedAtDesc(Users seller, OrderStatusEnum status, Pageable pageable);
     
     // Lấy tất cả đơn hàng của buyer (không phân trang)
     List<Order> findByBuyer(Users buyer);

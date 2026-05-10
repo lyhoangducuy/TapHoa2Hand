@@ -26,6 +26,8 @@ export const API = {
     GET_MYFAVORITES:"/favorites/my-favorites",
     CHECK_FAVORITE:(postId) => `/favorites/check/${postId}`,
     EDIT_POST:(postId) => `/posts/edit/${postId}`,
+    GET_MYPOST: "/posts/my-post",
+    GET_USER_POSTS: (userId) => `/posts/user/${userId}`,
     GET_POST_STATUS:"/post-status/getAll",
     GET_POST_TYPE:"/post-type/getAll",
     CREATE_CONVERSATION:"/conversations/create",

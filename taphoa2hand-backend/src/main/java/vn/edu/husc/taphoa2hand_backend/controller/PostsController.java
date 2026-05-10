@@ -143,4 +143,15 @@ public class PostsController {
                 .build();
             }
 
+    @GetMapping("/user/{userId}")
+    public ApiResponse<Page<PostsResponse>> getPostsByUser(
+            @PathVariable String userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ApiResponse.<Page<PostsResponse>>builder()
+                .message("Lấy bài viết của người dùng thành công")
+                .result(postsService.getPostsByUser(userId, page, size))
+                .build();
+    }
+
 }

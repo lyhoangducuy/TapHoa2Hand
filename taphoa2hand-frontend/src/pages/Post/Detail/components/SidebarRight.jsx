@@ -144,7 +144,12 @@ const SidebarRight = ({ post, seller, address, isFavorite, setIsFavorite, curren
             </div>
 
             <div className={cx('seller-card')}>
-                <div className={cx('seller-info')}>
+                <div
+                    className={cx('seller-info')}
+                    onClick={() => seller?.id && navigate(`/user/${seller.id}`)}
+                    style={{ cursor: seller?.id ? 'pointer' : 'default' }}
+                    title={seller?.id ? 'Xem trang cá nhân người bán' : undefined}
+                >
                     <div className={cx('avatar')}>
                         {seller?.avatar ? <img src={seller.avatar} alt="Avatar" /> : <FiUser />}
                     </div>

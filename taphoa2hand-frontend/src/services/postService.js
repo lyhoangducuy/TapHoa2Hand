@@ -279,10 +279,28 @@ export const getMyPosts = async (page = 0, size = 10) => {
                 Authorization: `Bearer ${token}`
             }
         });
-        // Trả về toàn bộ response.data để component tự bóc tách ApiResponse
         return response.data;
     } catch (error) {
         console.error("Lỗi khi lấy bài viết của tôi:", error);
+        throw error;
+    }
+};
+
+export const getUserPosts = async (userId, page = 0, size = 10) => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await httpClient.get(API.GET_USER_POSTS(userId), {
+            params: {
+                page: page,
+                size: size
+            },
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error(`Lỗi khi lấy bài viết của user ${userId}:`, error);
         throw error;
     }
 };

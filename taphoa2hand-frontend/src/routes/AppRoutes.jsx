@@ -2,6 +2,7 @@ import { HomePage } from '../pages/Home';
 import { SearchPage } from '../pages/Search';
 import { NoSidebarLayout } from '../components/Layouts/NoSidebarLayout';
 import { ProfilePage } from '../pages/Profile';
+import UserProfilePage from '../pages/Users/UserProfilePage';
 import { RegisterPage } from '../pages/Authe/Register';
 import { LoginPage } from '../pages/Authe/Login';
 import CodePage from '../pages/Authe/Register/Code/CodePage';
@@ -35,6 +36,7 @@ const publicRoutes = [
     { path: '/register', component: RegisterPage, layout: NoSidebarLayout },
     { path: '/search', component: SearchPage },
     { path: '/post-detail/:postId', component: PostDetailPage },
+    { path: '/user/:userId', component: UserProfilePage },
     {path:'/send-code',component: CodePage}
 ];
 

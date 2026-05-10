@@ -43,10 +43,11 @@ public class OrderController {
     public ApiResponse<Page<OrderResponse>> getMyPurchases(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
+            , @RequestParam(required = false) String status
     ) {
         return ApiResponse.<Page<OrderResponse>>builder()
                 .message("Lấy đơn hàng mình đi mua thanh cong")
-                .result(orderService.getPurchase(page, size))
+                .result(orderService.getPurchase(page, size, status))
                 .build();
     }
 
@@ -55,10 +56,11 @@ public class OrderController {
     public ApiResponse<Page<OrderResponse>> getMySales(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
+            , @RequestParam(required = false) String status
     ) {
         return ApiResponse.<Page<OrderResponse>>builder()
                 .message("Lấy đơn hàng mình là người bán thanh cong")
-                .result(orderService.getSales(page, size))
+                .result(orderService.getSales(page, size, status))
                 .build();
     }
 

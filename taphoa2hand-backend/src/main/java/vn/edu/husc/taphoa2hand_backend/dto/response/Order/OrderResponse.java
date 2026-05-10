@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PaymentMethodEnumResponse;
+import vn.edu.husc.taphoa2hand_backend.dto.response.Order.BankInfoResponse;
 
 @Data
 @AllArgsConstructor
@@ -29,13 +30,9 @@ public class OrderResponse {
      String receiverPhone;
      String shippingAddress;
 
+     BankInfoResponse buyerBankInfo;
+     BankInfoResponse sellerBankInfo;
+
     //  BankInfoResponse buyerBankInfo;
     //  BankInfoResponse sellerBankInfo;
-    
-    // @Data
-    // public static class BankInfoResponse {
-    //     private String bankName;
-    //     private String accountName;
-    //     private String accountNumber;
-    // }
 }

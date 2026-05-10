@@ -1,6 +1,6 @@
 import { API, CONFIG } from "../configurations/configuration";
 import httpClient from "../configurations/httpClient";
-import { getToken } from "./localstorageService";
+import { getToken } from "./localStorageService";
 
 // =========================================================
 // 1. CÁC API DÀNH CHO USER (NGƯỜI DÙNG TỰ QUẢN LÝ)
@@ -76,9 +76,14 @@ export const getInfoAdmin = async (userId) => {
 };
 
 export const getUserById = async (userId) => {
+    
     try {
-        const response = await httpClient.get(`/user/${userId}`);
-        return response.data;
+        const response = await httpClient.get(API.UPDATE_USER(userId), {
+            headers: {
+                Authorization: `Bearer ${getToken()}`
+            }
+        });
+        return response; // trả về toàn bộ axios response để frontend dùng chung với getMyInfo()
     } catch (error) {
         console.error('Error fetching user by id', error);
         return null;

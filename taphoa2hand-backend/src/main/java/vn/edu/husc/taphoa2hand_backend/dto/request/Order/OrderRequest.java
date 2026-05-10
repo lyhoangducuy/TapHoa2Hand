@@ -1,19 +1,23 @@
 package vn.edu.husc.taphoa2hand_backend.dto.request.Order;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import vn.edu.husc.taphoa2hand_backend.entity.PaymentMethodEnum;
+import vn.edu.husc.taphoa2hand_backend.validator.MiddlemanBankInfoConstraint;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
+@MiddlemanBankInfoConstraint
 public class OrderRequest {
     @NotBlank(message="Khong duoc de trong sellerID")
     String sellerId;
@@ -30,16 +34,27 @@ public class OrderRequest {
     @NotBlank(message="Khong duoc de trong shippingAddress")
     String shippingAddress;
 
-    // // Bank người mua (để hoàn tiền)
-    // BankInfoDTO buyerBank;
+    // Bank người mua (để hoàn tiền nếu cần)
+    @Valid
+    BankInfoDTO buyerBank;
 
-    // // Bank người bán (để nhận tiền)
-    // BankInfoDTO sellerBank;
+    // Bank người bán (để giải ngân khi giao dịch trung gian)
+    @Valid
+    BankInfoDTO sellerBank;
 
-    // @Data
-    // public static class BankInfoDTO {
-    //     private String bankName;
-    //     private String accountName;
-    //     private String accountNumber;
-    // }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class BankInfoDTO {
+        @NotBlank(message = "Tên ngân hàng không được để trống")
+        String bankName;
+
+        @NotBlank(message = "Tên chủ tài khoản không được để trống")
+        String accountName;
+
+        @NotBlank(message = "Số tài khoản không được để trống")
+        String accountNumber;
+    }
 }

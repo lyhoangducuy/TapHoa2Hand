@@ -362,4 +362,13 @@ public class PostsService {
         Page<Posts> pagePosts=postsRepository.findByUser(currentUser,pageable);;
         return pagePosts.map(postsMapper::toPostsResponse);
     }
+
+    @Transactional(readOnly = true)
+    public Page<PostsResponse> getPostsByUser(String userId, int page, int size) {
+        Users user = usersRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Posts> pagePosts = postsRepository.findByUser(user, pageable);
+        return pagePosts.map(postsMapper::toPostsResponse);
+    }
 }

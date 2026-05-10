@@ -91,6 +91,18 @@ public class OrderService {
                     throw new AppException(ErrorCode.ORDER_ALREADY_EXISTS);
                 });
         
+        if (request.getMethod() != null && request.getMethod().equalsIgnoreCase("MIDDLEMAN")) {
+            if (request.getBuyerBank() == null || request.getSellerBank() == null
+                    || request.getBuyerBank().getBankName() == null || request.getBuyerBank().getBankName().trim().isEmpty()
+                    || request.getBuyerBank().getAccountName() == null || request.getBuyerBank().getAccountName().trim().isEmpty()
+                    || request.getBuyerBank().getAccountNumber() == null || request.getBuyerBank().getAccountNumber().trim().isEmpty()
+                    || request.getSellerBank().getBankName() == null || request.getSellerBank().getBankName().trim().isEmpty()
+                    || request.getSellerBank().getAccountName() == null || request.getSellerBank().getAccountName().trim().isEmpty()
+                    || request.getSellerBank().getAccountNumber() == null || request.getSellerBank().getAccountNumber().trim().isEmpty()) {
+                throw new AppException(ErrorCode.VALID_EXCEPTION);
+            }
+        }
+
         // 2. Dùng Mapper để biến DTO thành Entity
         Order order = orderMapper.toOrder(request);
 
@@ -147,6 +159,24 @@ public class OrderService {
         return getPurchase(pageable);
     }
 
+    // New: hỗ trợ lọc theo trạng thái
+    public Page<OrderResponse> getPurchase(Pageable pageable, OrderStatusEnum status) {
+        if (status == null) return getPurchase(pageable);
+        var context = SecurityContextHolder.getContext();
+        String username = context.getAuthentication().getName();
+        Users buyer = usersRepository.findByUsername(username).orElseThrow(
+                () -> new AppException(ErrorCode.USER_NOT_FOUND));
+        Page<Order> orders = orderRepository.findByBuyerAndStatusOrderByCreatedAtDesc(buyer, status, pageable);
+        return orders.map(orderMapper::toResponse);
+    }
+
+    public Page<OrderResponse> getPurchase(int page, int size, String statusStr) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        OrderStatusEnum status = null;
+        if (statusStr != null && !statusStr.isBlank()) status = OrderStatusEnum.valueOf(statusStr);
+        return getPurchase(pageable, status);
+    }
+
     // 3. READ: Danh sách đơn hàng khách đặt (Dành cho Người bán)
     public Page<OrderResponse> getSales(Pageable pageable) {
         var context = SecurityContextHolder.getContext();
@@ -160,6 +190,24 @@ public class OrderService {
     public Page<OrderResponse> getSales(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return getSales(pageable);
+    }
+
+    // New: hỗ trợ lọc theo trạng thái cho sales
+    public Page<OrderResponse> getSales(Pageable pageable, OrderStatusEnum status) {
+        if (status == null) return getSales(pageable);
+        var context = SecurityContextHolder.getContext();
+        String username = context.getAuthentication().getName();
+        Users seller = usersRepository.findByUsername(username).orElseThrow(
+                () -> new AppException(ErrorCode.USER_NOT_FOUND));
+        Page<Order> orders = orderRepository.findBySellerAndStatusOrderByCreatedAtDesc(seller, status, pageable);
+        return orders.map(orderMapper::toResponse);
+    }
+
+    public Page<OrderResponse> getSales(int page, int size, String statusStr) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        OrderStatusEnum status = null;
+        if (statusStr != null && !statusStr.isBlank()) status = OrderStatusEnum.valueOf(statusStr);
+        return getSales(pageable, status);
     }
 
     @PreAuthorize("hasRole('ADMIN')")

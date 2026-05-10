@@ -66,7 +66,8 @@ public enum ErrorCode {
     INVALID_ORDER_STATUS(11004, "Order status is invalid for feedback",HttpStatus.BAD_REQUEST),
     INVALID_POST_TYPE(7004, "Post type is invalid",HttpStatus.BAD_REQUEST),
     FILE_UPLOAD_LIMIT_EXCEEDED(10006, "Maximum 10 images allowed",HttpStatus.BAD_REQUEST),
-    INVALID_PAYMENT_METHOD(12001, "Payment method is invalid",HttpStatus.BAD_REQUEST)
+    INVALID_PAYMENT_METHOD(12001, "Payment method is invalid",HttpStatus.BAD_REQUEST),
+    REPORT_NOT_FOUND(13001, "Report not found",HttpStatus.NOT_FOUND)
     ;
     private int code;
     private String message;

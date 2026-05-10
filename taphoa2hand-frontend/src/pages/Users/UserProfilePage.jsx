@@ -1,38 +1,29 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import classNames from 'classnames/bind';
-import styles from './ProfilePage.module.scss';
-import { getMyInfo } from '../../services/userService';
-import { getMyPosts } from '../../services/postService'; // Gọi API lấy bài viết
-import { removeToken } from '../../services/localstorageService';
-import UserPosts from './Post/UserPosts'; // Import component con
-
-import {
-    FiMail, FiPhone, FiMapPin, FiCalendar,
-    FiEdit3, FiShield, FiLogOut, FiLoader
-} from 'react-icons/fi';
+import styles from '../Profile/ProfilePage.module.scss';
+import { getUserById } from '../../services/userService';
+import { getUserPosts } from '../../services/postService';
+import UserPosts from '../Profile/Post/UserPosts';
+import { FiMail, FiPhone, FiMapPin, FiCalendar, FiLoader, FiShield } from 'react-icons/fi';
 
 const cx = classNames.bind(styles);
 
-function ProfilePage() {
+function UserProfilePage() {
+    const { userId } = useParams();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [uploadingAvatar, setUploadingAvatar] = useState(false);
-    
-    // State quản lý bài viết
+
     const [posts, setPosts] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
-    
-    const navigate = useNavigate();
-    const fileInputRef = useRef(null);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const [userResponse, postsResponse] = await Promise.all([
-                    getMyInfo().catch(() => null),
-                    getMyPosts(0, 10).catch(() => null)
+                    getUserById(userId).catch(() => null),
+                    getUserPosts(userId, 0, 10).catch(() => null)
                 ]);
 
                 if (userResponse?.data?.code === 1000) {
@@ -42,80 +33,50 @@ function ProfilePage() {
                 if (postsResponse?.code === 1000 && postsResponse.result) {
                     setPosts(postsResponse.result.content || []);
                     setTotalPages(postsResponse.result.totalPages || 1);
+                    setCurrentPage(0);
                 }
             } catch (error) {
-                console.error("Lỗi khi tải dữ liệu:", error);
+                console.error('Lỗi khi tải trang người dùng:', error);
             } finally {
                 setLoading(false);
             }
         };
         fetchData();
-    }, []);
+    }, [userId]);
 
     const handleLoadMorePosts = async () => {
         const nextPage = currentPage + 1;
         if (nextPage >= totalPages) return;
-
         try {
-            const response = await getMyPosts(nextPage, 10);
+            const response = await getUserPosts(userId, nextPage, 10);
             if (response?.code === 1000 && response.result) {
                 setPosts(prev => [...prev, ...(response.result.content || [])]);
                 setCurrentPage(nextPage);
             }
         } catch (error) {
-            console.error("Lỗi khi tải thêm bài viết:", error);
+            console.error('Lỗi khi tải thêm bài viết:', error);
         }
     };
 
-    const handleLogout = () => {
-        removeToken();
-        navigate('/');
-        window.location.reload();
-    };
+    if (loading) {
+        return (
+            <div className={cx('wrapper')}>
+                <div className={cx('loading')}>
+                    <FiLoader className={cx('spin')} /> Đang tải...
+                </div>
+            </div>
+        );
+    }
 
-    const handleEditAvatarClick = () => {
-        if (fileInputRef.current) fileInputRef.current.click();
-    };
-
-    const handleFileChange = async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        if (!file.type.startsWith('image/')) {
-            alert('Vui lòng chọn file hình ảnh!');
-            return;
-        }
-
-        setUploadingAvatar(true);
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:8080/user/update-avatar', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
-                body: formData
-            });
-
-            const data = await response.json();
-
-            if (data.code === 1000) {
-                setUser(prev => ({ ...prev, avatar: data.result.avatar }));
-            } else {
-                alert("Lỗi cập nhật ảnh: " + data.message);
-            }
-        } catch (error) {
-            console.error("Lỗi upload avatar:", error);
-            alert("Đã xảy ra lỗi khi tải ảnh lên máy chủ.");
-        } finally {
-            setUploadingAvatar(false);
-            event.target.value = null;
-        }
-    };
-
-    if (loading) return <div className={cx('loading')}>Đang tải thông tin...</div>;
-    if (!user) return <div className={cx('error')}>Vui lòng đăng nhập để xem thông tin.</div>;
+    if (!user) {
+        return (
+            <div className={cx('wrapper')}>
+                <div className={cx('profile-card')}>
+                    <h2>Người dùng không tồn tại</h2>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={cx('wrapper')}>
@@ -123,18 +84,15 @@ function ProfilePage() {
                 <div className={cx('header-section')}>
                     <div className={cx('avatar-container')}>
                         <img src={user.avatar || 'https://via.placeholder.com/150'} alt="Avatar" className={cx('avatar')} />
-                        <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} />
-                        <button className={cx('edit-avatar-btn')} onClick={handleEditAvatarClick} disabled={uploadingAvatar}>
-                            {uploadingAvatar ? <FiLoader className={cx('spin')} /> : <FiEdit3 />}
-                        </button>
                     </div>
 
                     <div className={cx('basic-info')}>
                         <div className={cx('label-group')}>
-                            <span className={cx('profile-badge')}>Hồ sơ của tôi</span>
+                            <span className={cx('profile-badge')}>Hồ sơ người dùng</span>
                         </div>
                         <h2 className={cx('full-name')}>{user.fullName || 'Người dùng'}</h2>
                         <p className={cx('username')}>@{user.username}</p>
+
                         <div className={cx('role-tags')}>
                             {user.roles?.map((role, index) => (
                                 <span key={index} className={cx('role-badge')}><FiShield /> {role.name}</span>
@@ -160,17 +118,6 @@ function ProfilePage() {
 
                 <hr className={cx('divider')} />
 
-                <div className={cx('profile-actions')}>
-                    <button className={cx('primary-action')} onClick={() => navigate('/edit-profile')}>
-                        Chỉnh sửa hồ sơ
-                    </button>
-                    <button className={cx('secondary-action')} onClick={handleLogout}>
-                        <FiLogOut /> Đăng xuất
-                    </button>
-                </div>
-
-                <hr className={cx('divider')} />
-
                 <div className={cx('details-section')}>
                     <h3 className={cx('section-title')}>Thông tin liên hệ</h3>
                     <div className={cx('detail-row')}>
@@ -179,7 +126,7 @@ function ProfilePage() {
                     </div>
                     <div className={cx('detail-row')}>
                         <div className={cx('detail-icon-wrapper')}><FiPhone /></div>
-                        <div className={cx('detail-content')}><span className={cx('detail-label')}>Số điện thoại</span><span className={cx('detail-value')}>{user.phone || 'Chưa cập nhật'}</span></div>
+                        <div className={cx('detail-content')}><span className={cx('detail-label')}>Số điện thoại</span><span className={cx('detail-value')}>{user.phone || user.phoneNumber || 'Chưa cập nhật'}</span></div>
                     </div>
                     <div className={cx('detail-row')}>
                         <div className={cx('detail-icon-wrapper')}><FiMapPin /></div>
@@ -197,7 +144,7 @@ function ProfilePage() {
                 <hr className={cx('divider')} />
 
                 <div className={cx('my-posts-section')}>
-                    <h3 className={cx('section-title')}>Bài đăng của tôi</h3>
+                    <h3 className={cx('section-title')}>Bài đăng của {user.fullName || user.username}</h3>
                     <UserPosts 
                         posts={posts} 
                         onLoadMore={handleLoadMorePosts} 
@@ -209,4 +156,4 @@ function ProfilePage() {
     );
 }
 
-export default ProfilePage;
+export default UserProfilePage;
