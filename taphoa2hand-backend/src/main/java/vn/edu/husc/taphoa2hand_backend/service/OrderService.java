@@ -210,6 +210,57 @@ public class OrderService {
         return getSales(pageable, status);
     }
 
+    // New: hỗ trợ lọc theo cả trạng thái và phương thức thanh toán
+    public Page<OrderResponse> getPurchase(int page, int size, String statusStr, String paymentStr) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        OrderStatusEnum status = null;
+        if (statusStr != null && !statusStr.isBlank()) status = OrderStatusEnum.valueOf(statusStr);
+        PaymentMethodEnum payment = null;
+        if (paymentStr != null && !paymentStr.isBlank()) payment = PaymentMethodEnum.valueOf(paymentStr);
+        
+        var context = SecurityContextHolder.getContext();
+        String username = context.getAuthentication().getName();
+        Users buyer = usersRepository.findByUsername(username).orElseThrow(
+                () -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
+        Page<Order> orders;
+        if (status != null && payment != null) {
+            orders = orderRepository.findByBuyerAndStatusAndPaymentMethodOrderByCreatedAtDesc(buyer, status, payment, pageable);
+        } else if (status != null) {
+            orders = orderRepository.findByBuyerAndStatusOrderByCreatedAtDesc(buyer, status, pageable);
+        } else if (payment != null) {
+            orders = orderRepository.findByBuyerAndPaymentMethodOrderByCreatedAtDesc(buyer, payment, pageable);
+        } else {
+            orders = orderRepository.findByBuyerOrderByCreatedAtDesc(buyer, pageable);
+        }
+        return orders.map(orderMapper::toResponse);
+    }
+
+    public Page<OrderResponse> getSales(int page, int size, String statusStr, String paymentStr) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        OrderStatusEnum status = null;
+        if (statusStr != null && !statusStr.isBlank()) status = OrderStatusEnum.valueOf(statusStr);
+        PaymentMethodEnum payment = null;
+        if (paymentStr != null && !paymentStr.isBlank()) payment = PaymentMethodEnum.valueOf(paymentStr);
+        
+        var context = SecurityContextHolder.getContext();
+        String username = context.getAuthentication().getName();
+        Users seller = usersRepository.findByUsername(username).orElseThrow(
+                () -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
+        Page<Order> orders;
+        if (status != null && payment != null) {
+            orders = orderRepository.findBySellerAndStatusAndPaymentMethodOrderByCreatedAtDesc(seller, status, payment, pageable);
+        } else if (status != null) {
+            orders = orderRepository.findBySellerAndStatusOrderByCreatedAtDesc(seller, status, pageable);
+        } else if (payment != null) {
+            orders = orderRepository.findBySellerAndPaymentMethodOrderByCreatedAtDesc(seller, payment, pageable);
+        } else {
+            orders = orderRepository.findBySellerOrderByCreatedAtDesc(seller, pageable);
+        }
+        return orders.map(orderMapper::toResponse);
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
     public Page<OrderResponse> getAllOrders(Pageable pageable) {
         return orderRepository.findAll(pageable)

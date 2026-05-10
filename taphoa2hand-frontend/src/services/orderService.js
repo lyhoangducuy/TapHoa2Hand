@@ -21,12 +21,16 @@ export const createOrder = async (orderData) => {
     }
 };
 
-export const getPurchases = async (page = 0, size = 10) => {
-    return await httpClient.get(`${API.GET_PURCHASES}?page=${page}&size=${size}`);
+export const getPurchases = async (page = 0, size = 10, status, paymentMethod) => {
+    const statusQuery = status ? `&status=${encodeURIComponent(status)}` : '';
+    const paymentQuery = paymentMethod ? `&paymentMethod=${encodeURIComponent(paymentMethod)}` : '';
+    return await httpClient.get(`${API.GET_PURCHASES}?page=${page}&size=${size}${statusQuery}${paymentQuery}`);
 };
 
-export const getSales = async (page = 0, size = 10) => {
-    return await httpClient.get(`${API.GET_SALES}?page=${page}&size=${size}`);
+export const getSales = async (page = 0, size = 10, status, paymentMethod) => {
+    const statusQuery = status ? `&status=${encodeURIComponent(status)}` : '';
+    const paymentQuery = paymentMethod ? `&paymentMethod=${encodeURIComponent(paymentMethod)}` : '';
+    return await httpClient.get(`${API.GET_SALES}?page=${page}&size=${size}${statusQuery}${paymentQuery}`);
 };
 
 export const getOrderDetail = async (orderId) => {

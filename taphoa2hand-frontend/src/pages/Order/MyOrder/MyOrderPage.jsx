@@ -20,19 +20,23 @@ const MyOrderPage = () => {
         totalElements: 0,
         totalPages: 0
     });
+    const [selectedStatus, setSelectedStatus] = useState('ALL');
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('ALL');
     const [showFeedbackForm, setShowFeedbackForm] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
 
     useEffect(() => {
         fetchOrders();
-    }, [activeTab, pagination.page]);
+    }, [activeTab, pagination.page, selectedStatus, selectedPaymentMethod]);
 
     const fetchOrders = async () => {
         setLoading(true);
         try {
+            const statusParam = selectedStatus && selectedStatus !== 'ALL' ? selectedStatus : undefined;
+            const paymentParam = selectedPaymentMethod && selectedPaymentMethod !== 'ALL' ? selectedPaymentMethod : undefined;
             const response = activeTab === 'purchases'
-                ? await orderService.getPurchases(pagination.page, pagination.size)
-                : await orderService.getSales(pagination.page, pagination.size);
+                ? await orderService.getPurchases(pagination.page, pagination.size, statusParam, paymentParam)
+                : await orderService.getSales(pagination.page, pagination.size, statusParam, paymentParam);
 
             // Backend trả về ApiResponse với result chứa Page
             const pageData = response.data?.result;
@@ -108,6 +112,26 @@ const MyOrderPage = () => {
                     >
                         💰 Đơn bán
                     </div>
+                </div>
+
+                <div className={cx('filter-row')}>
+                    <label className={cx('filter-label')}>Trạng thái:</label>
+                    <select className={cx('status-select')} value={selectedStatus} onChange={(e) => { setSelectedStatus(e.target.value); setPagination(prev => ({ ...prev, page: 0 })); }}>
+                        <option value={'ALL'}>Tất cả</option>
+                        <option value={'PENDING'}>Chờ xác nhận</option>
+                        <option value={'CONFIRMED'}>Đã xác nhận</option>
+                        <option value={'SHIPPING'}>Đang giao</option>
+                        <option value={'DELIVERED'}>Đã giao</option>
+                        <option value={'CANCELLED'}>Đã hủy</option>
+                        <option value={'RETURNED'}>Trả hàng</option>
+                    </select>
+
+                    <label className={cx('filter-label')}>Thanh toán:</label>
+                    <select className={cx('status-select')} value={selectedPaymentMethod} onChange={(e) => { setSelectedPaymentMethod(e.target.value); setPagination(prev => ({ ...prev, page: 0 })); }}>
+                        <option value={'ALL'}>Tất cả</option>
+                        <option value={'DIRECT'}>Trực tiếp</option>
+                        <option value={'MIDDLEMAN'}>Trung gian</option>
+                    </select>
                 </div>
 
                 {loading ? (

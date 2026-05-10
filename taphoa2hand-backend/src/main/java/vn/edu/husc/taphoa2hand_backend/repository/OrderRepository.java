@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import vn.edu.husc.taphoa2hand_backend.entity.Order;
 import vn.edu.husc.taphoa2hand_backend.entity.OrderStatusEnum;
+import vn.edu.husc.taphoa2hand_backend.entity.PaymentMethodEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.Posts;
 import vn.edu.husc.taphoa2hand_backend.entity.Users;
 
@@ -29,6 +30,18 @@ public interface OrderRepository extends JpaRepository<Order,String>{
 
     // Danh sách đơn hàng khách đặt (Seller) lọc theo trạng thái
     Page<Order> findBySellerAndStatusOrderByCreatedAtDesc(Users seller, OrderStatusEnum status, Pageable pageable);
+    
+    // Danh sách đơn hàng đã mua lọc theo phương thức thanh toán
+    Page<Order> findByBuyerAndPaymentMethodOrderByCreatedAtDesc(Users buyer, PaymentMethodEnum paymentMethod, Pageable pageable);
+    
+    // Danh sách đơn hàng khách đặt lọc theo phương thức thanh toán
+    Page<Order> findBySellerAndPaymentMethodOrderByCreatedAtDesc(Users seller, PaymentMethodEnum paymentMethod, Pageable pageable);
+    
+    // Danh sách đơn hàng đã mua lọc theo cả trạng thái và phương thức thanh toán
+    Page<Order> findByBuyerAndStatusAndPaymentMethodOrderByCreatedAtDesc(Users buyer, OrderStatusEnum status, PaymentMethodEnum paymentMethod, Pageable pageable);
+    
+    // Danh sách đơn hàng khách đặt lọc theo cả trạng thái và phương thức thanh toán
+    Page<Order> findBySellerAndStatusAndPaymentMethodOrderByCreatedAtDesc(Users seller, OrderStatusEnum status, PaymentMethodEnum paymentMethod, Pageable pageable);
     
     // Lấy tất cả đơn hàng của buyer (không phân trang)
     List<Order> findByBuyer(Users buyer);

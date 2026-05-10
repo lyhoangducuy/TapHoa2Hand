@@ -42,12 +42,13 @@ public class OrderController {
     @GetMapping("/purchases")
     public ApiResponse<Page<OrderResponse>> getMyPurchases(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-            , @RequestParam(required = false) String status
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String paymentMethod
     ) {
         return ApiResponse.<Page<OrderResponse>>builder()
                 .message("Lấy đơn hàng mình đi mua thanh cong")
-                .result(orderService.getPurchase(page, size, status))
+                .result(orderService.getPurchase(page, size, status, paymentMethod))
                 .build();
     }
 
@@ -55,12 +56,13 @@ public class OrderController {
     @GetMapping("/sales")
     public ApiResponse<Page<OrderResponse>> getMySales(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-            , @RequestParam(required = false) String status
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String paymentMethod
     ) {
         return ApiResponse.<Page<OrderResponse>>builder()
                 .message("Lấy đơn hàng mình là người bán thanh cong")
-                .result(orderService.getSales(page, size, status))
+                .result(orderService.getSales(page, size, status, paymentMethod))
                 .build();
     }
 

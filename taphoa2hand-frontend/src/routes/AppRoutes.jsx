@@ -30,11 +30,12 @@ import BannerSlider from '../pages/Banner/BannerSlider';
 import AdminBannerPage from '../pages/Admin/Banner/AdminBannerPage';
 import AdminFeedbackPage from '../pages/Admin/Feedback/AdminFeedbackPage';
 import OrderAdminPage from '../pages/Admin/Orders/OrderAdminPage';
+import NoSearchLayout from '../components/Layouts/NoSearchLayout';
 const publicRoutes = [
     { path: '/', component: HomePage },
     { path: '/login', component: LoginPage, layout: NoSidebarLayout },
     { path: '/register', component: RegisterPage, layout: NoSidebarLayout },
-    { path: '/search', component: SearchPage },
+    { path: '/search', component: SearchPage ,layout: NoSearchLayout},
     { path: '/post-detail/:postId', component: PostDetailPage },
     { path: '/user/:userId', component: UserProfilePage },
     {path:'/send-code',component: CodePage}
