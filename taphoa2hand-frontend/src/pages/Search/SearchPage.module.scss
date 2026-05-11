@@ -1,13 +1,352 @@
 .wrapper {
-    padding: 20px 0;
+    padding: 10px 0 0;
+    margin-top: -60px;
 }
 
 .page-title {
-    font-size: 20px;
-    font-weight: 700;
+    font-size: 16px;
+    font-weight: 600;
     color: #333;
-    margin-bottom: 24px;
-    text-transform: uppercase; /* Viết hoa toàn bộ */
+    margin-bottom: 16px;
+    text-transform: uppercase;
+}
+
+/* Form tìm kiếm */
+.search-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+
+    .form-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+
+        &:first-child {
+            // Hàng đầu tiên: từ khóa và địa điểm
+            .keyword-group {
+                flex: 2; // Từ khóa to nhất
+                min-width: 200px;
+            }
+
+            .location-group {
+                flex: 1;
+                min-width: 150px;
+            }
+        }
+
+        .price-group {
+            flex: 2;
+            min-width: 180px;
+
+            .price-inputs {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 8px;
+            }
+
+            .price-field {
+                flex: 1;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 8px 10px;
+                border: 1px solid #dee2e6;
+                border-radius: 6px;
+                background: #fff;
+
+                input {
+                    flex: 1;
+                    border: none;
+                    background: transparent;
+                    font-size: 13px;
+                    color: #333;
+                    outline: none;
+                }
+
+                span {
+                    color: #6c757d;
+                    font-size: 13px;
+                }
+            }
+
+            .price-range {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+                padding: 6px 0;
+
+                .price-slider {
+                    flex: 1;
+                    height: 4px;
+                    border-radius: 2px;
+                    background: #ddd;
+                    outline: none;
+                    -webkit-appearance: none;
+                    appearance: none;
+
+                    &::-webkit-slider-thumb {
+                        -webkit-appearance: none;
+                        appearance: none;
+                        width: 16px;
+                        height: 16px;
+                        border-radius: 50%;
+                        background: linear-gradient(135deg, #ff9900, #ff6b35);
+                        cursor: pointer;
+                        border: 2px solid white;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+                        transition: all 0.2s ease;
+
+                        &:hover {
+                            transform: scale(1.1);
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                        }
+                    }
+
+                    &::-moz-range-thumb {
+                        width: 16px;
+                        height: 16px;
+                        border-radius: 50%;
+                        background: linear-gradient(135deg, #ff9900, #ff6b35);
+                        cursor: pointer;
+                        border: 2px solid white;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+                        transition: all 0.2s ease;
+
+                        &:hover {
+                            transform: scale(1.1);
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                        }
+                    }
+                }
+            }
+
+            .price-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+
+                label {
+                    margin-bottom: 0;
+                    font-size: 11px;
+                }
+
+                .reset-price-btn {
+                    background: none;
+                    border: none;
+                    color: #6c757d;
+                    font-size: 14px;
+                    cursor: pointer;
+                    padding: 2px;
+                    border-radius: 3px;
+                    transition: all 0.2s ease;
+
+                    &:hover {
+                        background: #e9ecef;
+                        color: #495057;
+                        transform: rotate(90deg);
+                    }
+                }
+            }
+        }
+
+        .date-group {
+            flex: 2;
+            min-width: 200px;
+
+            // Date inputs and quick buttons
+            .date-inputs {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                margin-bottom: 6px;
+
+                input[type="date"] {
+                    flex: 1;
+                    padding: 6px 8px;
+                    border-radius: 4px;
+                    border: 1px solid #dee2e6;
+                    font-size: 12px;
+                    transition: all 0.2s ease;
+
+                    &:focus {
+                        outline: none;
+                        border-color: #ff9900;
+                        box-shadow: 0 0 0 2px rgba(255, 153, 0, 0.1);
+                    }
+                }
+
+                .date-separator {
+                    color: #6c757d;
+                    font-size: 12px;
+                    font-weight: 500;
+                }
+            }
+
+            .quick-date-buttons {
+                display: flex;
+                gap: 4px;
+                flex-wrap: wrap;
+
+                .quick-date-btn, .clear-date-btn {
+                    padding: 4px 8px;
+                    border: 1px solid #dee2e6;
+                    background: white;
+                    color: #495057;
+                    border-radius: 3px;
+                    font-size: 11px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+
+                    &:hover {
+                        background: #f8f9fa;
+                        border-color: #ff9900;
+                        color: #ff9900;
+                    }
+                }
+
+                .clear-date-btn {
+                    &:hover {
+                        background: #ffe6e6;
+                        border-color: #dc3545;
+                        color: #dc3545;
+                    }
+                }
+            }
+        }
+
+        .category-group,
+        .type-group,
+        .sort-group {
+            flex: 1;
+            min-width: 120px;
+        }
+    }
+
+    .bottom-row {
+        align-items: flex-end;
+
+        .search-button {
+            margin-left: auto;
+        }
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 2px;
+        }
+
+        input, select {
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            font-size: 13px;
+            transition: all 0.2s ease;
+            background: white;
+
+            &:focus {
+                outline: none;
+                border-color: #ff9900;
+                box-shadow: 0 0 0 2px rgba(255, 153, 0, 0.1);
+            }
+
+            &::placeholder {
+                color: #adb5bd;
+            }
+        }
+
+        select {
+            cursor: pointer;
+        }
+    }
+
+    .search-button {
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #ff9900, #ff6b35);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-width: 100px;
+        align-self: flex-end;
+
+        &:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(255, 153, 0, 0.3);
+        }
+
+        &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .search-form {
+            padding: 16px;
+        }
+
+        .search-form .form-row {
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .search-form .form-row .form-group {
+            width: 100%;
+            min-width: unset;
+        }
+
+        .search-form .form-row .price-group .price-range {
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .search-form .form-row .price-group .price-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .search-form .form-row .price-group .price-header .reset-price-btn {
+            align-self: flex-end;
+        }
+
+        .search-form .form-row .date-group .date-inputs {
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .search-form .form-row .date-group .date-inputs input[type="date"] {
+            width: 100%;
+        }
+
+        .search-form .form-row .date-group .quick-date-buttons {
+            justify-content: center;
+        }
+
+        .search-form .search-button {
+            width: 100%;
+            align-self: stretch;
+        }
+    }
 }
 
 /* 1. CHIA LƯỚI SẢN PHẨM */

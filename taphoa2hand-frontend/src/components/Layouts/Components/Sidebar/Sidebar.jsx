@@ -2,28 +2,12 @@ import React, { useState, useEffect } from "react";
 import classNames from "classnames/bind";
 import styles from "./Sidebar.module.scss";
 import { 
-    FiMenu, FiX, FiSmartphone, FiMonitor, FiHome, 
-    FiTruck, FiShoppingBag, FiCoffee, FiChevronRight, FiList 
+    FiMenu, FiX, FiChevronRight 
 } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { getAllCategories } from "../../../../services/categoryService";
 
 const cx = classNames.bind(styles);
-
-// Hàm hỗ trợ tự động chọn icon dựa theo tên danh mục trả về từ API
-const getCategoryIcon = (categoryName) => {
-    if (!categoryName) return <FiList />; // Icon mặc định
-    
-    const name = categoryName.toLowerCase();
-    if (name.includes("điện thoại")) return <FiSmartphone />;
-    if (name.includes("điện tử") || name.includes("công nghệ")) return <FiMonitor />;
-    if (name.includes("bất động sản") || name.includes("nhà")) return <FiHome />;
-    if (name.includes("xe")) return <FiTruck />;
-    if (name.includes("thời trang") || name.includes("quần áo")) return <FiShoppingBag />;
-    if (name.includes("gia dụng")) return <FiCoffee />;
-    
-    return <FiList />; // Icon mặc định cho các danh mục khác
-};
 
 function Sidebar() {
     const [isOpen, setIsOpen] = useState(false);
@@ -99,8 +83,6 @@ function Sidebar() {
                                 onClick={() => handleCategoryClick(item.id)}
                             >
                                 <div className={cx("item-left")}>
-                                    {/* Render icon động */}
-                                    <span className={cx("icon")}>{getCategoryIcon(item.name)}</span>
                                     <span className={cx("text")}>{item.name}</span>
                                 </div>
                                 <FiChevronRight className={cx("arrow-icon")} />

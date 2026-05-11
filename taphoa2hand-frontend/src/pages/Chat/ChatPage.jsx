@@ -69,13 +69,25 @@ function ChatPage() {
     const [messageInput, setMessageInput] = useState('');
     const [isSending, setIsSending] = useState(false);
 
+    const initialOrderForm = {
+        sellerId: '',
+        buyerId: '',
+        postId: '',
+        method: 'MIDDLEMAN',
+        receiverName: '',
+        receiverPhone: '',
+        shippingAddress: '',
+        buyerBank: {
+            bankName: '',
+            accountName: '',
+            accountNumber: ''
+        }
+    };
+
     const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
     const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
     const [createdOrder, setCreatedOrder] = useState(null);
-    const [orderForm, setOrderForm] = useState({
-        sellerId: '', buyerId: '', postId: '', method: 'MIDDLEMAN',
-        receiverName: '', receiverPhone: '', shippingAddress: ''
-    });
+    const [orderForm, setOrderForm] = useState(initialOrderForm);
 
     const messagesEndRef = useRef(null);
     const token = localStorage.getItem('token');
@@ -234,6 +246,41 @@ function ChatPage() {
         }
     };
 
+    const handleOrderFormChange = (e) => {
+        const { name, value } = e.target;
+        if (name.startsWith('buyerBank.')) {
+            const field = name.split('.')[1];
+            setOrderForm((prev) => ({
+                ...prev,
+                buyerBank: {
+                    ...prev.buyerBank,
+                    [field]: value
+                }
+            }));
+            return;
+        }
+
+        if (name === 'method') {
+            setOrderForm((prev) => ({
+                ...prev,
+                method: value,
+                buyerBank: initialOrderForm.buyerBank
+            }));
+            return;
+        }
+
+        setOrderForm((prev) => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const openOrderModal = () => {
+        setOrderForm(initialOrderForm);
+        setCreatedOrder(null);
+        setIsOrderModalOpen(true);
+    };
+
     const submitOrderRequest = async (e) => {
         e.preventDefault();
 
@@ -246,6 +293,14 @@ function ChatPage() {
             return;
         }
 
+        if (orderForm.method === 'MIDDLEMAN') {
+            const { bankName, accountName, accountNumber } = orderForm.buyerBank;
+            if (!bankName || !accountName || !accountNumber) {
+                toast.warning('Vui lòng điền đầy đủ thông tin tài khoản ngân hàng cho giao dịch trung gian!');
+                return;
+            }
+        }
+
         setIsSubmittingOrder(true);
 
         try {
@@ -256,18 +311,18 @@ function ChatPage() {
                 method: orderForm.method,
                 receiverName: orderForm.receiverName,
                 receiverPhone: orderForm.receiverPhone,
-                shippingAddress: orderForm.shippingAddress
+                shippingAddress: orderForm.shippingAddress,
+                buyerBank: orderForm.method === 'MIDDLEMAN' ? orderForm.buyerBank : undefined
             };
 
             const res = await createOrder(payload);
 
             if (res.code === 1000 || res.message === 'Tao order thanh cong') {
-                toast.success('Tạo đơn hàng thành công!');
-                
-                // Lưu order vừa tạo để hiển thị nút checkout
-                const newOrder = res.result || payload;
-                setCreatedOrder(newOrder);
-                
+                    const newOrder = res.result || payload;
+                    toast.success('Tạo đơn hàng thành công! Vui lòng thanh toán trong 180 phút.');
+                    setCreatedOrder(newOrder);
+                    setIsOrderModalOpen(false);
+                    navigate(`/order/myOrder?tab=purchases&orderId=${newOrder.id}`);
                 // Gửi tin nhắn tự động
                 const autoMessage =
                     'Tôi đã gửi yêu cầu giao dịch cho sản phẩm này qua hệ thống. Vui lòng kiểm tra!';
@@ -319,12 +374,12 @@ function ChatPage() {
             >
                 <ChatHeader 
                     currentChat={currentChat} 
-                    onOpenOrderModal={() => setIsOrderModalOpen(true)}
+                    onOpenOrderModal={openOrderModal}
                 />
                 
                 <PinnedProduct 
                     currentChat={currentChat} 
-                    onOpenOrderModal={() => setIsOrderModalOpen(true)}
+                    onOpenOrderModal={openOrderModal}
                 />
                 
                 <ChatMessages 
@@ -347,12 +402,14 @@ function ChatPage() {
                     orderForm={orderForm}
                     setOrderForm={setOrderForm} 
                     submitOrderRequest={submitOrderRequest}
+                    handleOrderFormChange={handleOrderFormChange}
                     isSubmittingOrder={isSubmittingOrder} 
                     createdOrder={createdOrder}
                     onCheckout={() => navigate(`/order/myOrder?orderId=${createdOrder?.id}`)}
                     close={() => {
                         setIsOrderModalOpen(false);
                         setCreatedOrder(null);
+                        setOrderForm(initialOrderForm);
                     }}
                 />
             )}

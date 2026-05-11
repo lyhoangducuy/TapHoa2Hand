@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import classNames from "classnames/bind";
 // Bạn có thể import thẳng file scss của HomePage nếu muốn dùng chung CSS
 import styles from "./SearchPage.module.scss"; 
+import { FiRefreshCcw } from 'react-icons/fi';
 
 import { searchPosts } from "../../services/postService";
 import { getAllCategories } from "../../services/categoryService";
@@ -40,6 +41,11 @@ function SearchPage() {
     const [location, setLocation] = useState("");
     const [categoryId, setCategoryId] = useState(categoryIdFromUrl);
     const [postType, setPostType] = useState("");
+    const [minPrice, setMinPrice] = useState(0);
+    const [maxPrice, setMaxPrice] = useState(10000000); // Max 10 triệu VND
+    const [sortBy, setSortBy] = useState(""); // "" = mặc định, "price_asc", "price_desc"
+    const [dateFrom, setDateFrom] = useState("");
+    const [dateTo, setDateTo] = useState("");
     
     // Dữ liệu & Phân trang
     const [categories, setCategories] = useState([]);
@@ -66,6 +72,73 @@ function SearchPage() {
         }
     }, [categoryIdFromUrl]);
 
+    // Sync price range sliders
+    useEffect(() => {
+        if (minPrice > maxPrice) {
+            setMinPrice(maxPrice);
+        }
+    }, [maxPrice, minPrice]);
+
+    const formatPriceValue = (value) => {
+        return Number(value).toLocaleString('vi-VN');
+    };
+
+    const parsePriceInput = (value) => {
+        const numeric = Number(value.replace(/\D/g, ''));
+        return Number.isNaN(numeric) ? 0 : numeric;
+    };
+
+    const handleMinPriceInput = (value) => {
+        const parsed = parsePriceInput(value);
+        const valid = Math.min(parsed, maxPrice);
+        setMinPrice(valid);
+    };
+
+    const handleMaxPriceInput = (value) => {
+        const parsed = parsePriceInput(value);
+        const valid = Math.max(parsed, minPrice);
+        setMaxPrice(valid);
+    };
+
+    // Hàm xử lý chọn nhanh ngày
+    const getDateString = (date) => {
+        return date.toISOString().split('T')[0]; // Format YYYY-MM-DD
+    };
+
+    const setToday = () => {
+        const today = new Date();
+        setDateFrom(getDateString(today));
+        setDateTo(getDateString(today));
+    };
+
+    const setYesterday = () => {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        setDateFrom(getDateString(yesterday));
+        setDateTo(getDateString(yesterday));
+    };
+
+    const setLast7Days = () => {
+        const today = new Date();
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(today.getDate() - 7);
+        setDateFrom(getDateString(sevenDaysAgo));
+        setDateTo(getDateString(today));
+    };
+
+    const setLast30Days = () => {
+        const today = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+        setDateFrom(getDateString(thirtyDaysAgo));
+        setDateTo(getDateString(today));
+    };
+
+    const clearDateFilter = () => {
+        setDateFrom("");
+        setDateTo("");
+    };
+
     // Hàm gọi API dùng chung
     const fetchSearchResults = async (targetPage = 0, currentKeyword = keyword) => {
         setIsLoading(true);
@@ -75,11 +148,28 @@ function SearchPage() {
                 location,
                 categoryId,
                 postType,
+                minPrice: minPrice === 0 ? null : minPrice,
+                maxPrice: maxPrice === 10000000 ? null : maxPrice,
+                dateFrom,
+                dateTo,
+                sortBy,
                 page: targetPage,
                 size: 10
             });
 
-            const data = await searchPosts(currentKeyword, location, categoryId, postType, targetPage, 10);
+            const data = await searchPosts(
+                currentKeyword, 
+                location, 
+                categoryId, 
+                postType, 
+                minPrice === 0 ? null : minPrice, 
+                maxPrice === 10000000 ? null : maxPrice,
+                dateFrom,
+                dateTo,
+                sortBy, 
+                targetPage, 
+                10
+            );
             
             console.log("Search response:", data);
             const pageData = data.result; 
@@ -155,39 +245,149 @@ function SearchPage() {
             </h2>
             
             {/* Form tìm kiếm */}
-            <form onSubmit={handleSearchSubmit} style={{ display: "flex", gap: "10px", marginBottom: "30px", flexWrap: "wrap" }}>
-                <input 
-                    type="text" placeholder="Từ khóa..." value={keyword}
-                    onChange={(e) => setKeyword(e.target.value)} 
-                    style={{ flex: "1 1 300px", padding: "10px", borderRadius: "5px", border: "1px solid #ccc" }}
-                />
-                <input 
-                    type="text" placeholder="Địa điểm (Tỉnh, phường...)" value={location}
-                    onChange={(e) => setLocation(e.target.value)} 
-                    style={{ flex: "1 1 200px", padding: "10px", borderRadius: "5px", border: "1px solid #ccc" }}
-                />
-                <select 
-                    value={categoryId} 
-                    onChange={(e) => setCategoryId(e.target.value)} 
-                    style={{ flex: "1 1 200px", padding: "10px", borderRadius: "5px", border: "1px solid #ccc" }}
-                >
-                    <option value="">Tất cả danh mục</option>
-                    {categories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
-                </select>
-                <select 
-                    value={postType} 
-                    onChange={(e) => setPostType(e.target.value)} 
-                    style={{ flex: "1 1 200px", padding: "10px", borderRadius: "5px", border: "1px solid #ccc" }}
-                >
-                    <option value="">Tất cả loại</option>
-                    <option value="SELL">Tin rao bán</option>
-                    <option value="BUY">Tin cần mua</option>
-                </select>
-                <button type="submit" disabled={isLoading} style={{ padding: "10px 20px", cursor: "pointer", background: "#ff9900", color: "#fff", border: "none", borderRadius: "5px", fontWeight: "bold" }}>
-                    Tìm kiếm
-                </button>
+            <form onSubmit={handleSearchSubmit} className={cx('search-form')}>
+                {/* Hàng 1: Từ khóa và địa điểm */}
+                <div className={cx('form-row')}>
+                    <div className={cx('form-group', 'keyword-group')}>
+                        <label>Từ khóa</label>
+                        <input 
+                            type="text" placeholder="Nhập từ khóa tìm kiếm..." value={keyword}
+                            onChange={(e) => setKeyword(e.target.value)} 
+                        />
+                    </div>
+                    <div className={cx('form-group', 'location-group')}>
+                        <label>Địa điểm</label>
+                        <input 
+                            type="text" placeholder="Tỉnh, thành phố..." value={location}
+                            onChange={(e) => setLocation(e.target.value)} 
+                        />
+                    </div>
+                </div>
+
+                {/* Hàng 2: Price và Date */}
+                <div className={cx('form-row')}>
+                    <div className={cx('form-group', 'price-group')}>
+                        <div className={cx('price-header')}>
+                            <label>Khoảng giá: {formatPriceValue(minPrice)}đ - {formatPriceValue(maxPrice)}đ</label>
+                            <button 
+                                type="button" 
+                                className={cx('reset-price-btn')}
+                                onClick={() => {
+                                    setMinPrice(0);
+                                    setMaxPrice(10000000);
+                                }}
+                                title="Đặt lại khoảng giá"
+                            >
+                                <FiRefreshCcw size={16} />
+                            </button>
+                        </div>
+                        <div className={cx('price-inputs')}>
+                            <div className={cx('price-field')}>
+                                <input
+                                    type="text"
+                                    value={formatPriceValue(minPrice)}
+                                    onChange={(e) => handleMinPriceInput(e.target.value)}
+                                    placeholder="Min"
+                                />
+                                <span>đ</span>
+                            </div>
+                            <div className={cx('price-field')}>
+                                <input
+                                    type="text"
+                                    value={formatPriceValue(maxPrice)}
+                                    onChange={(e) => handleMaxPriceInput(e.target.value)}
+                                    placeholder="Max"
+                                />
+                                <span>đ</span>
+                            </div>
+                        </div>
+                        <div className={cx('price-range')}>
+                            <input 
+                                type="range" 
+                                min="0" 
+                                max="10000000" 
+                                step="100000"
+                                value={minPrice}
+                                onChange={(e) => setMinPrice(Number(e.target.value))} 
+                                className={cx('price-slider')}
+                            />
+                            <input 
+                                type="range" 
+                                min="0" 
+                                max="10000000" 
+                                step="100000"
+                                value={maxPrice}
+                                onChange={(e) => setMaxPrice(Number(e.target.value))} 
+                                className={cx('price-slider')}
+                            />
+                        </div>
+                    </div>
+                    <div className={cx('form-group', 'date-group')}>
+                        <label>Ngày đăng</label>
+                        <div className={cx('date-inputs')}>
+                            <input 
+                                type="date" 
+                                value={dateFrom}
+                                onChange={(e) => setDateFrom(e.target.value)} 
+                                placeholder="Từ ngày"
+                            />
+                            <span className={cx('date-separator')}>đến</span>
+                            <input 
+                                type="date" 
+                                value={dateTo}
+                                onChange={(e) => setDateTo(e.target.value)} 
+                                placeholder="Đến ngày"
+                            />
+                        </div>
+                        <div className={cx('quick-date-buttons')}>
+                            <button type="button" onClick={setToday} className={cx('quick-date-btn')}>Hôm nay</button>
+                            <button type="button" onClick={setYesterday} className={cx('quick-date-btn')}>Hôm qua</button>
+                            <button type="button" onClick={setLast7Days} className={cx('quick-date-btn')}>7 ngày</button>
+                            <button type="button" onClick={setLast30Days} className={cx('quick-date-btn')}>30 ngày</button>
+                            <button type="button" onClick={clearDateFilter} className={cx('clear-date-btn')}>Xóa</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div className={cx('form-row', 'bottom-row')}>
+                    <div className={cx('form-group', 'category-group')}>
+                        <label>Danh mục</label>
+                        <select 
+                            value={categoryId} 
+                            onChange={(e) => setCategoryId(e.target.value)} 
+                        >
+                            <option value="">Tất cả danh mục</option>
+                            {categories.map((cat) => (
+                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className={cx('form-group', 'type-group')}>
+                        <label>Loại tin</label>
+                        <select 
+                            value={postType} 
+                            onChange={(e) => setPostType(e.target.value)} 
+                        >
+                            <option value="">Tất cả loại</option>
+                            <option value="SELL">Tin rao bán</option>
+                            <option value="BUY">Tin cần mua</option>
+                        </select>
+                    </div>
+                    <div className={cx('form-group', 'sort-group')}>
+                        <label>Sắp xếp</label>
+                        <select 
+                            value={sortBy} 
+                            onChange={(e) => setSortBy(e.target.value)} 
+                        >
+                            <option value="">Mặc định</option>
+                            <option value="price_asc">Giá: Thấp đến cao</option>
+                            <option value="price_desc">Giá: Cao đến thấp</option>
+                        </select>
+                    </div>
+                    <button type="submit" disabled={isLoading} className={cx('search-button')}>
+                        {isLoading ? 'Đang tìm...' : 'Tìm kiếm'}
+                    </button>
+                </div>
             </form>
 
             {/* Hiển thị kết quả */}

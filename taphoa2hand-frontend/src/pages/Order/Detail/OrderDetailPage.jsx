@@ -50,6 +50,7 @@ const OrderDetailPage = () => {
     const [existingFeedback, setExistingFeedback] = useState(null);
     const [buyerInfo, setBuyerInfo] = useState({});
     const [sellerInfo, setSellerInfo] = useState({});
+    const [sellerBankForm, setSellerBankForm] = useState({ bankName: '', accountName: '', accountNumber: '' });
 
     const currentUserId = getCurrentUserId();
 
@@ -127,11 +128,23 @@ const OrderDetailPage = () => {
     };
 
     const handleConfirm = async () => {
+        if (order.paymentMethod?.name === 'MIDDLEMAN') {
+            const { bankName, accountName, accountNumber } = sellerBankForm;
+            if (!bankName || !accountName || !accountNumber) {
+                toast.warning('Vui lòng nhập đầy đủ thông tin tài khoản ngân hàng của bạn trước khi xác nhận.');
+                return;
+            }
+        }
+
         if (!window.confirm("Xác nhận đơn?")) return;
 
         try {
             setActionLoading(true);
-            await orderService.updateOrderStatus(orderId, 'CONFIRMED');
+            if (order.paymentMethod?.name === 'MIDDLEMAN') {
+                await orderService.updateOrderStatus(orderId, 'CONFIRMED', sellerBankForm);
+            } else {
+                await orderService.updateOrderStatus(orderId, 'CONFIRMED');
+            }
             toast.success("Đã xác nhận");
             await refreshOrder();
         } catch {
@@ -154,6 +167,11 @@ const OrderDetailPage = () => {
         } finally {
             setActionLoading(false);
         }
+    };
+
+    const handleSellerBankChange = (e) => {
+        const { name, value } = e.target;
+        setSellerBankForm((prev) => ({ ...prev, [name]: value }));
     };
 
     const formatCurrency = (amount) =>
@@ -273,6 +291,78 @@ const OrderDetailPage = () => {
                             </div>
                         </div>
                     </div>
+
+                    {order.paymentMethod?.name === 'MIDDLEMAN' && (
+                        <div className={cx('card')}>
+                            <div className={cx('card-header')}>
+                                <h3>🏦 Thông tin ngân hàng</h3>
+                            </div>
+                            <div className={cx('card-body')}>
+                                {order.buyerBankInfo && (
+                                    <>
+                                        <div className={cx('section-title')}>Thông tin tài khoản người mua</div>
+                                        <div className={cx('info-row')}>
+                                            <span className={cx('label')}>Ngân hàng:</span>
+                                            <span className={cx('value')}>{order.buyerBankInfo.bankName}</span>
+                                        </div>
+                                        <div className={cx('info-row')}>
+                                            <span className={cx('label')}>Chủ tài khoản:</span>
+                                            <span className={cx('value')}>{order.buyerBankInfo.accountName}</span>
+                                        </div>
+                                        <div className={cx('info-row')}>
+                                            <span className={cx('label')}>Số tài khoản:</span>
+                                            <span className={cx('value')}>{order.buyerBankInfo.accountNumber}</span>
+                                        </div>
+                                    </>
+                                )}
+
+                                {isSeller && orderStatus === 'PENDING' && !order.sellerBankInfo && (
+                                    <div className={cx('form-section')}>
+                                        <div className={cx('section-title')}>Nhập thông tin tài khoản của bạn để nhận tiền</div>
+                                        <input
+                                            type="text"
+                                            name="bankName"
+                                            value={sellerBankForm.bankName}
+                                            onChange={handleSellerBankChange}
+                                            placeholder="Tên ngân hàng"
+                                        />
+                                        <input
+                                            type="text"
+                                            name="accountName"
+                                            value={sellerBankForm.accountName}
+                                            onChange={handleSellerBankChange}
+                                            placeholder="Tên chủ tài khoản"
+                                        />
+                                        <input
+                                            type="text"
+                                            name="accountNumber"
+                                            value={sellerBankForm.accountNumber}
+                                            onChange={handleSellerBankChange}
+                                            placeholder="Số tài khoản"
+                                        />
+                                    </div>
+                                )}
+
+                                {order.sellerBankInfo && (
+                                    <>
+                                        <div className={cx('section-title')}>Thông tin tài khoản người bán</div>
+                                        <div className={cx('info-row')}>
+                                            <span className={cx('label')}>Ngân hàng:</span>
+                                            <span className={cx('value')}>{order.sellerBankInfo.bankName}</span>
+                                        </div>
+                                        <div className={cx('info-row')}>
+                                            <span className={cx('label')}>Chủ tài khoản:</span>
+                                            <span className={cx('value')}>{order.sellerBankInfo.accountName}</span>
+                                        </div>
+                                        <div className={cx('info-row')}>
+                                            <span className={cx('label')}>Số tài khoản:</span>
+                                            <span className={cx('value')}>{order.sellerBankInfo.accountNumber}</span>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Buyer Info */}
                     <div className={cx('card')}>

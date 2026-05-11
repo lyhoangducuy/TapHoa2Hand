@@ -38,6 +38,8 @@ export const API = {
     GET_SALES:"/order/sales",
 
     SEARCH:"/posts/search",
+    SELLING_POSTS:"/posts/selling",
+    BUYING_POSTS:"/posts/buying",
     //users
     ADMIN_GETUSER:"/admin/users",
     ADMIN_GETINFO:(userId)=>`/admin/users/${userId}`,

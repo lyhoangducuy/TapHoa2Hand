@@ -89,9 +89,10 @@ public class OrderController {
     @PatchMapping("/{orderId}/status")
     public ApiResponse<OrderResponse> updateStatusDetail(
             @PathVariable String orderId,
-            @RequestParam String newStatus) {
+            @RequestParam String newStatus,
+            @RequestBody(required = false) OrderRequest.BankInfoDTO sellerBankInfo) {
         return ApiResponse.<OrderResponse>builder()
-                .result(orderService.updateStatus(orderId, newStatus))
+                .result(orderService.updateStatus(orderId, newStatus, sellerBankInfo))
                 .message("Cập nhật trạng thái thanh cong")
                 .build();
     }

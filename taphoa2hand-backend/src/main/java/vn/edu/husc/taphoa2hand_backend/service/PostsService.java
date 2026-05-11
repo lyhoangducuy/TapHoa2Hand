@@ -66,8 +66,23 @@ public class PostsService {
     FileService fileService;
 
     @Transactional(readOnly = true)
-    public Page<PostsResponse> searchPosts(String keyword, String location, String categoryId, String postType, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+    public Page<PostsResponse> searchPosts(String keyword, String location, String categoryId, String postType, Long minPrice, Long maxPrice, String dateFrom, String dateTo, String sortBy, int page, int size) {
+        // Create sort based on sortBy parameter
+        Sort sort = Sort.by("createdAt").descending(); // Default sort
+        if (sortBy != null && !sortBy.trim().isEmpty()) {
+            switch (sortBy) {
+                case "price_asc":
+                    sort = Sort.by("price").ascending();
+                    break;
+                case "price_desc":
+                    sort = Sort.by("price").descending();
+                    break;
+                default:
+                    sort = Sort.by("createdAt").descending();
+                    break;
+            }
+        }
+        Pageable pageable = PageRequest.of(page, size, sort);
 
         // Debug logging
         System.out.println("SearchPosts called with:");
@@ -75,6 +90,11 @@ public class PostsService {
         System.out.println("location: " + location);
         System.out.println("categoryId: " + categoryId);
         System.out.println("postType: " + postType);
+        System.out.println("minPrice: " + minPrice);
+        System.out.println("maxPrice: " + maxPrice);
+        System.out.println("dateFrom: " + dateFrom);
+        System.out.println("dateTo: " + dateTo);
+        System.out.println("sortBy: " + sortBy);
         System.out.println("page: " + page + ", size: " + size);
 
         // Convert postType string to enum if provided
@@ -87,13 +107,26 @@ public class PostsService {
             }
         }
 
+        // Determine status list based on postType. BUY posts can be stored as either SEARCHING or AVAILABLE,
+        // so include both to avoid hiding valid buying posts.
+        List<PostStatusEnum> statusFilters = null;
+        if (postTypeEnum == PostTypeEnum.SELL) {
+            statusFilters = List.of(PostStatusEnum.AVAILABLE);
+        } else if (postTypeEnum == PostTypeEnum.BUY) {
+            statusFilters = List.of(PostStatusEnum.SEARCHING, PostStatusEnum.AVAILABLE);
+        }
+
         // Cung cấp Enum trực tiếp từ Service
         Page<Posts> postsPage = postsRepository.searchPosts(
                 keyword,
                 location,
                 categoryId,
                 postTypeEnum,
-                PostStatusEnum.AVAILABLE,
+                statusFilters,
+                minPrice,
+                maxPrice,
+                dateFrom,
+                dateTo,
                 pageable
         );
 
@@ -104,7 +137,12 @@ public class PostsService {
 
     @Transactional(readOnly = true)
     public Page<PostsResponse> getSellingPosts(int page, int size) {
-        return searchPosts(null, null, null, PostTypeEnum.SELL.name(), page, size);
+        return searchPosts(null, null, null, PostTypeEnum.SELL.name(), null, null, null, null, null, page, size);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PostsResponse> getBuyingPosts(int page, int size) {
+        return searchPosts(null, null, null, PostTypeEnum.BUY.name(), null, null, null, null, null, page, size);
     }
 
     @Transactional(readOnly = true)

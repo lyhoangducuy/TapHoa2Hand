@@ -23,7 +23,11 @@ public interface PostsRepository extends JpaRepository<Posts, String> {
                         +
                         "AND (:categoryId IS NULL OR :categoryId = '' OR c.id = :categoryId) " +
                         "AND (:postType IS NULL OR p.postType = :postType) " +
-                        "AND (:status IS NULL OR p.status = :status)", countQuery = "SELECT COUNT(DISTINCT p) FROM Posts p "
+                        "AND (:statuses IS NULL OR p.status IN :statuses) " +
+                        "AND (:minPrice IS NULL OR p.price >= :minPrice) " +
+                        "AND (:maxPrice IS NULL OR p.price <= :maxPrice) " +
+                        "AND (:dateFrom IS NULL OR DATE(p.createdAt) >= DATE(:dateFrom)) " +
+                        "AND (:dateTo IS NULL OR DATE(p.createdAt) <= DATE(:dateTo))", countQuery = "SELECT COUNT(DISTINCT p) FROM Posts p "
                                         +
                                         "LEFT JOIN p.postAddress a " +
                                         "LEFT JOIN p.categories c " +
@@ -33,12 +37,20 @@ public interface PostsRepository extends JpaRepository<Posts, String> {
                                         +
                                         "AND (:categoryId IS NULL OR :categoryId = '' OR c.id = :categoryId) " +
                         "AND (:postType IS NULL OR p.postType = :postType) " +
-                        "AND (:status IS NULL OR p.status = :status)")
+                        "AND (:statuses IS NULL OR p.status IN :statuses) " +
+                        "AND (:minPrice IS NULL OR p.price >= :minPrice) " +
+                        "AND (:maxPrice IS NULL OR p.price <= :maxPrice) " +
+                        "AND (:dateFrom IS NULL OR DATE(p.createdAt) >= DATE(:dateFrom)) " +
+                        "AND (:dateTo IS NULL OR DATE(p.createdAt) <= DATE(:dateTo))")
         Page<Posts> searchPosts(@Param("keyword") String keyword,
                         @Param("location") String location,
                         @Param("categoryId") String categoryId,
                         @Param("postType") PostTypeEnum postType,
-                        @Param("status") PostStatusEnum status,
+                        @Param("statuses") List<PostStatusEnum> statuses,
+                        @Param("minPrice") Long minPrice,
+                        @Param("maxPrice") Long maxPrice,
+                        @Param("dateFrom") String dateFrom,
+                        @Param("dateTo") String dateTo,
                         Pageable pageable);
 
         Page<Posts> findByUser(Users user, Pageable pageable);

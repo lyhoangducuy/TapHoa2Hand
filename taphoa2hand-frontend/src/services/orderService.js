@@ -41,10 +41,10 @@ export const getAdminOrders = async (page = 0, size = 10) => {
     return await httpClient.get(`${API.ADMIN_GET_ORDERS}?page=${page}&size=${size}`);
 };
 
-export const updateOrderStatus = async (orderId, newStatus) => {
+export const updateOrderStatus = async (orderId, newStatus, body = {}) => {
     return await httpClient.patch(
         `${API.UPDATE_ORDER_STATUS(orderId)}?newStatus=${newStatus}`,
-        {}
+        body
     );
 };
 

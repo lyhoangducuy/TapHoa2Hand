@@ -21,6 +21,7 @@ import vn.edu.husc.taphoa2hand_backend.dto.response.AdminUsers.AdminUsersRespons
 import vn.edu.husc.taphoa2hand_backend.dto.response.Order.OrderResponse;
 import vn.edu.husc.taphoa2hand_backend.entity.Conversation;
 import vn.edu.husc.taphoa2hand_backend.entity.Order;
+import vn.edu.husc.taphoa2hand_backend.entity.OrderBankInfo;
 import vn.edu.husc.taphoa2hand_backend.entity.OrderItem;
 import vn.edu.husc.taphoa2hand_backend.entity.OrderStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.ParticipantInfo;
@@ -92,13 +93,10 @@ public class OrderService {
                 });
         
         if (request.getMethod() != null && request.getMethod().equalsIgnoreCase("MIDDLEMAN")) {
-            if (request.getBuyerBank() == null || request.getSellerBank() == null
+            if (request.getBuyerBank() == null
                     || request.getBuyerBank().getBankName() == null || request.getBuyerBank().getBankName().trim().isEmpty()
                     || request.getBuyerBank().getAccountName() == null || request.getBuyerBank().getAccountName().trim().isEmpty()
-                    || request.getBuyerBank().getAccountNumber() == null || request.getBuyerBank().getAccountNumber().trim().isEmpty()
-                    || request.getSellerBank().getBankName() == null || request.getSellerBank().getBankName().trim().isEmpty()
-                    || request.getSellerBank().getAccountName() == null || request.getSellerBank().getAccountName().trim().isEmpty()
-                    || request.getSellerBank().getAccountNumber() == null || request.getSellerBank().getAccountNumber().trim().isEmpty()) {
+                    || request.getBuyerBank().getAccountNumber() == null || request.getBuyerBank().getAccountNumber().trim().isEmpty()) {
                 throw new AppException(ErrorCode.VALID_EXCEPTION);
             }
         }
@@ -290,8 +288,30 @@ public class OrderService {
     // 5. UPDATE: Cập nhật trạng thái đơn hàng (Logic quan trọng)
     @Transactional
     public OrderResponse updateStatus(String orderId, String status) {
+        return updateStatus(orderId, status, null);
+    }
+
+    @Transactional
+    public OrderResponse updateStatus(String orderId, String status, OrderRequest.BankInfoDTO sellerBankInfo) {
         Order order = orderRepository.findById(orderId).orElseThrow();
-        OrderStatusEnum newStatus= OrderStatusEnum.valueOf(status);
+        OrderStatusEnum newStatus = OrderStatusEnum.valueOf(status);
+
+        if (newStatus == OrderStatusEnum.CONFIRMED && order.getPaymentMethod() == PaymentMethodEnum.MIDDLEMAN) {
+            if (order.getSellerBankInfo() == null) {
+                if (sellerBankInfo == null
+                        || sellerBankInfo.getBankName() == null || sellerBankInfo.getBankName().trim().isEmpty()
+                        || sellerBankInfo.getAccountName() == null || sellerBankInfo.getAccountName().trim().isEmpty()
+                        || sellerBankInfo.getAccountNumber() == null || sellerBankInfo.getAccountNumber().trim().isEmpty()) {
+                    throw new AppException(ErrorCode.VALID_EXCEPTION);
+                }
+                order.setSellerBankInfo(OrderBankInfo.builder()
+                        .bankName(sellerBankInfo.getBankName())
+                        .accountName(sellerBankInfo.getAccountName())
+                        .accountNumber(sellerBankInfo.getAccountNumber())
+                        .build());
+            }
+        }
+
         // Logic: Nếu chuyển sang DELIVERED (Trung gian), thiết lập ngày giải ngân
         if (newStatus == OrderStatusEnum.DELIVERED &&
                 order.getPaymentMethod() == PaymentMethodEnum.MIDDLEMAN) {
@@ -300,7 +320,6 @@ public class OrderService {
 
         // Logic: Khi người bán xác nhận đơn -> Cập nhật bài viết thành SOLD
         if (newStatus == OrderStatusEnum.CONFIRMED) {
-            // Lấy post từ order items và cập nhật status
             if (order.getItems() != null && !order.getItems().isEmpty()) {
                 OrderItem firstItem = order.getItems().get(0);
                 Posts post = firstItem.getPost();

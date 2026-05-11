@@ -45,7 +45,7 @@ public class PostsController {
     @GetMapping("/test-search")
     public ApiResponse<String> testSearch() {
         // Test search without any filters
-        Page<PostsResponse> result = postsService.searchPosts(null, null, null, null, 0, 10);
+        Page<PostsResponse> result = postsService.searchPosts(null, null, null, null, null, null, null, null, null, 0, 10);
         return ApiResponse.<String>builder()
                 .message("Test search completed")
                 .result("Found " + result.getTotalElements() + " posts")
@@ -114,12 +114,17 @@ public class PostsController {
             @RequestParam(required = false) String location,
             @RequestParam(required = false) String categoryId,
             @RequestParam(required = false) String postType,
+            @RequestParam(required = false) Long minPrice,
+            @RequestParam(required = false) Long maxPrice,
+            @RequestParam(required = false) String dateFrom,
+            @RequestParam(required = false) String dateTo,
+            @RequestParam(required = false) String sortBy,
             @RequestParam(defaultValue = "0") int page, // Mặc định trang 0 (trang đầu tiên)
             @RequestParam(defaultValue = "10") int size) { // Mặc định 10 bài/trang
 
         return ApiResponse.<Page<PostsResponse>>builder()
                 .message("Tìm kiếm thành công")
-                .result(postsService.searchPosts(keyword, location, categoryId, postType, page, size))
+                .result(postsService.searchPosts(keyword, location, categoryId, postType, minPrice, maxPrice, dateFrom, dateTo, sortBy, page, size))
                 .build();
     }
 
@@ -130,6 +135,16 @@ public class PostsController {
         return ApiResponse.<Page<PostsResponse>>builder()
                 .message("Lấy tin đang bán thành công")
                 .result(postsService.getSellingPosts(page, size))
+                .build();
+    }
+
+    @GetMapping("/buying")
+    public ApiResponse<Page<PostsResponse>> getBuyingPosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ApiResponse.<Page<PostsResponse>>builder()
+                .message("Lấy tin cần mua thành công")
+                .result(postsService.getBuyingPosts(page, size))
                 .build();
     }
 

@@ -11,6 +11,7 @@ const cx = classNames.bind(styles);
 const MyOrderPage = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
+    const newOrderId = searchParams.get('orderId');
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'purchases'); // 'purchases' hoặc 'sales'
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -24,6 +25,17 @@ const MyOrderPage = () => {
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('ALL');
     const [showFeedbackForm, setShowFeedbackForm] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
+    const [showSellerBankModal, setShowSellerBankModal] = useState(false);
+    const [confirmOrderId, setConfirmOrderId] = useState(null);
+    const [sellerBankForm, setSellerBankForm] = useState({ bankName: '', accountName: '', accountNumber: '' });
+    const [actionLoading, setActionLoading] = useState(false);
+
+    useEffect(() => {
+        if (newOrderId) {
+            setActiveTab('purchases');
+            setPagination((prev) => ({ ...prev, page: 0 }));
+        }
+    }, [newOrderId]);
 
     useEffect(() => {
         fetchOrders();
@@ -63,13 +75,49 @@ const MyOrderPage = () => {
         }
     };
 
-    const handleUpdateStatus = async (orderId, newStatus) => {
+    const handleSellerBankChange = (e) => {
+        const { name, value } = e.target;
+        setSellerBankForm(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleConfirmSellerBank = async () => {
+        const { bankName, accountName, accountNumber } = sellerBankForm;
+        if (!bankName || !accountName || !accountNumber) {
+            toast.warning('Vui lòng nhập đầy đủ thông tin ngân hàng');
+            return;
+        }
         try {
-            await orderService.updateOrderStatusPost(orderId, newStatus);
+            setActionLoading(true);
+            await orderService.updateOrderStatus(confirmOrderId, 'CONFIRMED', sellerBankForm);
+            toast.success('Xác nhận đơn thành công');
+            setShowSellerBankModal(false);
+            setConfirmOrderId(null);
+            setSellerBankForm({ bankName: '', accountName: '', accountNumber: '' });
+            fetchOrders();
+        } catch (error) {
+            toast.error('Có lỗi xảy ra khi xác nhận đơn');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleUpdateStatus = async (orderId, newStatus, paymentMethod) => {
+        if (newStatus === 'CONFIRMED' && paymentMethod === 'MIDDLEMAN') {
+            setConfirmOrderId(orderId);
+            setSellerBankForm({ bankName: '', accountName: '', accountNumber: '' });
+            setShowSellerBankModal(true);
+            return;
+        }
+
+        try {
+            setActionLoading(true);
+            await orderService.updateOrderStatus(orderId, newStatus);
             toast.success("Cập nhật trạng thái thành công");
             fetchOrders();
         } catch (error) {
-            toast.error("Có lỗi xảy ra  khi cập nhật");
+            toast.error("Có lỗi xảy ra khi cập nhật");
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -114,6 +162,11 @@ const MyOrderPage = () => {
                     </div>
                 </div>
 
+                {newOrderId && (
+                    <div className={cx('new-order-banner')}>
+                        Đã tạo đơn hàng mới #{newOrderId?.substring(0, 8)}. Vui lòng thanh toán trong 180 phút.
+                    </div>
+                )}
                 <div className={cx('filter-row')}>
                     <label className={cx('filter-label')}>Trạng thái:</label>
                     <select className={cx('status-select')} value={selectedStatus} onChange={(e) => { setSelectedStatus(e.target.value); setPagination(prev => ({ ...prev, page: 0 })); }}>
@@ -145,7 +198,7 @@ const MyOrderPage = () => {
                             </div>
                         ) : (
                             orders.map(order => (
-                                <div key={order.id} className={cx('order-card')}>
+                                <div key={order.id} className={cx('order-card', { highlighted: order.id === newOrderId })}>
                                     <div className={cx('order-header')}>
                                         <div className={cx('order-info')}>
                                             <span className={cx('label')}>Mã đơn:</span>
@@ -166,8 +219,8 @@ const MyOrderPage = () => {
                                         </div>
 
                                         <div className={cx('payment-info')}>
-                                            <div className={cx('method-tag', order.paymentMethod)}>
-                                                {order.paymentMethod === 'MIDDLEMAN' ? '🛡️ Trung gian' : '🤝 Trực tiếp'}
+                                            <div className={cx('method-tag', order.paymentMethod?.name)}>
+                                                {order.paymentMethod?.name === 'MIDDLEMAN' ? '🛡️ Trung gian' : '🤝 Trực tiếp'}
                                             </div>
                                             <div className={cx('total-amount')}>
                                                 {formatCurrency(order.totalAmount)}
@@ -200,14 +253,16 @@ const MyOrderPage = () => {
                                                 <button
                                                     className={cx('btn-reject')}
                                                     onClick={() => handleUpdateStatus(order.id, 'CANCELLED')}
+                                                    disabled={actionLoading}
                                                 >
                                                     Từ chối
                                                 </button>
                                                 <button
                                                     className={cx('btn-approve')}
-                                                    onClick={() => handleUpdateStatus(order.id, 'CONFIRMED')}
+                                                    onClick={() => handleUpdateStatus(order.id, 'CONFIRMED', order.paymentMethod?.name)}
+                                                    disabled={actionLoading}
                                                 >
-                                                    Xác nhận đơn
+                                                    {order.paymentMethod?.name === 'MIDDLEMAN' ? 'Xác nhận + Nhập TK' : 'Xác nhận đơn'}
                                                 </button>
                                             </div>
                                         )}
@@ -261,6 +316,55 @@ const MyOrderPage = () => {
                             onSuccess={handleFeedbackSuccess}
                             onCancel={handleFeedbackCancel}
                         />
+                    </div>
+                </div>
+            )}
+
+            {showSellerBankModal && (
+                <div className={cx('feedback-modal-overlay')} onClick={() => setShowSellerBankModal(false)}>
+                    <div className={cx('feedback-modal')} onClick={(e) => e.stopPropagation()}>
+                        <h3 style={{ marginBottom: '20px', color: '#2f3542', fontSize: '18px', fontWeight: '700' }}>
+                            Nhập thông tin ngân hàng
+                        </h3>
+                        <div className={cx('form-section')}>
+                            <input
+                                type="text"
+                                name="bankName"
+                                value={sellerBankForm.bankName}
+                                onChange={handleSellerBankChange}
+                                placeholder="Tên ngân hàng"
+                            />
+                            <input
+                                type="text"
+                                name="accountName"
+                                value={sellerBankForm.accountName}
+                                onChange={handleSellerBankChange}
+                                placeholder="Tên chủ tài khoản"
+                            />
+                            <input
+                                type="text"
+                                name="accountNumber"
+                                value={sellerBankForm.accountNumber}
+                                onChange={handleSellerBankChange}
+                                placeholder="Số tài khoản"
+                            />
+                        </div>
+                        <div className={cx('modal-actions')}>
+                            <button
+                                className={cx('btn', 'btn-cancel')}
+                                onClick={() => setShowSellerBankModal(false)}
+                                disabled={actionLoading}
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                className={cx('btn', 'btn-primary')}
+                                onClick={handleConfirmSellerBank}
+                                disabled={actionLoading}
+                            >
+                                {actionLoading ? '⏳ Đang xử lý...' : 'Xác nhận đơn'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

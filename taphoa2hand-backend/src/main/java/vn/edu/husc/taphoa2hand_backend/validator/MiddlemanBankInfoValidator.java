@@ -23,26 +23,14 @@ public class MiddlemanBankInfoValidator implements ConstraintValidator<Middleman
                 && isFilled(request.getBuyerBank().getAccountName())
                 && isFilled(request.getBuyerBank().getAccountNumber());
 
-        boolean validSellerBank = request.getSellerBank() != null
-                && isFilled(request.getSellerBank().getBankName())
-                && isFilled(request.getSellerBank().getAccountName())
-                && isFilled(request.getSellerBank().getAccountNumber());
-
-        if (validBuyerBank && validSellerBank) {
+        if (validBuyerBank) {
             return true;
         }
 
         context.disableDefaultConstraintViolation();
-        if (!validBuyerBank) {
-            context.buildConstraintViolationWithTemplate("VALID_EXCEPTION")
-                    .addPropertyNode("buyerBank")
-                    .addConstraintViolation();
-        }
-        if (!validSellerBank) {
-            context.buildConstraintViolationWithTemplate("VALID_EXCEPTION")
-                    .addPropertyNode("sellerBank")
-                    .addConstraintViolation();
-        }
+        context.buildConstraintViolationWithTemplate("VALID_EXCEPTION")
+                .addPropertyNode("buyerBank")
+                .addConstraintViolation();
         return false;
     }
 

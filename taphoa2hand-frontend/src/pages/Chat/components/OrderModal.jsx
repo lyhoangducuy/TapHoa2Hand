@@ -14,16 +14,13 @@ const formatPrice = (price) => {
 function OrderModal({ 
     currentChat, 
     orderForm, 
-    setOrderForm, 
+    handleOrderFormChange, 
     submitOrderRequest, 
     isSubmittingOrder, 
     createdOrder,
     onCheckout,
     close 
 }) {
-    const handleChange = (e) => {
-        setOrderForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    };
 
     // Nếu đã tạo order thành công, hiển thị thông tin order và nút checkout
     if (createdOrder) {
@@ -100,7 +97,7 @@ function OrderModal({
                             type="text" 
                             name="receiverName" 
                             value={orderForm.receiverName} 
-                            onChange={handleChange} 
+                            onChange={handleOrderFormChange} 
                             placeholder="Tên người nhận" 
                         />
                         <input 
@@ -108,24 +105,53 @@ function OrderModal({
                             type="text" 
                             name="receiverPhone" 
                             value={orderForm.receiverPhone} 
-                            onChange={handleChange} 
+                            onChange={handleOrderFormChange} 
                             placeholder="Số điện thoại" 
                         />
                         <textarea 
                             required 
                             name="shippingAddress" 
                             value={orderForm.shippingAddress} 
-                            onChange={handleChange} 
+                            onChange={handleOrderFormChange} 
                             placeholder="Địa chỉ giao hàng..." 
                         />
                     </div>
                     <div className={cx('form-section')}>
                         <strong>2. Phương thức giao dịch</strong>
-                        <select name="method" value={orderForm.method} onChange={handleChange}>
+                        <select name="method" value={orderForm.method} onChange={handleOrderFormChange}>
                             <option value="MIDDLEMAN">Giao dịch qua Trung gian (An toàn)</option>
                             <option value="DIRECT">Giao dịch Trực tiếp (Tự thỏa thuận)</option>
                         </select>
                     </div>
+                    {orderForm.method === 'MIDDLEMAN' && (
+                        <div className={cx('form-section')}>
+                            <strong>3. Thông tin tài khoản ngân hàng</strong>
+                            <input
+                                required
+                                type="text"
+                                name="buyerBank.bankName"
+                                value={orderForm.buyerBank.bankName}
+                                onChange={handleOrderFormChange}
+                                placeholder="Tên ngân hàng"
+                            />
+                            <input
+                                required
+                                type="text"
+                                name="buyerBank.accountName"
+                                value={orderForm.buyerBank.accountName}
+                                onChange={handleOrderFormChange}
+                                placeholder="Tên chủ tài khoản"
+                            />
+                            <input
+                                required
+                                type="text"
+                                name="buyerBank.accountNumber"
+                                value={orderForm.buyerBank.accountNumber}
+                                onChange={handleOrderFormChange}
+                                placeholder="Số tài khoản"
+                            />
+                        </div>
+                    )}
                     <div className={cx('modal-actions')}>
                         <button 
                             type="button" 

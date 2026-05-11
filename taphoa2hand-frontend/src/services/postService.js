@@ -93,13 +93,18 @@ export const editPost = async (postId, postData, images) => {
         throw error;
     }
 };
-export const searchPosts = async (keyword, location, categoryId, postType, page = 0, size = 10) => {
+export const searchPosts = async (keyword, location, categoryId, postType, minPrice, maxPrice, dateFrom, dateTo, sortBy, page = 0, size = 10) => {
     try {
         const params = { page, size }; // Spring nhận page từ 0
         if (keyword) params.keyword = keyword;
         if (location) params.location = location;
         if (categoryId) params.categoryId = categoryId;
         if (postType) params.postType = postType;
+        if (minPrice) params.minPrice = minPrice;
+        if (maxPrice) params.maxPrice = maxPrice;
+        if (dateFrom) params.dateFrom = dateFrom;
+        if (dateTo) params.dateTo = dateTo;
+        if (sortBy) params.sortBy = sortBy;
 
         const response = await httpClient.get(`${API.SEARCH}`, { params });
         
@@ -112,11 +117,10 @@ export const searchPosts = async (keyword, location, categoryId, postType, page 
 
 export const getSellingPosts = async (page = 0, size = 10) => {
     try {
-        const response = await httpClient.get(`${API.SEARCH}`, {
+        const response = await httpClient.get(API.SELLING_POSTS, {
             params: {
                 page,
-                size,
-                postType: 'SELL'
+                size
             }
         });
         return response.data;
@@ -128,11 +132,10 @@ export const getSellingPosts = async (page = 0, size = 10) => {
 
 export const getBuyingPosts = async (page = 0, size = 10) => {
     try {
-        const response = await httpClient.get(`${API.SEARCH}`, {
+        const response = await httpClient.get(API.BUYING_POSTS, {
             params: {
                 page,
-                size,
-                postType: 'BUY'
+                size
             }
         });
         return response.data;
