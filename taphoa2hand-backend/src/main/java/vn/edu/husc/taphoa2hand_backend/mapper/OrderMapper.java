@@ -1,7 +1,9 @@
 package vn.edu.husc.taphoa2hand_backend.mapper;
 
+import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 import vn.edu.husc.taphoa2hand_backend.dto.request.Order.OrderRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Order.BankInfoResponse;
@@ -14,6 +16,8 @@ import vn.edu.husc.taphoa2hand_backend.entity.OrderBankInfo;
 import vn.edu.husc.taphoa2hand_backend.entity.OrderStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.PaymentMethodEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.PaymentStatusEnum;
+import vn.edu.husc.taphoa2hand_backend.entity.PostImage;
+import vn.edu.husc.taphoa2hand_backend.entity.Posts;
 
 @Mapper(componentModel = "spring")
 public interface OrderMapper {
@@ -26,6 +30,9 @@ public interface OrderMapper {
     @Mapping(target = "buyerBankInfo", source = "buyerBank")
     @Mapping(target = "sellerBankInfo", source = "sellerBank")
     @Mapping(target = "paymentMethod", ignore = true) // Bỏ ánh xạ tự động cho paymentMethod
+    @Mapping(target = "holdUntil", ignore = true)
+    @Mapping(target = "holdDurationUnit", ignore = true)
+    @Mapping(target = "holdDurationAmount", ignore = true)
     Order toOrder(OrderRequest dto);
 
     // Ánh xạ tự động cho InfoBank từ BankInfoDTO
@@ -36,7 +43,38 @@ public interface OrderMapper {
     @Mapping(target = "status", expression = "java(mapStatus(order.getStatus()))")
     @Mapping(target = "paymentMethod", expression = "java(mapPaymentMethod(order.getPaymentMethod()))")
     @Mapping(target = "paymentStatus", expression = "java(mapPaymentStatus(order.getPaymentStatus()))")
+    @Mapping(target = "postId", ignore = true)
+    @Mapping(target = "postTitle", ignore = true)
+    @Mapping(target = "postImageUrl", ignore = true)
+    @Mapping(target = "buyerUsername", ignore = true)
+    @Mapping(target = "holdDurationUnit", ignore = true)
     OrderResponse toResponse(Order order);
+
+    @AfterMapping
+    default void fillPostAndBuyerSummary(Order order, @MappingTarget OrderResponse response) {
+        if (order.getBuyer() != null) {
+            response.setBuyerUsername(order.getBuyer().getUsername());
+        }
+        if (order.getHoldDurationUnit() != null) {
+            response.setHoldDurationUnit(order.getHoldDurationUnit().name());
+        }
+        if (order.getItems() == null || order.getItems().isEmpty()) {
+            return;
+        }
+        Posts post = order.getItems().get(0).getPost();
+        if (post == null) {
+            return;
+        }
+        response.setPostId(post.getId());
+        response.setPostTitle(post.getTitle());
+        if (post.getPostImages() != null && !post.getPostImages().isEmpty()) {
+            PostImage thumb = post.getPostImages().stream()
+                    .filter(img -> Boolean.TRUE.equals(img.getIsThumbnail()))
+                    .findFirst()
+                    .orElse(post.getPostImages().get(0));
+            response.setPostImageUrl(thumb.getImageUrl());
+        }
+    }
 
     OrderBankInfo toOrderBankInfo(OrderRequest.BankInfoDTO dto);
     BankInfoResponse orderBankInfoToBankInfoResponse(OrderBankInfo bankInfo);

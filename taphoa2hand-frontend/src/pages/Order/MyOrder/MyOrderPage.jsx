@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import classNames from 'classnames/bind';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -89,7 +89,7 @@ const MyOrderPage = () => {
         try {
             setActionLoading(true);
             await orderService.updateOrderStatus(confirmOrderId, 'CONFIRMED', sellerBankForm);
-            toast.success('Xác nhận đơn thành công');
+            toast.success('Đã chốt đơn. Các yêu cầu khác cùng tin đăng đã được hủy.');
             setShowSellerBankModal(false);
             setConfirmOrderId(null);
             setSellerBankForm({ bankName: '', accountName: '', accountNumber: '' });
@@ -112,7 +112,11 @@ const MyOrderPage = () => {
         try {
             setActionLoading(true);
             await orderService.updateOrderStatus(orderId, newStatus);
-            toast.success("Cập nhật trạng thái thành công");
+            if (activeTab === 'sales' && newStatus === 'CONFIRMED') {
+                toast.success('Đã chốt đơn. Các yêu cầu khác cùng tin đăng đã được hủy.');
+            } else {
+                toast.success('Cập nhật trạng thái thành công');
+            }
             fetchOrders();
         } catch (error) {
             toast.error("Có lỗi xảy ra khi cập nhật");
@@ -141,6 +145,137 @@ const MyOrderPage = () => {
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
     };
+
+    /** Đơn bán: gom theo tin đăng, trong mỗi tin sắp xếp đơn theo thời gian tạo (cũ → mới) */
+    const salesGroups = useMemo(() => {
+        if (activeTab !== 'sales' || !orders.length) return [];
+        const map = new Map();
+        for (const order of orders) {
+            const pid = order.postId || `_unknown_${order.id}`;
+            if (!map.has(pid)) {
+                map.set(pid, {
+                    groupKey: pid,
+                    postId: order.postId,
+                    postTitle: order.postTitle,
+                    postImageUrl: order.postImageUrl,
+                    orders: [],
+                });
+            }
+            map.get(pid).orders.push(order);
+        }
+        const groups = [...map.values()];
+        for (const g of groups) {
+            g.orders.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        }
+        groups.sort((a, b) => {
+            const t = (xs) =>
+                Math.max(0, ...xs.map((o) => (o.createdAt ? new Date(o.createdAt).getTime() : 0)));
+            return t(b.orders) - t(a.orders);
+        });
+        return groups;
+    }, [orders, activeTab]);
+
+    const renderOrderCard = (order) => (
+        <div key={order.id} className={cx('order-card', { highlighted: order.id === newOrderId })}>
+            <div className={cx('order-header')}>
+                <div className={cx('order-info')}>
+                    <span className={cx('label')}>Mã đơn:</span>
+                    <span className={cx('value')}>#{order.id?.substring(0, 8).toUpperCase()}</span>
+                </div>
+                <div className={cx('order-status-badge', order.status?.name?.toLowerCase())}>
+                    {order.status?.displayName}
+                </div>
+            </div>
+
+            {activeTab === 'sales' && order.buyerUsername && (
+                <div className={cx('buyer-row')}>
+                    <span className={cx('label')}>Người mua:</span>
+                    <span className={cx('value')}>@{order.buyerUsername}</span>
+                </div>
+            )}
+
+            <div className={cx('order-body')}>
+                <div className={cx('product-info')}>
+                    <div className={cx('receiver-name')}>{order.receiverName}</div>
+                    <div className={cx('receiver-detail')}>
+                        <p>📞 {order.receiverPhone}</p>
+                        <p>📍 {order.shippingAddress}</p>
+                    </div>
+                </div>
+
+                <div className={cx('payment-info')}>
+                    <div className={cx('method-tag', order.paymentMethod?.name)}>
+                        {order.paymentMethod?.name === 'MIDDLEMAN' ? '🛡️ Trung gian' : '🤝 Trực tiếp'}
+                    </div>
+                    {order.paymentMethod?.name === 'MIDDLEMAN' &&
+                        order.holdDurationAmount != null &&
+                        order.holdDurationUnit && (
+                        <div className={cx('escrow-hold')}>
+                            Giữ tiền:{' '}
+                            {order.holdDurationUnit === 'HOURS'
+                                ? `${order.holdDurationAmount} giờ`
+                                : `${order.holdDurationAmount} ngày`}
+                            {order.status?.name === 'DELIVERED' && order.holdUntil && (
+                                <span> — đến {new Date(order.holdUntil).toLocaleDateString('vi-VN')}</span>
+                            )}
+                        </div>
+                    )}
+                    <div className={cx('total-amount')}>
+                        {formatCurrency(order.totalAmount)}
+                    </div>
+                    {order.platformFee > 0 && (
+                        <div className={cx('fee')}>Phí: {formatCurrency(order.platformFee)}</div>
+                    )}
+                </div>
+            </div>
+
+            <div className={cx('order-footer')}>
+                <button
+                    className={cx('btn-detail')}
+                    onClick={() => navigate(`/order/myOrder/${order.id}`)}
+                >
+                    Xem chi tiết
+                </button>
+
+                {activeTab === 'purchases' && order.status?.name === 'DELIVERED' && (
+                    <button
+                        className={cx('btn-feedback')}
+                        onClick={() => handleFeedbackClick(order)}
+                    >
+                        ⭐ Đánh giá
+                    </button>
+                )}
+
+                {activeTab === 'sales' && order.status?.name === 'PENDING' && (
+                    <div className={cx('seller-actions')}>
+                        <button
+                            className={cx('btn-reject')}
+                            onClick={() => handleUpdateStatus(order.id, 'CANCELLED')}
+                            disabled={actionLoading}
+                        >
+                            Từ chối
+                        </button>
+                        <button
+                            className={cx('btn-approve')}
+                            onClick={() => handleUpdateStatus(order.id, 'CONFIRMED', order.paymentMethod?.name)}
+                            disabled={actionLoading}
+                        >
+                            {order.paymentMethod?.name === 'MIDDLEMAN' ? 'Chọn đơn + TK NH' : 'Chọn đơn này'}
+                        </button>
+                    </div>
+                )}
+
+                {activeTab === 'sales' && order.status?.name === 'CONFIRMED' && (
+                    <button
+                        className={cx('btn-deliver')}
+                        onClick={() => handleUpdateStatus(order.id, 'DELIVERED')}
+                    >
+                        📦 Chuyển sang giao hàng thành công
+                    </button>
+                )}
+            </div>
+        </div>
+    );
 
     return (
         <>
@@ -196,88 +331,41 @@ const MyOrderPage = () => {
 
                                 <p>Chưa có đơn hàng nào ở mục này.</p>
                             </div>
-                        ) : (
-                            orders.map(order => (
-                                <div key={order.id} className={cx('order-card', { highlighted: order.id === newOrderId })}>
-                                    <div className={cx('order-header')}>
-                                        <div className={cx('order-info')}>
-                                            <span className={cx('label')}>Mã đơn:</span>
-                                            <span className={cx('value')}>#{order.id?.substring(0, 8).toUpperCase()}</span>
-                                        </div>
-                                        <div className={cx('order-status-badge', order.status?.name?.toLowerCase())}>
-                                            {order.status?.displayName}
-                                        </div>
-                                    </div>
-
-                                    <div className={cx('order-body')}>
-                                        <div className={cx('product-info')}>
-                                            <div className={cx('receiver-name')}>{order.receiverName}</div>
-                                            <div className={cx('receiver-detail')}>
-                                                <p>📞 {order.receiverPhone}</p>
-                                                <p>📍 {order.shippingAddress}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className={cx('payment-info')}>
-                                            <div className={cx('method-tag', order.paymentMethod?.name)}>
-                                                {order.paymentMethod?.name === 'MIDDLEMAN' ? '🛡️ Trung gian' : '🤝 Trực tiếp'}
-                                            </div>
-                                            <div className={cx('total-amount')}>
-                                                {formatCurrency(order.totalAmount)}
-                                            </div>
-                                            {order.platformFee > 0 && (
-                                                <div className={cx('fee')}>Phí: {formatCurrency(order.platformFee)}</div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className={cx('order-footer')}>
-                                        <button
-                                            className={cx('btn-detail')}
-                                            onClick={() => navigate(`/order/myOrder/${order.id}`)}
-                                        >
-                                            Xem chi tiết
-                                        </button>
-
-                                        {activeTab === 'purchases' && order.status?.name === 'DELIVERED' && (
-                                            <button
-                                                className={cx('btn-feedback')}
-                                                onClick={() => handleFeedbackClick(order)}
-                                            >
-                                                ⭐ Đánh giá
-                                            </button>
-                                        )}
-
-                                        {activeTab === 'sales' && order.status?.name === 'PENDING' && (
-                                            <div className={cx('seller-actions')}>
-                                                <button
-                                                    className={cx('btn-reject')}
-                                                    onClick={() => handleUpdateStatus(order.id, 'CANCELLED')}
-                                                    disabled={actionLoading}
-                                                >
-                                                    Từ chối
-                                                </button>
-                                                <button
-                                                    className={cx('btn-approve')}
-                                                    onClick={() => handleUpdateStatus(order.id, 'CONFIRMED', order.paymentMethod?.name)}
-                                                    disabled={actionLoading}
-                                                >
-                                                    {order.paymentMethod?.name === 'MIDDLEMAN' ? 'Xác nhận + Nhập TK' : 'Xác nhận đơn'}
-                                                </button>
-                                            </div>
-                                        )}
-
-                                        {activeTab === 'sales' && order.status?.name === 'CONFIRMED' && (
-                                            <button
-                                                className={cx('btn-deliver')}
-                                                onClick={() => handleUpdateStatus(order.id, 'DELIVERED')}
-                                            >
-                                                📦 Chuyển sang giao hàng thành công
-                                            </button>
-                                        )}
-                                    </div>
+                        ) : activeTab === 'sales' ? (
+                            <>
+                                <div className={cx('sales-group-hint')}>
+                                    Mỗi tin đăng có thể nhận nhiều yêu cầu. Đơn được sắp theo thời gian tạo. Khi bạn{' '}
+                                    <strong>chọn một đơn</strong>, các đơn chờ khác cùng tin sẽ tự động hủy.
                                 </div>
-                            ))
+                                {salesGroups.map((group) => (
+                                    <div key={group.groupKey} className={cx('post-order-group')}>
+                                        <div className={cx('post-group-header')}>
+                                            {group.postImageUrl ? (
+                                                <img
+                                                    className={cx('post-thumb')}
+                                                    src={group.postImageUrl}
+                                                    alt=""
+                                                />
+                                            ) : (
+                                                <div className={cx('post-thumb', 'placeholder')}>📦</div>
+                                            )}
+                                            <div className={cx('post-group-meta')}>
+                                                <h3 className={cx('post-group-title')}>
+                                                    {group.postTitle || 'Tin đăng'}
+                                                </h3>
+                                                <p className={cx('post-group-sub')}>
+                                                    {group.orders.length} đơn — thứ tự theo lúc tạo
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className={cx('post-group-orders')}>
+                                            {group.orders.map((order) => renderOrderCard(order))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </>
+                        ) : (
+                            orders.map((order) => renderOrderCard(order))
                         )}
                     </div>
                 )}

@@ -77,6 +77,8 @@ function ChatPage() {
         receiverName: '',
         receiverPhone: '',
         shippingAddress: '',
+        holdDurationUnit: 'DAYS',
+        holdDurationAmount: 3,
         buyerBank: {
             bankName: '',
             accountName: '',
@@ -264,7 +266,18 @@ function ChatPage() {
             setOrderForm((prev) => ({
                 ...prev,
                 method: value,
-                buyerBank: initialOrderForm.buyerBank
+                buyerBank: initialOrderForm.buyerBank,
+                holdDurationUnit: initialOrderForm.holdDurationUnit,
+                holdDurationAmount: initialOrderForm.holdDurationAmount
+            }));
+            return;
+        }
+
+        if (name === 'holdDurationAmount') {
+            const parsed = parseInt(value, 10);
+            setOrderForm((prev) => ({
+                ...prev,
+                holdDurationAmount: Number.isNaN(parsed) ? '' : parsed
             }));
             return;
         }
@@ -299,6 +312,16 @@ function ChatPage() {
                 toast.warning('Vui lòng điền đầy đủ thông tin tài khoản ngân hàng cho giao dịch trung gian!');
                 return;
             }
+            const holdAmt = Number(orderForm.holdDurationAmount);
+            const maxHold = orderForm.holdDurationUnit === 'HOURS' ? 240 : 10;
+            if (!holdAmt || holdAmt < 1 || holdAmt > maxHold) {
+                toast.warning(
+                    orderForm.holdDurationUnit === 'HOURS'
+                        ? 'Thời gian giữ tiền: nhập từ 1 đến 240 giờ (tối đa 10 ngày).'
+                        : 'Thời gian giữ tiền: nhập từ 1 đến 10 ngày.'
+                );
+                return;
+            }
         }
 
         setIsSubmittingOrder(true);
@@ -312,7 +335,9 @@ function ChatPage() {
                 receiverName: orderForm.receiverName,
                 receiverPhone: orderForm.receiverPhone,
                 shippingAddress: orderForm.shippingAddress,
-                buyerBank: orderForm.method === 'MIDDLEMAN' ? orderForm.buyerBank : undefined
+                buyerBank: orderForm.method === 'MIDDLEMAN' ? orderForm.buyerBank : undefined,
+                holdDurationUnit: orderForm.method === 'MIDDLEMAN' ? orderForm.holdDurationUnit : undefined,
+                holdDurationAmount: orderForm.method === 'MIDDLEMAN' ? Number(orderForm.holdDurationAmount) : undefined
             };
 
             const res = await createOrder(payload);

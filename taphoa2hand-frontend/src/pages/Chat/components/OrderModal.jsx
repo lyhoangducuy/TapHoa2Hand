@@ -11,6 +11,11 @@ const formatPrice = (price) => {
     return num.toLocaleString('vi-VN') + ' đ';
 };
 
+const formatEscrowHold = (unit, amount) => {
+    if (amount == null || !unit) return null;
+    return unit === 'HOURS' ? `${amount} giờ` : `${amount} ngày`;
+};
+
 function OrderModal({ 
     currentChat, 
     orderForm, 
@@ -57,6 +62,15 @@ function OrderModal({
                                 {createdOrder.method === 'MIDDLEMAN' ? 'Giao dịch qua Trung gian' : 'Giao dịch Trực tiếp'}
                             </span>
                         </div>
+                        {createdOrder.paymentMethod?.name === 'MIDDLEMAN' &&
+                            formatEscrowHold(createdOrder.holdDurationUnit, createdOrder.holdDurationAmount) && (
+                            <div className={cx('info-row')}>
+                                <span className={cx('label')}>Giữ tiền ký quỹ:</span>
+                                <span className={cx('value')}>
+                                    {formatEscrowHold(createdOrder.holdDurationUnit, createdOrder.holdDurationAmount)} sau khi giao thành công (tối đa 10 ngày)
+                                </span>
+                            </div>
+                        )}
                     </div>
 
                     <div className={cx('modal-actions')}>
@@ -125,7 +139,40 @@ function OrderModal({
                     </div>
                     {orderForm.method === 'MIDDLEMAN' && (
                         <div className={cx('form-section')}>
-                            <strong>3. Thông tin tài khoản ngân hàng</strong>
+                            <strong>3. Thời gian giữ tiền (ký quỹ hai bên)</strong>
+                            <p className={cx('form-hint')}>
+                                Sau khi giao hàng thành công, tiền được giữ tối đa tương đương <strong>10 ngày</strong> (240 giờ). Chọn theo ngày hoặc theo giờ.
+                            </p>
+                            <div className={cx('hold-row')}>
+                                <label className={cx('hold-label')}>
+                                    <span>Đơn vị</span>
+                                    <select
+                                        name="holdDurationUnit"
+                                        value={orderForm.holdDurationUnit}
+                                        onChange={handleOrderFormChange}
+                                    >
+                                        <option value="DAYS">Theo ngày</option>
+                                        <option value="HOURS">Theo giờ</option>
+                                    </select>
+                                </label>
+                                <label className={cx('hold-label')}>
+                                    <span>{orderForm.holdDurationUnit === 'HOURS' ? 'Số giờ (1–240)' : 'Số ngày (1–10)'}</span>
+                                    <input
+                                        type="number"
+                                        name="holdDurationAmount"
+                                        min={1}
+                                        max={orderForm.holdDurationUnit === 'HOURS' ? 240 : 10}
+                                        value={orderForm.holdDurationAmount}
+                                        onChange={handleOrderFormChange}
+                                        required
+                                    />
+                                </label>
+                            </div>
+                        </div>
+                    )}
+                    {orderForm.method === 'MIDDLEMAN' && (
+                        <div className={cx('form-section')}>
+                            <strong>4. Thông tin tài khoản ngân hàng</strong>
                             <input
                                 required
                                 type="text"

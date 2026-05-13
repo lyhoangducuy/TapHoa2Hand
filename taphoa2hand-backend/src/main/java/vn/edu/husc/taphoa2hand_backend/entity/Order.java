@@ -80,7 +80,16 @@ public class Order extends BaseEntity{
     String receiverPhone;
     @NotBlank(message = "Dia chi nguoi nhan")
     String shippingAddress;
+
+    /** Thời điểm hết hạn giữ tiền ký quỹ (sau khi giao DELIVERED, phương thức trung gian). */
     LocalDateTime holdUntil;
+
+    /** Đơn vị thời gian giữ tiền do người mua chọn lúc tạo đơn (chỉ trung gian). */
+    @Enumerated(EnumType.STRING)
+    HoldDurationUnit holdDurationUnit;
+
+    /** Số giờ hoặc số ngày giữ tiền (tối đa tương đương 10 ngày). */
+    Integer holdDurationAmount;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     List<OrderItem> items = new ArrayList<>();

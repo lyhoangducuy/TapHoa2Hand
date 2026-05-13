@@ -145,7 +145,13 @@ const OrderDetailPage = () => {
             } else {
                 await orderService.updateOrderStatus(orderId, 'CONFIRMED');
             }
-            toast.success("Đã xác nhận");
+            const sellerIdConfirm = getUserIdFromOrder(order, 'sellerId');
+            const confirmAsSeller = sellerIdConfirm === currentUserId;
+            toast.success(
+                confirmAsSeller
+                    ? 'Đã chốt đơn. Các yêu cầu khác cùng tin đăng đã được hủy.'
+                    : 'Đã xác nhận'
+            );
             await refreshOrder();
         } catch {
             toast.error("Lỗi xác nhận");
@@ -179,6 +185,26 @@ const OrderDetailPage = () => {
             style: 'currency',
             currency: 'VND'
         }).format(amount || 0);
+
+    const formatEscrowHoldLabel = (unit, amount) => {
+        if (amount == null || amount === '' || !unit) return null;
+        return unit === 'HOURS' ? `${amount} giờ` : `${amount} ngày`;
+    };
+
+    const formatDateTimeVi = (iso) => {
+        if (!iso) return null;
+        try {
+            return new Date(iso).toLocaleString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch {
+            return iso;
+        }
+    };
 
     const getStatusBadge = (status) => {
         const statusMap = {
@@ -289,6 +315,23 @@ const OrderDetailPage = () => {
                                     {formatCurrency(order.totalAmount)}
                                 </span>
                             </div>
+                            {order.paymentMethod?.name === 'MIDDLEMAN' &&
+                                formatEscrowHoldLabel(order.holdDurationUnit, order.holdDurationAmount) && (
+                                <div className={cx('info-row')}>
+                                    <span className={cx('label')}>Thời gian giữ tiền (ký quỹ):</span>
+                                    <span className={cx('value')}>
+                                        {formatEscrowHoldLabel(order.holdDurationUnit, order.holdDurationAmount)} (tối đa 10 ngày)
+                                    </span>
+                                </div>
+                            )}
+                            {order.paymentMethod?.name === 'MIDDLEMAN' &&
+                                orderStatus === 'DELIVERED' &&
+                                order.holdUntil && (
+                                <div className={cx('info-row')}>
+                                    <span className={cx('label')}>Giữ tiền đến:</span>
+                                    <span className={cx('value')}>{formatDateTimeVi(order.holdUntil)}</span>
+                                </div>
+                            )}
                         </div>
                     </div>
 

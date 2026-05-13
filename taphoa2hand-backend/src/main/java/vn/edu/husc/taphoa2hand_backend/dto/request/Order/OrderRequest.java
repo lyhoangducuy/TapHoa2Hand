@@ -9,7 +9,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import vn.edu.husc.taphoa2hand_backend.entity.PaymentMethodEnum;
 import vn.edu.husc.taphoa2hand_backend.validator.MiddlemanBankInfoConstraint;
 
 @Data
@@ -33,6 +32,11 @@ public class OrderRequest {
     String receiverPhone;
     @NotBlank(message="Khong duoc de trong shippingAddress")
     String shippingAddress;
+
+    /** Giao dịch trung gian: HOURS hoặc DAYS — thời gian giữ tiền hai bên sau khi giao thành công. */
+    String holdDurationUnit;
+    /** Số giờ hoặc số ngày tương ứng; tối đa 10 ngày (240 giờ). */
+    Integer holdDurationAmount;
 
     // Bank người mua (để hoàn tiền nếu cần)
     @Valid

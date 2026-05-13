@@ -3,6 +3,7 @@ package vn.edu.husc.taphoa2hand_backend.service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -11,8 +12,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import vn.edu.husc.taphoa2hand_backend.dto.request.Noti.NotificationRequest;
@@ -20,6 +21,7 @@ import vn.edu.husc.taphoa2hand_backend.dto.request.Order.OrderRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.response.AdminUsers.AdminUsersResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Order.OrderResponse;
 import vn.edu.husc.taphoa2hand_backend.entity.Conversation;
+import vn.edu.husc.taphoa2hand_backend.entity.HoldDurationUnit;
 import vn.edu.husc.taphoa2hand_backend.entity.Order;
 import vn.edu.husc.taphoa2hand_backend.entity.OrderBankInfo;
 import vn.edu.husc.taphoa2hand_backend.entity.OrderItem;
@@ -42,12 +44,52 @@ import vn.edu.husc.taphoa2hand_backend.repository.UsersRepository;
 
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 public class OrderService {
+
+    private static final int MAX_ESCROW_HOLD_HOURS = 10 * 24;
+
     OrderRepository orderRepository;
     UsersRepository usersRepository;
     PostsRepository postsRepository;
     OrderMapper orderMapper; // Inject Mapper vào đây\
     ConversationRepository conversationRepository;
     NotificationService notificationService;
+
+    private static LocalDateTime addEscrowHold(LocalDateTime from, int amount, HoldDurationUnit unit) {
+        if (unit == HoldDurationUnit.DAYS) {
+            return from.plusDays(amount);
+        }
+        return from.plusHours(amount);
+    }
+
+    /**
+     * Giao dịch trung gian: lưu thời gian giữ tiền ký quỹ (tối đa 10 ngày / 240 giờ). Giao dịch trực tiếp: xóa các trường này.
+     */
+    private void applyEscrowHoldFromRequest(Order order, OrderRequest request) {
+        order.setHoldDurationUnit(null);
+        order.setHoldDurationAmount(null);
+        if (order.getPaymentMethod() != PaymentMethodEnum.MIDDLEMAN) {
+            return;
+        }
+        if (request.getHoldDurationUnit() == null || request.getHoldDurationUnit().isBlank()) {
+            throw new AppException(ErrorCode.VALID_EXCEPTION);
+        }
+        if (request.getHoldDurationAmount() == null || request.getHoldDurationAmount() < 1) {
+            throw new AppException(ErrorCode.VALID_EXCEPTION);
+        }
+        HoldDurationUnit unit;
+        try {
+            unit = HoldDurationUnit.valueOf(request.getHoldDurationUnit().trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new AppException(ErrorCode.VALID_EXCEPTION);
+        }
+        int amount = request.getHoldDurationAmount();
+        int totalHours = unit == HoldDurationUnit.DAYS ? amount * 24 : amount;
+        if (totalHours < 1 || totalHours > MAX_ESCROW_HOLD_HOURS) {
+            throw new AppException(ErrorCode.VALID_EXCEPTION);
+        }
+        order.setHoldDurationUnit(unit);
+        order.setHoldDurationAmount(amount);
+    }
 
     private String getUserStringId() {
         var context = SecurityContextHolder.getContext();
@@ -109,6 +151,7 @@ public class OrderService {
         order.setBuyer(buyer);
         order.setSeller(seller);
         order.setPaymentMethod(PaymentMethodEnum.valueOf(request.getMethod()));
+        applyEscrowHoldFromRequest(order, request);
 
         // Tính phí sàn 2% nếu chọn MIDDLEMAN
         BigDecimal productPrice = post.getPrice();
@@ -142,7 +185,90 @@ public class OrderService {
         return orderMapper.toResponse(order);
     }
 
+    private static final List<OrderStatusEnum> POST_WINNER_STATUSES = List.of(
+            OrderStatusEnum.CONFIRMED,
+            OrderStatusEnum.SHIPPING,
+            OrderStatusEnum.DELIVERED);
+
+    private Posts getFirstPostFromOrder(Order order) {
+        if (order.getItems() == null || order.getItems().isEmpty()) {
+            return null;
+        }
+        return order.getItems().get(0).getPost();
+    }
+
+    /**
+     * Khi hủy đơn: chỉ mở bán lại nếu không còn đơn nào ở trạng thái đã chốt (CONFIRMED/SHIPPING/DELIVERED).
+     */
+    private void refreshPostAfterOrdersChanged(Posts post) {
+        if (post == null || post.getStatus() == PostStatusEnum.HIDDEN) {
+            return;
+        }
+        boolean hasWinner = orderRepository.existsByPostIdAndStatusIn(post.getId(), POST_WINNER_STATUSES);
+        if (hasWinner) {
+            if (post.getStatus() != PostStatusEnum.SOLD) {
+                post.setStatus(PostStatusEnum.SOLD);
+                postsRepository.save(post);
+            }
+        } else if (post.getStatus() == PostStatusEnum.SOLD) {
+            post.setStatus(PostStatusEnum.AVAILABLE);
+            postsRepository.save(post);
+        }
+    }
+
+    private void assertUserCanSetOrderStatus(Order order, Users currentUser, OrderStatusEnum newStatus, boolean isAdmin) {
+        String uid = currentUser.getId();
+        boolean isSeller = order.getSeller() != null && Objects.equals(order.getSeller().getId(), uid);
+        boolean isBuyer = order.getBuyer() != null && Objects.equals(order.getBuyer().getId(), uid);
+        if (newStatus == OrderStatusEnum.CONFIRMED) {
+            if (!isSeller && !isAdmin) {
+                throw new AppException(ErrorCode.UNAUTHORIZED);
+            }
+            if (order.getStatus() != OrderStatusEnum.PENDING) {
+                throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+            }
+            return;
+        }
+        if (newStatus == OrderStatusEnum.CANCELLED) {
+            if (!isSeller && !isBuyer && !isAdmin) {
+                throw new AppException(ErrorCode.UNAUTHORIZED);
+            }
+            return;
+        }
+        if (newStatus == OrderStatusEnum.DELIVERED || newStatus == OrderStatusEnum.SHIPPING) {
+            if (!isSeller && !isAdmin) {
+                throw new AppException(ErrorCode.UNAUTHORIZED);
+            }
+        }
+    }
+
+    /** Khi người bán chọn một đơn: hủy mọi đơn PENDING khác cùng tin đăng (không đổi trạng thái bài viết ở bước này). */
+    private void cancelOtherPendingOrdersForSamePost(Order winningOrder) {
+        Posts post = getFirstPostFromOrder(winningOrder);
+        if (post == null) {
+            return;
+        }
+        List<Order> others = orderRepository.findByPostIdAndStatusExcludingOrderId(
+                post.getId(), OrderStatusEnum.PENDING, winningOrder.getId());
+        for (Order other : others) {
+            other.setStatus(OrderStatusEnum.CANCELLED);
+            orderRepository.save(other);
+            Users buyer = other.getBuyer();
+            if (buyer != null) {
+                String shortId = other.getId() != null && other.getId().length() > 8
+                        ? other.getId().substring(0, 8)
+                        : other.getId();
+                notificationService.createNotification(NotificationRequest.builder()
+                        .content("Người bán đã chọn người mua khác. Đơn #" + shortId + " đã hủy.")
+                        .userIds(List.of(buyer.getId()))
+                        .link("/order/myOrder/" + other.getId())
+                        .build());
+            }
+        }
+    }
+
     // 2. READ: Danh sách đơn hàng đã mua (Dành cho Người mua)
+    @Transactional(readOnly = true)
     public Page<OrderResponse> getPurchase(Pageable pageable) {
         var context = SecurityContextHolder.getContext();
         String username = context.getAuthentication().getName();
@@ -176,6 +302,7 @@ public class OrderService {
     }
 
     // 3. READ: Danh sách đơn hàng khách đặt (Dành cho Người bán)
+    @Transactional(readOnly = true)
     public Page<OrderResponse> getSales(Pageable pageable) {
         var context = SecurityContextHolder.getContext();
         String username = context.getAuthentication().getName();
@@ -209,6 +336,7 @@ public class OrderService {
     }
 
     // New: hỗ trợ lọc theo cả trạng thái và phương thức thanh toán
+    @Transactional(readOnly = true)
     public Page<OrderResponse> getPurchase(int page, int size, String statusStr, String paymentStr) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         OrderStatusEnum status = null;
@@ -234,6 +362,7 @@ public class OrderService {
         return orders.map(orderMapper::toResponse);
     }
 
+    @Transactional(readOnly = true)
     public Page<OrderResponse> getSales(int page, int size, String statusStr, String paymentStr) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         OrderStatusEnum status = null;
@@ -267,12 +396,13 @@ public class OrderService {
 
     // 4. READ: Chi tiết 1 đơn hàng
     
+   @Transactional(readOnly = true)
    public OrderResponse getOrderDetails(String orderId) {
     Users currentUser = usersRepository.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName())
             .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
     Order order = orderRepository.findById(orderId)
-            .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
+            .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
     boolean isBuyer = order.getBuyer().getId().equals(currentUser.getId());
     boolean isSeller = order.getSeller().getId().equals(currentUser.getId());
@@ -293,8 +423,15 @@ public class OrderService {
 
     @Transactional
     public OrderResponse updateStatus(String orderId, String status, OrderRequest.BankInfoDTO sellerBankInfo) {
-        Order order = orderRepository.findById(orderId).orElseThrow();
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
         OrderStatusEnum newStatus = OrderStatusEnum.valueOf(status);
+
+        Users currentUser = usersRepository.findByUsername(
+                SecurityContextHolder.getContext().getAuthentication().getName())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+        assertUserCanSetOrderStatus(order, currentUser, newStatus, isAdmin);
 
         if (newStatus == OrderStatusEnum.CONFIRMED && order.getPaymentMethod() == PaymentMethodEnum.MIDDLEMAN) {
             if (order.getSellerBankInfo() == null) {
@@ -312,10 +449,19 @@ public class OrderService {
             }
         }
 
-        // Logic: Nếu chuyển sang DELIVERED (Trung gian), thiết lập ngày giải ngân
+        if (newStatus == OrderStatusEnum.CONFIRMED) {
+            cancelOtherPendingOrdersForSamePost(order);
+        }
+
+        // Trung gian: sau giao thành công, thiết lập mốc hết hạn giữ tiền theo thời gian đã chọn khi tạo đơn
         if (newStatus == OrderStatusEnum.DELIVERED &&
                 order.getPaymentMethod() == PaymentMethodEnum.MIDDLEMAN) {
-            order.setHoldUntil(LocalDateTime.now().plusDays(3));
+            LocalDateTime now = LocalDateTime.now();
+            if (order.getHoldDurationUnit() != null && order.getHoldDurationAmount() != null) {
+                order.setHoldUntil(addEscrowHold(now, order.getHoldDurationAmount(), order.getHoldDurationUnit()));
+            } else {
+                order.setHoldUntil(now.plusDays(3));
+            }
         }
 
         // Logic: Khi người bán xác nhận đơn -> Cập nhật bài viết thành SOLD
@@ -330,20 +476,12 @@ public class OrderService {
             }
         }
 
-        // Logic: Khi hủy đơn -> Cập nhật bài viết lại thành AVAILABLE (nếu muốn)
-        if (newStatus == OrderStatusEnum.CANCELLED) {
-            if (order.getItems() != null && !order.getItems().isEmpty()) {
-                OrderItem firstItem = order.getItems().get(0);
-                Posts post = firstItem.getPost();
-                if (post != null) {
-                    post.setStatus(PostStatusEnum.AVAILABLE);
-                    postsRepository.save(post);
-                }
-            }
-        }
-
         order.setStatus(newStatus);
-        return orderMapper.toResponse(orderRepository.save(order));
+        Order saved = orderRepository.save(order);
+        if (newStatus == OrderStatusEnum.CANCELLED) {
+            refreshPostAfterOrdersChanged(getFirstPostFromOrder(saved));
+        }
+        return orderMapper.toResponse(saved);
     }
 
     // 6. DELETE (Logical): Hủy đơn hàng

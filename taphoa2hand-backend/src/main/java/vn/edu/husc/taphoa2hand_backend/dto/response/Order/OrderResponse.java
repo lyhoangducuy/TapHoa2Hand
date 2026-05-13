@@ -33,6 +33,18 @@ public class OrderResponse {
      BankInfoResponse buyerBankInfo;
      BankInfoResponse sellerBankInfo;
 
+    /** Tin đăng (mục đầu tiên trong đơn) — phục vụ nhóm đơn theo bài viết */
+    String postId;
+    String postTitle;
+    String postImageUrl;
+     /** Người mua (username) — người bán xem khi có nhiều yêu cầu */
+     String buyerUsername;
+
+    /** Hết hạn giữ tiền ký quỹ (trung gian, sau DELIVERED). */
+    LocalDateTime holdUntil;
+    String holdDurationUnit;
+    Integer holdDurationAmount;
+
     //  BankInfoResponse buyerBankInfo;
     //  BankInfoResponse sellerBankInfo;
 }

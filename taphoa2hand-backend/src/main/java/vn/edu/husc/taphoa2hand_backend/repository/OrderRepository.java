@@ -1,5 +1,6 @@
 package vn.edu.husc.taphoa2hand_backend.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,5 +53,14 @@ public interface OrderRepository extends JpaRepository<Order,String>{
     // Kiểm tra xem có đơn hàng active nào cho post này từ buyer này không
     @Query("SELECT o FROM Order o JOIN o.items oi WHERE oi.post.id = :postId AND o.buyer.id = :buyerId AND o.status != OrderStatusEnum.CANCELLED ")
     Optional<Order> findActiveOrderByPostAndBuyer(@Param("postId") String postId, @Param("buyerId") String buyerId);
+
+    @Query("SELECT DISTINCT o FROM Order o JOIN o.items i WHERE i.post.id = :postId AND o.status = :status AND o.id <> :excludeOrderId")
+    List<Order> findByPostIdAndStatusExcludingOrderId(
+            @Param("postId") String postId,
+            @Param("status") OrderStatusEnum status,
+            @Param("excludeOrderId") String excludeOrderId);
+
+    @Query("SELECT CASE WHEN COUNT(o) > 0 THEN true ELSE false END FROM Order o JOIN o.items i WHERE i.post.id = :postId AND o.status IN :statuses")
+    boolean existsByPostIdAndStatusIn(@Param("postId") String postId, @Param("statuses") Collection<OrderStatusEnum> statuses);
 
 }
