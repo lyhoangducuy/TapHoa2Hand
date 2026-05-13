@@ -41,7 +41,7 @@ public class OrderRequest {
     Integer holdDurationAmount;
 
     /**
-     * Tin BUY (cần mua): giá đề xuất của người gửi yêu cầu — lưu vào {@code OrderItem.price}.
+     * Tin BUY (cần mua): giá đề xuất — lưu {@code OrderItem.price}; với MIDDLEMAN, phí nền tảng tính trên số này ở server.
      * Tin SELL: bỏ qua, dùng giá trên bài đăng.
      */
     BigDecimal offeredPrice;

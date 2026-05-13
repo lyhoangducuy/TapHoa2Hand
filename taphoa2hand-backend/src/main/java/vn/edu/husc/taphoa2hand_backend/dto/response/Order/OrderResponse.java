@@ -24,6 +24,8 @@ public class OrderResponse {
      PaymentMethodEnumResponse paymentMethod;
      PaymentStatusEnumResponse paymentStatus;
      BigDecimal totalAmount;
+     /** Phí nền tảng (trung gian), tính theo tỷ lệ cố định trên giá hàng. */
+     BigDecimal platformFee;
      LocalDateTime createdAt;
 
      String receiverName;

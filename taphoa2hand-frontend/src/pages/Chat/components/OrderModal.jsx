@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import classNames from 'classnames/bind';
 import styles from '../ChatPage.module.scss';
 
@@ -16,7 +16,10 @@ const formatEscrowHold = (unit, amount) => {
     return unit === 'HOURS' ? `${amount} giờ` : `${amount} ngày`;
 };
 
-function OrderModal({ 
+/** Khớp backend OrderService: MIDDLEMAN_PLATFORM_FEE_RATE = 0.02, làm tròn HALF_UP đồng */
+const MIDDLEMAN_FEE_RATE = 0.02;
+
+function OrderModal({
     currentChat, 
     orderForm, 
     handleOrderFormChange, 
@@ -28,6 +31,28 @@ function OrderModal({
 }) {
     const isBuyPost = String(currentChat?.postType || '').toUpperCase() === 'BUY';
 
+    const middlemanPreview = useMemo(() => {
+        if (orderForm.method !== 'MIDDLEMAN') return null;
+        let base = null;
+        if (isBuyPost) {
+            const raw = orderForm.offeredPrice;
+            if (raw === '' || raw == null) {
+                base = null;
+            } else {
+                const n = typeof raw === 'number' ? raw : Number(String(raw).replace(/\D/g, ''));
+                if (Number.isFinite(n) && n > 0) base = Math.floor(n);
+            }
+        } else {
+            const p = Number(currentChat?.postPrice);
+            if (Number.isFinite(p) && p >= 0) base = Math.floor(p);
+        }
+        if (base == null || base < 0) {
+            return { ready: false, base: null, fee: null, total: null };
+        }
+        const fee = Math.round(base * MIDDLEMAN_FEE_RATE);
+        return { ready: true, base, fee, total: base + fee };
+    }, [orderForm.method, orderForm.offeredPrice, isBuyPost, currentChat?.postPrice]);
+
     // Nếu đã tạo order thành công, hiển thị thông tin order và nút checkout
     if (createdOrder) {
         return (
@@ -36,7 +61,12 @@ function OrderModal({
                     <h2>🎉 Đơn Hàng Đã Tạo</h2>
                     <div className={cx('product-summary')}>
                         <strong>Tin đăng:</strong> {currentChat?.postTitle} <br />
-                        {isBuyPost ? (
+                        {createdOrder.paymentMethod?.name === 'MIDDLEMAN' ? (
+                            <>
+                                <strong>Tổng thanh toán:</strong>{' '}
+                                <span>{formatPrice(createdOrder.totalAmount)}</span>
+                            </>
+                        ) : isBuyPost ? (
                             <>
                                 <strong>Giá trên đơn:</strong>{' '}
                                 <span>{formatPrice(createdOrder.totalAmount)}</span>
@@ -80,6 +110,28 @@ function OrderModal({
                                     {formatEscrowHold(createdOrder.holdDurationUnit, createdOrder.holdDurationAmount)} sau khi giao thành công (tối đa 10 ngày)
                                 </span>
                             </div>
+                        )}
+                        {createdOrder.paymentMethod?.name === 'MIDDLEMAN' &&
+                            createdOrder.platformFee != null &&
+                            createdOrder.totalAmount != null && (
+                            <>
+                                <div className={cx('info-row')}>
+                                    <span className={cx('label')}>Giá hàng:</span>
+                                    <span className={cx('value')}>
+                                        {formatPrice(
+                                            Number(createdOrder.totalAmount) - Number(createdOrder.platformFee)
+                                        )}
+                                    </span>
+                                </div>
+                                <div className={cx('info-row')}>
+                                    <span className={cx('label')}>Phí trung gian (2%):</span>
+                                    <span className={cx('value')}>{formatPrice(createdOrder.platformFee)}</span>
+                                </div>
+                                <div className={cx('info-row')}>
+                                    <span className={cx('label')}>Tổng thanh toán:</span>
+                                    <span className={cx('value')}>{formatPrice(createdOrder.totalAmount)}</span>
+                                </div>
+                            </>
                         )}
                     </div>
 
@@ -174,8 +226,39 @@ function OrderModal({
                         </select>
                     </div>
                     {orderForm.method === 'MIDDLEMAN' && (
+                        <div className={cx('form-section', 'fee-preview')}>
+                            <strong>3. Phí trung gian & tạm tính</strong>
+                            <p className={cx('form-hint')}>
+                                Phí nền tảng <strong>2%</strong> trên giá hàng (làm tròn đến đồng). Tin cần mua: tính theo{' '}
+                                <strong>giá bạn nhập</strong> ở trên.
+                            </p>
+                            {!middlemanPreview?.ready ? (
+                                <p className={cx('fee-preview-muted')}>
+                                    {isBuyPost
+                                        ? 'Nhập giá đề xuất để xem phí và tổng dự kiến.'
+                                        : 'Chưa có giá tin hợp lệ để tạm tính.'}
+                                </p>
+                            ) : (
+                                <div className={cx('fee-preview-rows')}>
+                                    <div className={cx('fee-preview-row')}>
+                                        <span>Giá hàng (tạm)</span>
+                                        <span>{formatPrice(middlemanPreview.base)}</span>
+                                    </div>
+                                    <div className={cx('fee-preview-row')}>
+                                        <span>Phí trung gian (2%)</span>
+                                        <span>{formatPrice(middlemanPreview.fee)}</span>
+                                    </div>
+                                    <div className={cx('fee-preview-row', 'fee-preview-total')}>
+                                        <span>Tổng dự kiến thanh toán</span>
+                                        <span>{formatPrice(middlemanPreview.total)}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {orderForm.method === 'MIDDLEMAN' && (
                         <div className={cx('form-section')}>
-                            <strong>3. Thời gian giữ tiền (ký quỹ hai bên)</strong>
+                            <strong>4. Thời gian giữ tiền (ký quỹ hai bên)</strong>
                             <p className={cx('form-hint')}>
                                 Sau khi giao hàng thành công, tiền được giữ tối đa tương đương <strong>10 ngày</strong> (240 giờ). Chọn theo ngày hoặc theo giờ.
                             </p>
@@ -208,7 +291,7 @@ function OrderModal({
                     )}
                     {orderForm.method === 'MIDDLEMAN' && (
                         <div className={cx('form-section')}>
-                            <strong>4. Thông tin tài khoản ngân hàng</strong>
+                            <strong>5. Thông tin tài khoản ngân hàng</strong>
                             <input
                                 required
                                 type="text"

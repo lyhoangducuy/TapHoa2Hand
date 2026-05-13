@@ -1,6 +1,7 @@
 package vn.edu.husc.taphoa2hand_backend.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -47,6 +48,8 @@ import vn.edu.husc.taphoa2hand_backend.repository.UsersRepository;
 public class OrderService {
 
     private static final int MAX_ESCROW_HOLD_HOURS = 10 * 24;
+    /** Phí trung gian: 2% trên giá hàng (làm tròn VND). Khớp tạm tính trên OrderModal. */
+    private static final BigDecimal MIDDLEMAN_PLATFORM_FEE_RATE = new BigDecimal("0.02");
 
     OrderRepository orderRepository;
     UsersRepository usersRepository;
@@ -167,14 +170,13 @@ public class OrderService {
         order.setPaymentMethod(PaymentMethodEnum.valueOf(request.getMethod()));
         applyEscrowHoldFromRequest(order, request);
 
-        // Tính phí sàn 2% nếu chọn MIDDLEMAN
         BigDecimal lineItemPrice = isBuyPost ? request.getOfferedPrice() : post.getPrice();
-        BigDecimal platformFee = BigDecimal.ZERO;
 
-        // if (request.getMethod() == PaymentMethodEnum.MIDDLEMAN) {
-        // platformFee = productPrice.multiply(new BigDecimal("0.02"));
-        // }
-        // order.setPaymentMethod(request.getMethod());
+        // Phí nền tảng: chỉ áp dụng trung gian, trên giá hàng (SELL = giá tin; BUY = giá đề xuất)
+        BigDecimal platformFee = BigDecimal.ZERO;
+        if (order.getPaymentMethod() == PaymentMethodEnum.MIDDLEMAN) {
+            platformFee = lineItemPrice.multiply(MIDDLEMAN_PLATFORM_FEE_RATE).setScale(0, RoundingMode.HALF_UP);
+        }
         order.setPlatformFee(platformFee);
         order.setTotalAmount(lineItemPrice.add(platformFee));
 

@@ -29,7 +29,7 @@ import vn.edu.husc.taphoa2hand_backend.service.OrderService;
 public class OrderController {
     OrderService orderService;
 
-    // Tạo mới
+    // Tạo mới (phí trung gian + tổng tiền do OrderService tính từ giá hàng / giá đề xuất tin BUY)
     @PostMapping
     public ApiResponse<OrderResponse> create(@RequestBody @Valid OrderRequest request) {
         return ApiResponse.<OrderResponse>builder()
