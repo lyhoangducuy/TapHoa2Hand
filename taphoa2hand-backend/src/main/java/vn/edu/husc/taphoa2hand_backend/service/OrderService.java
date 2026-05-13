@@ -62,7 +62,8 @@ public class OrderService {
     }
 
     /**
-     * Giao dịch trung gian: lưu thời gian giữ tiền ký quỹ (tối đa 10 ngày / 240 giờ). Giao dịch trực tiếp: xóa các trường này.
+     * Giao dịch trung gian: lưu thời gian giữ tiền ký quỹ (tối đa 10 ngày / 240
+     * giờ). Giao dịch trực tiếp: xóa các trường này.
      */
     private void applyEscrowHoldFromRequest(Order order, OrderRequest request) {
         order.setHoldDurationUnit(null);
@@ -105,40 +106,43 @@ public class OrderService {
         // 1. Lấy dữ liệu từ DB (Bắt buộc phải lấy để đảm bảo bảo mật và quan hệ JPA)
         Users buyer = usersRepository.findByUsername(request.getBuyerId().trim())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-       // 2. LẤY SELLER TỪ CONVERSATION ID
-    // Giả sử request.getSellerId() thực tế đang chứa Conversation ID
-    String conversationId = request.getSellerId(); 
-    
-    Conversation conversation = conversationRepository.findById(conversationId)
-            .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND));
+        // 2. LẤY SELLER TỪ CONVERSATION ID
+        // Giả sử request.getSellerId() thực tế đang chứa Conversation ID
+        String conversationId = request.getSellerId();
 
-    // Tìm Participant nào có userId khác với ID của người mua
-    ParticipantInfo sellerInfo = conversation.getParticipants().stream()
-            .filter(p -> !p.getUserId().equals(buyer.getId()))
-            .findFirst()
-            .orElseThrow(() -> new AppException(ErrorCode.SELLER_NOT_FOUND));
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND));
 
-    // 3. Lấy thực thể Users của Seller từ DB
-    Users seller = usersRepository.findById(sellerInfo.getUserId())
-            .orElseThrow(() -> new AppException(ErrorCode.ID_USER_NOT_FOUND));
+        // Tìm Participant nào có userId khác với ID của người mua
+        ParticipantInfo sellerInfo = conversation.getParticipants().stream()
+                .filter(p -> !p.getUserId().equals(buyer.getId()))
+                .findFirst()
+                .orElseThrow(() -> new AppException(ErrorCode.SELLER_NOT_FOUND));
+
+        // 3. Lấy thực thể Users của Seller từ DB
+        Users seller = usersRepository.findById(sellerInfo.getUserId())
+                .orElseThrow(() -> new AppException(ErrorCode.ID_USER_NOT_FOUND));
         Posts post = postsRepository.findById(request.getPostId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         if (post.getStatus().equals(PostStatusEnum.HIDDEN))
             throw new AppException(ErrorCode.POST_HIDDEN);
         if (post.getStatus().equals(PostStatusEnum.SOLD))
             throw new AppException(ErrorCode.POST_HAD_SOLD);
-        
+
         // Kiểm tra xem đã có đơn hàng active cho bài viết này từ người mua này chưa
         orderRepository.findActiveOrderByPostAndBuyer(request.getPostId(), buyer.getId())
                 .ifPresent(existingOrder -> {
                     throw new AppException(ErrorCode.ORDER_ALREADY_EXISTS);
                 });
-        
+
         if (request.getMethod() != null && request.getMethod().equalsIgnoreCase("MIDDLEMAN")) {
             if (request.getBuyerBank() == null
-                    || request.getBuyerBank().getBankName() == null || request.getBuyerBank().getBankName().trim().isEmpty()
-                    || request.getBuyerBank().getAccountName() == null || request.getBuyerBank().getAccountName().trim().isEmpty()
-                    || request.getBuyerBank().getAccountNumber() == null || request.getBuyerBank().getAccountNumber().trim().isEmpty()) {
+                    || request.getBuyerBank().getBankName() == null
+                    || request.getBuyerBank().getBankName().trim().isEmpty()
+                    || request.getBuyerBank().getAccountName() == null
+                    || request.getBuyerBank().getAccountName().trim().isEmpty()
+                    || request.getBuyerBank().getAccountNumber() == null
+                    || request.getBuyerBank().getAccountNumber().trim().isEmpty()) {
                 throw new AppException(ErrorCode.VALID_EXCEPTION);
             }
         }
@@ -173,7 +177,6 @@ public class OrderService {
                 .build();
         order.setItems(List.of(item));
 
-
         order = orderRepository.save(order);
         String orderLink = "/order/myOrder/" + order.getId();
         notificationService.createNotification(NotificationRequest.builder()
@@ -181,7 +184,7 @@ public class OrderService {
                 .userIds(List.of(seller.getId()))
                 .link(orderLink)
                 .build());
-        
+
         return orderMapper.toResponse(order);
     }
 
@@ -198,7 +201,8 @@ public class OrderService {
     }
 
     /**
-     * Khi hủy đơn: chỉ mở bán lại nếu không còn đơn nào ở trạng thái đã chốt (CONFIRMED/SHIPPING/DELIVERED).
+     * Khi hủy đơn: chỉ mở bán lại nếu không còn đơn nào ở trạng thái đã chốt
+     * (CONFIRMED/SHIPPING/DELIVERED).
      */
     private void refreshPostAfterOrdersChanged(Posts post) {
         if (post == null || post.getStatus() == PostStatusEnum.HIDDEN) {
@@ -216,7 +220,8 @@ public class OrderService {
         }
     }
 
-    private void assertUserCanSetOrderStatus(Order order, Users currentUser, OrderStatusEnum newStatus, boolean isAdmin) {
+    private void assertUserCanSetOrderStatus(Order order, Users currentUser, OrderStatusEnum newStatus,
+            boolean isAdmin) {
         String uid = currentUser.getId();
         boolean isSeller = order.getSeller() != null && Objects.equals(order.getSeller().getId(), uid);
         boolean isBuyer = order.getBuyer() != null && Objects.equals(order.getBuyer().getId(), uid);
@@ -242,7 +247,10 @@ public class OrderService {
         }
     }
 
-    /** Khi người bán chọn một đơn: hủy mọi đơn PENDING khác cùng tin đăng (không đổi trạng thái bài viết ở bước này). */
+    /**
+     * Khi người bán chọn một đơn: hủy mọi đơn PENDING khác cùng tin đăng (không đổi
+     * trạng thái bài viết ở bước này).
+     */
     private void cancelOtherPendingOrdersForSamePost(Order winningOrder) {
         Posts post = getFirstPostFromOrder(winningOrder);
         if (post == null) {
@@ -285,7 +293,8 @@ public class OrderService {
 
     // New: hỗ trợ lọc theo trạng thái
     public Page<OrderResponse> getPurchase(Pageable pageable, OrderStatusEnum status) {
-        if (status == null) return getPurchase(pageable);
+        if (status == null)
+            return getPurchase(pageable);
         var context = SecurityContextHolder.getContext();
         String username = context.getAuthentication().getName();
         Users buyer = usersRepository.findByUsername(username).orElseThrow(
@@ -297,7 +306,8 @@ public class OrderService {
     public Page<OrderResponse> getPurchase(int page, int size, String statusStr) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         OrderStatusEnum status = null;
-        if (statusStr != null && !statusStr.isBlank()) status = OrderStatusEnum.valueOf(statusStr);
+        if (statusStr != null && !statusStr.isBlank())
+            status = OrderStatusEnum.valueOf(statusStr);
         return getPurchase(pageable, status);
     }
 
@@ -319,7 +329,8 @@ public class OrderService {
 
     // New: hỗ trợ lọc theo trạng thái cho sales
     public Page<OrderResponse> getSales(Pageable pageable, OrderStatusEnum status) {
-        if (status == null) return getSales(pageable);
+        if (status == null)
+            return getSales(pageable);
         var context = SecurityContextHolder.getContext();
         String username = context.getAuthentication().getName();
         Users seller = usersRepository.findByUsername(username).orElseThrow(
@@ -331,7 +342,8 @@ public class OrderService {
     public Page<OrderResponse> getSales(int page, int size, String statusStr) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         OrderStatusEnum status = null;
-        if (statusStr != null && !statusStr.isBlank()) status = OrderStatusEnum.valueOf(statusStr);
+        if (statusStr != null && !statusStr.isBlank())
+            status = OrderStatusEnum.valueOf(statusStr);
         return getSales(pageable, status);
     }
 
@@ -340,18 +352,21 @@ public class OrderService {
     public Page<OrderResponse> getPurchase(int page, int size, String statusStr, String paymentStr) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         OrderStatusEnum status = null;
-        if (statusStr != null && !statusStr.isBlank()) status = OrderStatusEnum.valueOf(statusStr);
+        if (statusStr != null && !statusStr.isBlank())
+            status = OrderStatusEnum.valueOf(statusStr);
         PaymentMethodEnum payment = null;
-        if (paymentStr != null && !paymentStr.isBlank()) payment = PaymentMethodEnum.valueOf(paymentStr);
-        
+        if (paymentStr != null && !paymentStr.isBlank())
+            payment = PaymentMethodEnum.valueOf(paymentStr);
+
         var context = SecurityContextHolder.getContext();
         String username = context.getAuthentication().getName();
         Users buyer = usersRepository.findByUsername(username).orElseThrow(
                 () -> new AppException(ErrorCode.USER_NOT_FOUND));
-        
+
         Page<Order> orders;
         if (status != null && payment != null) {
-            orders = orderRepository.findByBuyerAndStatusAndPaymentMethodOrderByCreatedAtDesc(buyer, status, payment, pageable);
+            orders = orderRepository.findByBuyerAndStatusAndPaymentMethodOrderByCreatedAtDesc(buyer, status, payment,
+                    pageable);
         } else if (status != null) {
             orders = orderRepository.findByBuyerAndStatusOrderByCreatedAtDesc(buyer, status, pageable);
         } else if (payment != null) {
@@ -366,18 +381,21 @@ public class OrderService {
     public Page<OrderResponse> getSales(int page, int size, String statusStr, String paymentStr) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         OrderStatusEnum status = null;
-        if (statusStr != null && !statusStr.isBlank()) status = OrderStatusEnum.valueOf(statusStr);
+        if (statusStr != null && !statusStr.isBlank())
+            status = OrderStatusEnum.valueOf(statusStr);
         PaymentMethodEnum payment = null;
-        if (paymentStr != null && !paymentStr.isBlank()) payment = PaymentMethodEnum.valueOf(paymentStr);
-        
+        if (paymentStr != null && !paymentStr.isBlank())
+            payment = PaymentMethodEnum.valueOf(paymentStr);
+
         var context = SecurityContextHolder.getContext();
         String username = context.getAuthentication().getName();
         Users seller = usersRepository.findByUsername(username).orElseThrow(
                 () -> new AppException(ErrorCode.USER_NOT_FOUND));
-        
+
         Page<Order> orders;
         if (status != null && payment != null) {
-            orders = orderRepository.findBySellerAndStatusAndPaymentMethodOrderByCreatedAtDesc(seller, status, payment, pageable);
+            orders = orderRepository.findBySellerAndStatusAndPaymentMethodOrderByCreatedAtDesc(seller, status, payment,
+                    pageable);
         } else if (status != null) {
             orders = orderRepository.findBySellerAndStatusOrderByCreatedAtDesc(seller, status, pageable);
         } else if (payment != null) {
@@ -395,26 +413,28 @@ public class OrderService {
     }
 
     // 4. READ: Chi tiết 1 đơn hàng
-    
-   @Transactional(readOnly = true)
-   public OrderResponse getOrderDetails(String orderId) {
-    Users currentUser = usersRepository.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName())
-            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-    Order order = orderRepository.findById(orderId)
-            .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderDetails(String orderId) {
+        Users currentUser = usersRepository
+                .findByUsername(SecurityContextHolder.getContext().getAuthentication().getName())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-    boolean isBuyer = order.getBuyer().getId().equals(currentUser.getId());
-    boolean isSeller = order.getSeller().getId().equals(currentUser.getId());
-    boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
-            .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
-    if (!isBuyer && !isSeller && !isAdmin) {
-        throw new AppException(ErrorCode.UNAUTHORIZED);
+        boolean isBuyer = order.getBuyer().getId().equals(currentUser.getId());
+        boolean isSeller = order.getSeller().getId().equals(currentUser.getId());
+        boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!isBuyer && !isSeller && !isAdmin) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        return orderMapper.toResponse(order);
     }
 
-    return orderMapper.toResponse(order);
-}
     // 5. UPDATE: Cập nhật trạng thái đơn hàng (Logic quan trọng)
     @Transactional
     public OrderResponse updateStatus(String orderId, String status) {
@@ -438,7 +458,8 @@ public class OrderService {
                 if (sellerBankInfo == null
                         || sellerBankInfo.getBankName() == null || sellerBankInfo.getBankName().trim().isEmpty()
                         || sellerBankInfo.getAccountName() == null || sellerBankInfo.getAccountName().trim().isEmpty()
-                        || sellerBankInfo.getAccountNumber() == null || sellerBankInfo.getAccountNumber().trim().isEmpty()) {
+                        || sellerBankInfo.getAccountNumber() == null
+                        || sellerBankInfo.getAccountNumber().trim().isEmpty()) {
                     throw new AppException(ErrorCode.VALID_EXCEPTION);
                 }
                 order.setSellerBankInfo(OrderBankInfo.builder()
@@ -447,13 +468,22 @@ public class OrderService {
                         .accountNumber(sellerBankInfo.getAccountNumber())
                         .build());
             }
+            
         }
 
         if (newStatus == OrderStatusEnum.CONFIRMED) {
             cancelOtherPendingOrdersForSamePost(order);
+            String orderLink = "/order/myOrder/" + order.getId();
+                notificationService.createNotification(NotificationRequest.builder()
+                        .content("Don hang " + order.getId() + " da duoc xac nhan boi nguoi ban "
+                                + order.getBuyer().getUsername())
+                        .userIds(List.of(order.getBuyer().getId()))
+                        .link(orderLink)
+                        .build());
         }
 
-        // Trung gian: sau giao thành công, thiết lập mốc hết hạn giữ tiền theo thời gian đã chọn khi tạo đơn
+        // Trung gian: sau giao thành công, thiết lập mốc hết hạn giữ tiền theo thời
+        // gian đã chọn khi tạo đơn
         if (newStatus == OrderStatusEnum.DELIVERED &&
                 order.getPaymentMethod() == PaymentMethodEnum.MIDDLEMAN) {
             LocalDateTime now = LocalDateTime.now();
@@ -462,6 +492,14 @@ public class OrderService {
             } else {
                 order.setHoldUntil(now.plusDays(3));
             }
+            String orderLink = "/order/myOrder/" + order.getId();
+                notificationService.createNotification(NotificationRequest.builder()
+                        .content("Don hang " + order.getId() + " da hoan thanh va duoc xac nhan boi nguoi ban "
+                                + order.getBuyer().getUsername())
+                        .userIds(List.of(order.getBuyer().getId()))
+                        .link(orderLink)
+                        .build());
+
         }
 
         // Logic: Khi người bán xác nhận đơn -> Cập nhật bài viết thành SOLD
@@ -473,6 +511,14 @@ public class OrderService {
                     post.setStatus(PostStatusEnum.SOLD);
                     postsRepository.save(post);
                 }
+                String orderLink = "/order/myOrder/" + order.getId();
+                notificationService.createNotification(NotificationRequest.builder()
+                        .content("Don hang " + order.getId() + " da duoc xac nhan boi nguoi ban "
+                                + order.getBuyer().getUsername())
+                        .userIds(List.of(order.getBuyer().getId()))
+                        .link(orderLink)
+                        .build());
+
             }
         }
 
@@ -480,6 +526,12 @@ public class OrderService {
         Order saved = orderRepository.save(order);
         if (newStatus == OrderStatusEnum.CANCELLED) {
             refreshPostAfterOrdersChanged(getFirstPostFromOrder(saved));
+            String orderLink = "/order/myOrder/" + order.getId();
+            notificationService.createNotification(NotificationRequest.builder()
+                    .content("Don hang " + order.getId() + " da bi huy bo boi " + order.getBuyer().getUsername())
+                    .userIds(List.of(order.getBuyer().getId()))
+                    .link(orderLink)
+                    .build());
         }
         return orderMapper.toResponse(saved);
     }
@@ -489,6 +541,7 @@ public class OrderService {
     public void cancelOrder(String orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow();
         order.setStatus(OrderStatusEnum.CANCELLED);
+
         orderRepository.save(order);
     }
 }
