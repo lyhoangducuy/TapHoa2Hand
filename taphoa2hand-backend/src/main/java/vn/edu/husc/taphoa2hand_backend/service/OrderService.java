@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -555,5 +556,71 @@ public class OrderService {
         order.setStatus(OrderStatusEnum.CANCELLED);
 
         orderRepository.save(order);
+    }
+    @Transactional
+    @Scheduled(cron = "0 0 * * * *")
+    public void scanAndProcessOrders() {
+        LocalDateTime now = LocalDateTime.now();
+
+        // 1. Tự động hủy đơn PENDING sau 24h
+        List<Order> pendingOrders = orderRepository.findByStatus(OrderStatusEnum.PENDING);
+        for (Order order : pendingOrders) {
+            if (order.getCreatedAt().plusHours(24).isBefore(now)) {
+                order.setStatus(OrderStatusEnum.CANCELLED);
+                orderRepository.save(order);
+                refreshPostAfterOrdersChanged(getFirstPostFromOrder(order));
+                
+                // Gửi thông báo hủy (tùy chọn)
+                sendSystemNotification(order, "Đơn hàng đã tự động hủy do không được xác nhận sau 24h.");
+            }
+        }
+
+        // 2. Xử lý đơn đã CONFIRMED/SHIPPING để chuyển sang DELIVERED
+        // Lấy các đơn chưa hoàn thành
+        List<Order> activeOrders = orderRepository.findByStatusIn(List.of(OrderStatusEnum.CONFIRMED, OrderStatusEnum.SHIPPING));
+        
+        for (Order order : activeOrders) {
+            Posts post = getFirstPostFromOrder(order);
+            if (post == null) continue;
+
+            if (post.getPostType() == PostTypeEnum.SELL) {
+                // Nếu là tin BÁN: Tự động hoàn thành sau 7 ngày kể từ khi xác nhận (Confirmed)
+                if (order.getUpdatedAt().plusDays(7).isBefore(now)) {
+                    completeOrder(order);
+                }
+            } 
+            else if (post.getPostType() == PostTypeEnum.BUY) {
+                // Nếu là tin MUA: Tự động hoàn thành sau 2 ngày kể từ mốc HoldUntil
+                // Giả định: Người bán tin MUA giao hàng -> qua ngày giữ tiền -> +2 ngày thì auto confirm
+                if (order.getHoldUntil() != null && order.getHoldUntil().plusDays(2).isBefore(now)) {
+                    completeOrder(order);
+                }
+            }
+        }
+    }
+
+    private void completeOrder(Order order) {
+        order.setStatus(OrderStatusEnum.DELIVERED);
+        
+        // Nếu là trung gian, thiết lập lại mốc hold tiền nếu chưa có (để admin biết khi nào được giải ngân)
+        if (order.getPaymentMethod() == PaymentMethodEnum.MIDDLEMAN && order.getHoldUntil() == null) {
+            LocalDateTime now = LocalDateTime.now();
+            if (order.getHoldDurationUnit() != null && order.getHoldDurationAmount() != null) {
+                order.setHoldUntil(addEscrowHold(now, order.getHoldDurationAmount(), order.getHoldDurationUnit()));
+            } else {
+                order.setHoldUntil(now.plusDays(3));
+            }
+        }
+        
+        orderRepository.save(order);
+        sendSystemNotification(order, "Đơn hàng #" + order.getId() + " đã được hệ thống xác nhận hoàn thành.");
+    }
+
+    private void sendSystemNotification(Order order, String message) {
+        notificationService.createNotification(NotificationRequest.builder()
+                .content(message)
+                .userIds(List.of(order.getBuyer().getId(), order.getSeller().getId()))
+                .link("/order/myOrder/" + order.getId())
+                .build());
     }
 }

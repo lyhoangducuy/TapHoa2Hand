@@ -63,4 +63,8 @@ public interface OrderRepository extends JpaRepository<Order,String>{
     @Query("SELECT CASE WHEN COUNT(o) > 0 THEN true ELSE false END FROM Order o JOIN o.items i WHERE i.post.id = :postId AND o.status IN :statuses")
     boolean existsByPostIdAndStatusIn(@Param("postId") String postId, @Param("statuses") Collection<OrderStatusEnum> statuses);
 
+    List<Order> findByStatus(OrderStatusEnum pending);
+
+    List<Order> findByStatusIn(List<OrderStatusEnum> of);
+
 }
