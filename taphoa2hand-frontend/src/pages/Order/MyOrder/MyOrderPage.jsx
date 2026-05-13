@@ -146,9 +146,9 @@ const MyOrderPage = () => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
     };
 
-    /** Đơn bán: gom theo tin đăng, trong mỗi tin sắp xếp đơn theo thời gian tạo (cũ → mới) */
-    const salesGroups = useMemo(() => {
-        if (activeTab !== 'sales' || !orders.length) return [];
+    /** Gom đơn theo tin đăng (đơn mua / đơn bán): trong mỗi tin sắp đơn theo thời gian tạo (cũ → mới), nhóm tin theo đơn mới nhất */
+    const postOrderGroups = useMemo(() => {
+        if (!orders.length) return [];
         const map = new Map();
         for (const order of orders) {
             const pid = order.postId || `_unknown_${order.id}`;
@@ -173,7 +173,7 @@ const MyOrderPage = () => {
             return t(b.orders) - t(a.orders);
         });
         return groups;
-    }, [orders, activeTab]);
+    }, [orders]);
 
     const renderOrderCard = (order) => (
         <div key={order.id} className={cx('order-card', { highlighted: order.id === newOrderId })}>
@@ -331,13 +331,21 @@ const MyOrderPage = () => {
 
                                 <p>Chưa có đơn hàng nào ở mục này.</p>
                             </div>
-                        ) : activeTab === 'sales' ? (
+                        ) : (
                             <>
                                 <div className={cx('sales-group-hint')}>
-                                    Mỗi tin đăng có thể nhận nhiều yêu cầu. Đơn được sắp theo thời gian tạo. Khi bạn{' '}
-                                    <strong>chọn một đơn</strong>, các đơn chờ khác cùng tin sẽ tự động hủy.
+                                    {activeTab === 'sales' ? (
+                                        <>
+                                            Mỗi tin đăng có thể nhận nhiều yêu cầu. Đơn được sắp theo thời gian tạo. Khi bạn{' '}
+                                            <strong>chọn một đơn</strong>, các đơn chờ khác cùng tin sẽ tự động hủy.
+                                        </>
+                                    ) : (
+                                        <>
+                                            Đơn mua được gom theo <strong>tin đăng</strong>. Trong mỗi tin, đơn xếp theo thời gian tạo (cũ đến mới).
+                                        </>
+                                    )}
                                 </div>
-                                {salesGroups.map((group) => (
+                                {postOrderGroups.map((group) => (
                                     <div key={group.groupKey} className={cx('post-order-group')}>
                                         <div className={cx('post-group-header')}>
                                             {group.postImageUrl ? (
@@ -364,8 +372,6 @@ const MyOrderPage = () => {
                                     </div>
                                 ))}
                             </>
-                        ) : (
-                            orders.map((order) => renderOrderCard(order))
                         )}
                     </div>
                 )}

@@ -79,6 +79,7 @@ function ChatPage() {
         shippingAddress: '',
         holdDurationUnit: 'DAYS',
         holdDurationAmount: 3,
+        offeredPrice: '',
         buyerBank: {
             bankName: '',
             accountName: '',
@@ -132,6 +133,7 @@ function ChatPage() {
                         postTitle: conv.postTitle,
                         postImage: conv.postImage,
                         postPrice: conv.postPrice,
+                        postType: conv.postType,
                         postStatus: conv.postStatus,
                         isMyPost: conv.isMyPost
                     }));
@@ -282,6 +284,15 @@ function ChatPage() {
             return;
         }
 
+        if (name === 'offeredPrice') {
+            const cleaned = value.replace(/[^\d]/g, '');
+            setOrderForm((prev) => ({
+                ...prev,
+                offeredPrice: cleaned
+            }));
+            return;
+        }
+
         setOrderForm((prev) => ({
             ...prev,
             [name]: value
@@ -324,9 +335,19 @@ function ChatPage() {
             }
         }
 
+        const isBuyPost = String(currentChat?.postType || '').toUpperCase() === 'BUY';
+        if (isBuyPost) {
+            const offered = Number(orderForm.offeredPrice);
+            if (!orderForm.offeredPrice || !Number.isFinite(offered) || offered <= 0) {
+                toast.warning('Vui lòng nhập giá đề xuất (VNĐ) cho tin cần mua.');
+                return;
+            }
+        }
+
         setIsSubmittingOrder(true);
 
         try {
+            const isBuyPost = String(currentChat?.postType || '').toUpperCase() === 'BUY';
             const payload = {
                 sellerId: String(currentChat?.userId || currentChat?.id || ''), 
                 buyerId: String(currentUserId), 
@@ -337,7 +358,8 @@ function ChatPage() {
                 shippingAddress: orderForm.shippingAddress,
                 buyerBank: orderForm.method === 'MIDDLEMAN' ? orderForm.buyerBank : undefined,
                 holdDurationUnit: orderForm.method === 'MIDDLEMAN' ? orderForm.holdDurationUnit : undefined,
-                holdDurationAmount: orderForm.method === 'MIDDLEMAN' ? Number(orderForm.holdDurationAmount) : undefined
+                holdDurationAmount: orderForm.method === 'MIDDLEMAN' ? Number(orderForm.holdDurationAmount) : undefined,
+                ...(isBuyPost ? { offeredPrice: Number(orderForm.offeredPrice) } : {})
             };
 
             const res = await createOrder(payload);

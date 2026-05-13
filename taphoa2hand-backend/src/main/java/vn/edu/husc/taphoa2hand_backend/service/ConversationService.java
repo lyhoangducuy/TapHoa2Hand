@@ -138,6 +138,9 @@ public class ConversationService {
 
                 conversationResponse.setPostId(postCurrent.getId());
                 conversationResponse.setPostPrice(postCurrent.getPrice());
+                if (postCurrent.getPostType() != null) {
+                    conversationResponse.setPostType(postCurrent.getPostType().name());
+                }
                 conversationResponse.setPostStatus(postCurrent.getStatus().toString());
                 
                 conversationResponse.setPostTitle(postCurrent.getTitle());    

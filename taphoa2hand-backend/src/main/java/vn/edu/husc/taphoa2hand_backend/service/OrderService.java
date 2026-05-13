@@ -29,6 +29,7 @@ import vn.edu.husc.taphoa2hand_backend.entity.OrderStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.ParticipantInfo;
 import vn.edu.husc.taphoa2hand_backend.entity.PaymentMethodEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.PostStatusEnum;
+import vn.edu.husc.taphoa2hand_backend.entity.PostTypeEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.Posts;
 import vn.edu.husc.taphoa2hand_backend.entity.Users;
 import vn.edu.husc.taphoa2hand_backend.exception.AppException;
@@ -129,6 +130,15 @@ public class OrderService {
         if (post.getStatus().equals(PostStatusEnum.SOLD))
             throw new AppException(ErrorCode.POST_HAD_SOLD);
 
+        boolean isBuyPost = post.getPostType() == PostTypeEnum.BUY;
+        if (isBuyPost) {
+            if (request.getOfferedPrice() == null || request.getOfferedPrice().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new AppException(ErrorCode.VALID_EXCEPTION);
+            }
+        } else if (request.getOfferedPrice() != null) {
+            throw new AppException(ErrorCode.VALID_EXCEPTION);
+        }
+
         // Kiểm tra xem đã có đơn hàng active cho bài viết này từ người mua này chưa
         orderRepository.findActiveOrderByPostAndBuyer(request.getPostId(), buyer.getId())
                 .ifPresent(existingOrder -> {
@@ -158,7 +168,7 @@ public class OrderService {
         applyEscrowHoldFromRequest(order, request);
 
         // Tính phí sàn 2% nếu chọn MIDDLEMAN
-        BigDecimal productPrice = post.getPrice();
+        BigDecimal lineItemPrice = isBuyPost ? request.getOfferedPrice() : post.getPrice();
         BigDecimal platformFee = BigDecimal.ZERO;
 
         // if (request.getMethod() == PaymentMethodEnum.MIDDLEMAN) {
@@ -166,13 +176,13 @@ public class OrderService {
         // }
         // order.setPaymentMethod(request.getMethod());
         order.setPlatformFee(platformFee);
-        order.setTotalAmount(productPrice.add(platformFee));
+        order.setTotalAmount(lineItemPrice.add(platformFee));
 
         // // 4. Tạo OrderItem
         OrderItem item = OrderItem.builder()
                 .order(order)
                 .post(post)
-                .price(post.getPrice())
+                .price(lineItemPrice)
                 .quantity(1)
                 .build();
         order.setItems(List.of(item));

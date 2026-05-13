@@ -1,5 +1,7 @@
 package vn.edu.husc.taphoa2hand_backend.dto.request.Order;
 
+import java.math.BigDecimal;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -37,6 +39,12 @@ public class OrderRequest {
     String holdDurationUnit;
     /** Số giờ hoặc số ngày tương ứng; tối đa 10 ngày (240 giờ). */
     Integer holdDurationAmount;
+
+    /**
+     * Tin BUY (cần mua): giá đề xuất của người gửi yêu cầu — lưu vào {@code OrderItem.price}.
+     * Tin SELL: bỏ qua, dùng giá trên bài đăng.
+     */
+    BigDecimal offeredPrice;
 
     // Bank người mua (để hoàn tiền nếu cần)
     @Valid

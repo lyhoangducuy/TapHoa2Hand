@@ -28,6 +28,8 @@ public class ConversationResponse {
     String postTitle; // Tên sản phẩm
     String postImage; // Ảnh thu nhỏ
     BigDecimal postPrice; // Giá
+    /** SELL = tin rao bán, BUY = tin cần mua (người tạo đơn có thể nhập giá đề xuất). */
+    String postType;
     String postStatus; // Trạng thái sản phẩm (AVAILABLE, SOLD, HIDDEN, etc.)
     Boolean isMyPost;
     LocalDateTime createdAt;

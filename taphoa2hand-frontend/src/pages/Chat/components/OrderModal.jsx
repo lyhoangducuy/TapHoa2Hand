@@ -26,6 +26,7 @@ function OrderModal({
     onCheckout,
     close 
 }) {
+    const isBuyPost = String(currentChat?.postType || '').toUpperCase() === 'BUY';
 
     // Nếu đã tạo order thành công, hiển thị thông tin order và nút checkout
     if (createdOrder) {
@@ -34,8 +35,17 @@ function OrderModal({
                 <div className={cx('modal-content')}>
                     <h2>🎉 Đơn Hàng Đã Tạo</h2>
                     <div className={cx('product-summary')}>
-                        <strong>Sản phẩm:</strong> {currentChat?.postTitle} <br />
-                        <strong>Giá:</strong> <span>{formatPrice(currentChat?.postPrice)}</span>
+                        <strong>Tin đăng:</strong> {currentChat?.postTitle} <br />
+                        {isBuyPost ? (
+                            <>
+                                <strong>Giá trên đơn:</strong>{' '}
+                                <span>{formatPrice(createdOrder.totalAmount)}</span>
+                            </>
+                        ) : (
+                            <>
+                                <strong>Giá:</strong> <span>{formatPrice(currentChat?.postPrice)}</span>
+                            </>
+                        )}
                     </div>
                     
                     <div className={cx('order-info-section')}>
@@ -100,10 +110,36 @@ function OrderModal({
             <div className={cx('modal-content')}>
                 <h2>Yêu Cầu Giao Dịch</h2>
                 <div className={cx('product-summary')}>
-                    <strong>Sản phẩm:</strong> {currentChat?.postTitle} <br />
-                    <strong>Giá:</strong> <span>{formatPrice(currentChat?.postPrice)}</span>
+                    <strong>Tin đăng:</strong> {currentChat?.postTitle} <br />
+                    {isBuyPost ? (
+                        <>
+                            <strong>Gợi ý trên tin (tham khảo):</strong>{' '}
+                            <span>{formatPrice(currentChat?.postPrice)}</span>
+                        </>
+                    ) : (
+                        <>
+                            <strong>Giá:</strong> <span>{formatPrice(currentChat?.postPrice)}</span>
+                        </>
+                    )}
                 </div>
                 <form onSubmit={submitOrderRequest}>
+                    {isBuyPost && (
+                        <div className={cx('form-section')}>
+                            <strong>Giá bạn đề xuất (VNĐ)</strong>
+                            <p className={cx('form-hint')}>
+                                Tin <strong>cần mua</strong>: nhập mức giá bạn muốn bán / thỏa thuận. Giá này ghi vào đơn hàng.
+                            </p>
+                            <input
+                                required
+                                type="text"
+                                inputMode="numeric"
+                                name="offeredPrice"
+                                value={orderForm.offeredPrice}
+                                onChange={handleOrderFormChange}
+                                placeholder="Ví dụ: 1500000"
+                            />
+                        </div>
+                    )}
                     <div className={cx('form-section')}>
                         <strong>1. Thông tin nhận hàng</strong>
                         <input 
