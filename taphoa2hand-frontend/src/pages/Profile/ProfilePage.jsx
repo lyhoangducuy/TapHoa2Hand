@@ -150,10 +150,6 @@ function ProfilePage() {
                                 <strong>{user.rating || '-'}</strong>
                                 <span>Đánh giá</span>
                             </div>
-                            <div className={cx('stat-item')}>
-                                <strong>{user.followers || '-'}</strong>
-                                <span>Người theo dõi</span>
-                            </div>
                         </div>
                     </div>
                 </div>

@@ -40,6 +40,7 @@ const MyOrderPage = () => {
     const [actionLoading, setActionLoading] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [paymentOrderId, setPaymentOrderId] = useState(null);
+    const [paymentAmount, setPaymentAmount] = useState(0);
 
     useEffect(() => {
         if (newOrderId) {
@@ -52,6 +53,33 @@ const MyOrderPage = () => {
         fetchOrders();
     }, [activeTab, pagination.page, selectedStatus, selectedPaymentMethod]);
 
+    // Xử lý Callback từ VNPay
+    useEffect(() => {
+        const vnp_ResponseCode = searchParams.get('vnp_ResponseCode');
+        const vnp_TxnRef = searchParams.get('vnp_TxnRef'); // Lấy mã đơn hàng từ URL VNPay
+
+        if (vnp_ResponseCode && vnp_TxnRef) {
+            if (vnp_ResponseCode === '00') {
+                // Thanh toán thành công -> Gọi hàm cập nhật trạng thái
+                handleUpdateStatus(vnp_TxnRef, 'PAID_WAITING_PICKUP', 'VNPAY');
+            } else {
+                toast.error('Thanh toán VNPay thất bại hoặc đã bị hủy giao dịch.');
+            }
+
+            // Dọn dẹp URL để người dùng F5 không bị gọi lại
+            const newSearchParams = new URLSearchParams(searchParams);
+            const vnpParamsToRemove = [
+                'vnp_Amount', 'vnp_BankCode', 'vnp_BankTranNo', 'vnp_CardType',
+                'vnp_OrderInfo', 'vnp_PayDate', 'vnp_ResponseCode', 'vnp_TmnCode',
+                'vnp_TransactionNo', 'vnp_TransactionStatus', 'vnp_TxnRef', 'vnp_SecureHash'
+            ];
+            
+            vnpParamsToRemove.forEach(param => newSearchParams.delete(param));
+            window.history.replaceState(null, '', `?${newSearchParams.toString()}`);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams]);
+
     const fetchOrders = async () => {
         setLoading(true);
         try {
@@ -61,7 +89,6 @@ const MyOrderPage = () => {
                 ? await orderService.getPurchases(pagination.page, pagination.size, statusParam, paymentParam)
                 : await orderService.getSales(pagination.page, pagination.size, statusParam, paymentParam);
 
-            // Backend trả về ApiResponse với result chứa Page
             const pageData = response.data?.result;
             if (pageData) {
                 setOrders(pageData.content || []);
@@ -153,7 +180,9 @@ const MyOrderPage = () => {
     };
 
     const handlePaymentClick = (orderId) => {
+        const orderToPay = orders.find((o) => o.id === orderId);
         setPaymentOrderId(orderId);
+        setPaymentAmount(orderToPay ? orderToPay.totalAmount : 0);
         setShowPaymentModal(true);
     };
 
@@ -175,6 +204,7 @@ const MyOrderPage = () => {
     const handlePaymentCancel = () => {
         setShowPaymentModal(false);
         setPaymentOrderId(null);
+        setPaymentAmount(0);
     };
 
     const handlePaymentConfirmed = (orderId) => {
@@ -185,7 +215,6 @@ const MyOrderPage = () => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
     };
 
-    // Gom đơn theo tin đăng
     const postOrderGroups = useMemo(() => {
         if (!orders.length) return [];
         const map = new Map();
@@ -219,15 +248,15 @@ const MyOrderPage = () => {
             <div className={cx('my-order-wrapper')}>
                 <h2 className={cx('page-title')}>Quản lý đơn hàng</h2>
 
-                <OrderTabs 
-                    activeTab={activeTab} 
+                <OrderTabs
+                    activeTab={activeTab}
                     onTabChange={(tab) => {
                         setActiveTab(tab);
                         setPagination(prev => ({ ...prev, page: 0 }));
                     }}
                 />
 
-                <OrderFilters 
+                <OrderFilters
                     selectedStatus={selectedStatus}
                     selectedPaymentMethod={selectedPaymentMethod}
                     onStatusChange={(e) => {
@@ -288,7 +317,6 @@ const MyOrderPage = () => {
                     </div>
                 )}
 
-                {/* Phân trang — luôn hiện khi có ≥1 trang (kể cả chỉ 1 trang) */}
                 {!loading && pagination.totalPages >= 1 && (
                     <div className={cx('pagination')}>
                         <button
@@ -312,7 +340,6 @@ const MyOrderPage = () => {
                 )}
             </div>
 
-            {/* Feedback Modal */}
             {showFeedbackForm && selectedOrder && (
                 <div className={cx('feedback-modal-overlay')} onClick={handleFeedbackCancel}>
                     <div className={cx('feedback-modal')} onClick={(e) => e.stopPropagation()}>
@@ -326,7 +353,6 @@ const MyOrderPage = () => {
                 </div>
             )}
 
-            {/* Seller Bank Modal */}
             <SellerBankModal
                 show={showSellerBankModal}
                 bankInfo={sellerBankForm}
@@ -336,13 +362,11 @@ const MyOrderPage = () => {
                 loading={actionLoading}
             />
 
-            {/* Payment Modal */}
             <PaymentModal
                 show={showPaymentModal}
                 orderId={paymentOrderId}
-                onConfirm={handleConfirmPayment}
+                amount={paymentAmount}
                 onCancel={handlePaymentCancel}
-                loading={actionLoading}
             />
         </>
     );

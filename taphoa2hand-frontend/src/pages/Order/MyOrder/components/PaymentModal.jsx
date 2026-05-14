@@ -2,39 +2,45 @@ import React, { useState } from 'react';
 import classNames from 'classnames/bind';
 import { FiCreditCard, FiX } from 'react-icons/fi';
 import styles from '../MyOrderPage.module.scss';
-// Nhớ import thư viện gọi API của bạn (axios hoặc fetch custom)
-// import api from 'path/to/your/api'; 
+import axios from 'axios'; // Nhớ import thư viện gọi API của bạn
+import { getToken } from '../../../../services/localStorageService';
 
 const cx = classNames.bind(styles);
 
 const PaymentModal = ({ 
     show, 
     orderId, 
+    amount, // BƯỚC 1: Nhận thêm prop số tiền
     onCancel 
 }) => {
     const [loading, setLoading] = useState(false);
 
-    if (!show || !orderId) return null;
+    if (!show || !orderId || !amount) return null;
 
-    // Hàm xử lý khi bấm nút Thanh toán qua ZaloPay
-    const handleZaloPayPayment = async () => {
+    // Đổi tên hàm cho đúng với VNPay
+    const handleVNPayPayment = async () => {
         setLoading(true);
         try {
-            // GỌI API BACKEND ĐỂ LẤY LINK ZALOPAY
-            // Thay thế endpoint này bằng endpoint thực tế của bạn
-            // const response = await api.post(`/payment/zalopay/create/${orderId}`);
+            const token = getToken();
+            const response = await axios.get('http://localhost:8080/payment/vn-pay', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                params: {
+                    amount: amount,
+                    orderId: orderId,
+                }
+            });
             
-            // Giả sử response trả về có chứa order_url
-            // if (response.data && response.data.result.order_url) {
-            //     window.location.href = response.data.result.order_url; // Chuyển hướng user
-            // }
-
-            // Demo log
-            console.log("Gọi API lấy link ZaloPay cho Order:", orderId);
-            alert("Sẽ chuyển hướng sang ZaloPay ngay bây giờ!");
-            
+            // BƯỚC 3: Lấy link từ backend và chuyển hướng người dùng
+            // Dựa vào cấu trúc ApiResponse bạn định nghĩa ở Backend
+            if (response.data && response.data.result && response.data.result.paymentUrl) {
+                window.location.href = response.data.result.paymentUrl;
+            } else {
+                alert("Không lấy được đường dẫn thanh toán!");
+            }
         } catch (error) {
-            console.error("Lỗi khi tạo giao dịch ZaloPay:", error);
+            console.error("Lỗi khi tạo giao dịch VNPay:", error);
             alert("Có lỗi xảy ra khi kết nối cổng thanh toán.");
         } finally {
             setLoading(false);
@@ -46,14 +52,18 @@ const PaymentModal = ({
             <div className={cx('feedback-modal')} onClick={(e) => e.stopPropagation()}>
                 <div style={{ textAlign: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-                        <FiCreditCard size={32} color="#0068FF" /> {/* Đổi màu xanh ZaloPay */}
+                        <FiCreditCard size={32} color="#0068FF" /> 
                         <h3 style={{ margin: '0 0 0 10px', color: '#2f3542', fontSize: '18px', fontWeight: '700' }}>
-                            Thanh toán qua ZaloPay
+                            Thanh toán qua VNPay
                         </h3>
                     </div>
                     
-                    <p style={{ marginBottom: '15px', color: '#666' }}>
+                    <p style={{ marginBottom: '5px', color: '#666' }}>
                         Mã đơn: <strong>#{orderId?.substring(0, 8).toUpperCase()}</strong>
+                    </p>
+                    {/* Hiển thị thêm số tiền để người dùng xác nhận */}
+                    <p style={{ marginBottom: '15px', color: '#d63031', fontWeight: 'bold', fontSize: '18px' }}>
+                        Tổng tiền: {amount.toLocaleString('vi-VN')} VNĐ
                     </p>
                     
                     <div style={{
@@ -67,27 +77,21 @@ const PaymentModal = ({
                     }}>
                         <p style={{ margin: 0, fontWeight: 'bold' }}>Xác nhận thanh toán</p>
                         <p style={{ margin: '10px 0 0 0' }}>
-                            Bạn sẽ được chuyển hướng sang cổng thanh toán an toàn của ZaloPay. Có thể thanh toán bằng <strong>Ví ZaloPay</strong>, <strong>Thẻ ATM</strong> hoặc <strong>Thẻ tín dụng</strong>.
+                            Bạn sẽ được chuyển hướng sang cổng thanh toán an toàn của VNPay.
                         </p>
                     </div>
                 </div>
 
                 <div className={cx('modal-actions')}>
-                    <button
-                        className={cx('btn', 'btn-cancel')}
-                        onClick={onCancel}
-                        disabled={loading}
-                    >
-                        <FiX size={18} />
-                        Hủy
+                    <button className={cx('btn', 'btn-cancel')} onClick={onCancel} disabled={loading}>
+                        <FiX size={18} /> Hủy
                     </button>
-                    <button
-                        className={cx('btn', 'btn-primary')}
-                        onClick={handleZaloPayPayment}
+                    <button 
+                        className={cx('btn', 'btn-primary')} 
+                        onClick={handleVNPayPayment} // Gọi hàm thanh toán
                         disabled={loading}
-                        style={{ backgroundColor: '#0068FF', borderColor: '#0068FF' }} // Nút xanh ZaloPay
                     >
-                        {loading ? '⏳ Đang kết nối...' : 'Chuyển tới ZaloPay'}
+                        {loading ? '⏳ Đang kết nối...' : 'Chuyển tới VNPay'}
                     </button>
                 </div>
             </div>
