@@ -1,43 +1,27 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import classNames from 'classnames/bind';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { FiLoader } from 'react-icons/fi';
 
 import styles from './MyOrderPage.module.scss';
 import * as orderService from '../../../services/orderService';
 import { FeedbackForm } from '../../../components/Feedback';
+import {
+    PaymentModal,
+    SellerBankModal,
+    OrderCard,
+    OrderFilters,
+    OrderTabs,
+    PostOrderGroup
+} from './components';
+
 const cx = classNames.bind(styles);
 
-// QR Code component đơn giản (demo)
-const QRCodeDemo = ({ value }) => {
-    // Tạm dùng placeholder, sau có thể thay bằng thư viện qrcode.react
-    return (
-        <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: '#f0f0f0',
-            width: '200px',
-            height: '200px',
-            fontSize: '12px',
-            padding: '10px',
-            textAlign: 'center',
-            borderRadius: '8px'
-        }}>
-            <div>
-                <div style={{ fontSize: '48px', marginBottom: '10px' }}>📱</div>
-                <div>Mã QR chuyển khoản</div>
-                <div style={{ fontSize: '10px', marginTop: '5px', wordBreak: 'break-all' }}>{value}</div>
-            </div>
-        </div>
-    );
-};
-
 const MyOrderPage = () => {
-    const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const newOrderId = searchParams.get('orderId');
-    const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'purchases'); // 'purchases' hoặc 'sales'
+    const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'purchases');
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(false);
     const [pagination, setPagination] = useState({
@@ -54,7 +38,6 @@ const MyOrderPage = () => {
     const [confirmOrderId, setConfirmOrderId] = useState(null);
     const [sellerBankForm, setSellerBankForm] = useState({ bankName: '', accountName: '', accountNumber: '' });
     const [actionLoading, setActionLoading] = useState(false);
-    // State cho modal thanh toán
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [paymentOrderId, setPaymentOrderId] = useState(null);
 
@@ -158,11 +141,10 @@ const MyOrderPage = () => {
         setShowFeedbackForm(true);
     };
 
-    const handleFeedbackSuccess = (feedback) => {
+    const handleFeedbackSuccess = () => {
         setShowFeedbackForm(false);
         setSelectedOrder(null);
         toast.success('Đánh giá đã được gửi!');
-        // Có thể refresh orders nếu muốn cập nhật UI
     };
 
     const handleFeedbackCancel = () => {
@@ -185,7 +167,6 @@ const MyOrderPage = () => {
             fetchOrders();
         } catch (error) {
             toast.error('Có lỗi xảy ra khi xác nhận thanh toán');
-            console.error(error);
         } finally {
             setActionLoading(false);
         }
@@ -196,11 +177,15 @@ const MyOrderPage = () => {
         setPaymentOrderId(null);
     };
 
+    const handlePaymentConfirmed = (orderId) => {
+        handleUpdateStatus(orderId, 'PAID_WAITING_PICKUP');
+    };
+
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
     };
 
-    /** Gom đơn theo tin đăng (đơn mua / đơn bán): trong mỗi tin sắp đơn theo thời gian tạo (cũ → mới), nhóm tin theo đơn mới nhất */
+    // Gom đơn theo tin đăng
     const postOrderGroups = useMemo(() => {
         if (!orders.length) return [];
         const map = new Map();
@@ -229,174 +214,41 @@ const MyOrderPage = () => {
         return groups;
     }, [orders]);
 
-    const renderOrderCard = (order) => (
-        <div key={order.id} className={cx('order-card', { highlighted: order.id === newOrderId })}>
-            <div className={cx('order-header')}>
-                <div className={cx('order-info')}>
-                    <span className={cx('label')}>Mã đơn:</span>
-                    <span className={cx('value')}>#{order.id?.substring(0, 8).toUpperCase()}</span>
-                </div>
-                <div className={cx('order-status-badge', order.status?.name?.toLowerCase())}>
-                    {order.status?.displayName}
-                </div>
-            </div>
-
-            {activeTab === 'sales' && order.buyerUsername && (
-                <div className={cx('buyer-row')}>
-                    <span className={cx('label')}>Người mua:</span>
-                    <span className={cx('value')}>@{order.buyerUsername}</span>
-                </div>
-            )}
-
-            <div className={cx('order-body')}>
-                <div className={cx('product-info')}>
-                    <div className={cx('receiver-name')}>{order.receiverName}</div>
-                    <div className={cx('receiver-detail')}>
-                        <p>📞 {order.receiverPhone}</p>
-                        <p>📍 {order.shippingAddress}</p>
-                    </div>
-                </div>
-
-                <div className={cx('payment-info')}>
-                    <div className={cx('method-tag', order.paymentMethod?.name)}>
-                        {order.paymentMethod?.name === 'MIDDLEMAN' ? '🛡️ Trung gian' : '🤝 Trực tiếp'}
-                    </div>
-                    {order.paymentMethod?.name === 'MIDDLEMAN' &&
-                        order.holdDurationAmount != null &&
-                        order.holdDurationUnit && (
-                        <div className={cx('escrow-hold')}>
-                            Giữ tiền:{' '}
-                            {order.holdDurationUnit === 'HOURS'
-                                ? `${order.holdDurationAmount} giờ`
-                                : `${order.holdDurationAmount} ngày`}
-                            {order.status?.name === 'DELIVERED' && order.holdUntil && (
-                                <span> — đến {new Date(order.holdUntil).toLocaleDateString('vi-VN')}</span>
-                            )}
-                        </div>
-                    )}
-                    <div className={cx('total-amount')}>
-                        {formatCurrency(order.totalAmount)}
-                    </div>
-                    {order.platformFee > 0 && (
-                        <div className={cx('fee')}>Phí: {formatCurrency(order.platformFee)}</div>
-                    )}
-                </div>
-            </div>
-
-            <div className={cx('order-footer')}>
-                <button
-                    className={cx('btn-detail')}
-                    onClick={() => navigate(`/order/myOrder/${order.id}`)}
-                >
-                    Xem chi tiết
-                </button>
-
-                {activeTab === 'purchases' && order.status?.name === 'DELIVERED' && (
-                    <button
-                        className={cx('btn-feedback')}
-                        onClick={() => handleFeedbackClick(order)}
-                    >
-                        ⭐ Đánh giá
-                    </button>
-                )}
-
-                {activeTab === 'purchases' && order.status?.name === 'CONFIRMED' && (
-                    <button
-                        className={cx('btn-payment')}
-                        onClick={() => handlePaymentClick(order.id)}
-                        disabled={actionLoading}
-                    >
-                        💳 Xác nhận thanh toán
-                    </button>
-                )}
-
-                {activeTab === 'sales' && order.status?.name === 'PENDING' && (
-                    <div className={cx('seller-actions')}>
-                        <button
-                            className={cx('btn-reject')}
-                            onClick={() => handleUpdateStatus(order.id, 'CANCELLED')}
-                            disabled={actionLoading}
-                        >
-                            Từ chối
-                        </button>
-                        <button
-                            className={cx('btn-approve')}
-                            onClick={() => handleUpdateStatus(order.id, 'CONFIRMED', order.paymentMethod?.name)}
-                            disabled={actionLoading}
-                        >
-                            {order.paymentMethod?.name === 'MIDDLEMAN' ? 'Chọn đơn + TK NH' : 'Chọn đơn này'}
-                        </button>
-                    </div>
-                )}
-
-                {activeTab === 'sales' && order.status?.name === 'PAID_WAITING_PICKUP' && (
-                    <button
-                        className={cx('btn-deliver')}
-                        onClick={() => handleUpdateStatus(order.id, 'SHIPPING')}
-                    >
-                        📦 Chuyển sang giao hàng
-                    </button>
-                )}
-
-                {activeTab === 'sales' && order.status?.name === 'SHIPPING' && (
-                    <button
-                        className={cx('btn-deliver')}
-                        onClick={() => handleUpdateStatus(order.id, 'DELIVERED')}
-                    >
-                        ✔️ Giao hàng thành công
-                    </button>
-                )}
-            </div>
-        </div>
-    );
-
     return (
         <>
             <div className={cx('my-order-wrapper')}>
                 <h2 className={cx('page-title')}>Quản lý đơn hàng</h2>
 
-                <div className={cx('order-tabs')}>
-                    <div
-                        className={cx('tab-item', { active: activeTab === 'purchases' })}
-                        onClick={() => { setActiveTab('purchases'); setPagination(prev => ({ ...prev, page: 0 })); }}
-                    >
-                        🛒 Đơn mua
-                    </div>
-                    <div
-                        className={cx('tab-item', { active: activeTab === 'sales' })}
-                        onClick={() => { setActiveTab('sales'); setPagination(prev => ({ ...prev, page: 0 })); }}
-                    >
-                        💰 Đơn bán
-                    </div>
-                </div>
-                <div className={cx('filter-row')}>
-                    <label className={cx('filter-label')}>Trạng thái:</label>
-                    <select className={cx('status-select')} value={selectedStatus} onChange={(e) => { setSelectedStatus(e.target.value); setPagination(prev => ({ ...prev, page: 0 })); }}>
-                        <option value={'ALL'}>Tất cả</option>
-                        <option value={'PENDING'}>Chờ xác nhận</option>
-                        <option value={'CONFIRMED'}>Đã xác nhận, chờ thanh toán</option>
-                        <option value={'PAID_WAITING_PICKUP'}>Đã thanh toán, chờ lấy hàng</option>
-                        <option value={'SHIPPING'}>Đang giao</option>
-                        <option value={'DELIVERED'}>Đã giao</option>
-                        <option value={'CANCELLED'}>Đã hủy</option>
-                        <option value={'RETURNED'}>Trả hàng</option>
-                    </select>
+                <OrderTabs 
+                    activeTab={activeTab} 
+                    onTabChange={(tab) => {
+                        setActiveTab(tab);
+                        setPagination(prev => ({ ...prev, page: 0 }));
+                    }}
+                />
 
-                    <label className={cx('filter-label')}>Thanh toán:</label>
-                    <select className={cx('status-select')} value={selectedPaymentMethod} onChange={(e) => { setSelectedPaymentMethod(e.target.value); setPagination(prev => ({ ...prev, page: 0 })); }}>
-                        <option value={'ALL'}>Tất cả</option>
-                        <option value={'DIRECT'}>Trực tiếp</option>
-                        <option value={'MIDDLEMAN'}>Trung gian</option>
-                    </select>
-                </div>
+                <OrderFilters 
+                    selectedStatus={selectedStatus}
+                    selectedPaymentMethod={selectedPaymentMethod}
+                    onStatusChange={(e) => {
+                        setSelectedStatus(e.target.value);
+                        setPagination(prev => ({ ...prev, page: 0 }));
+                    }}
+                    onPaymentChange={(e) => {
+                        setSelectedPaymentMethod(e.target.value);
+                        setPagination(prev => ({ ...prev, page: 0 }));
+                    }}
+                />
 
                 {loading ? (
-                    <div className={cx('loading-state')}>Đang tải dữ liệu...</div>
+                    <div className={cx('loading-state')}>
+                        <FiLoader size={32} style={{ animation: 'spin 1s linear infinite', marginBottom: '10px' }} />
+                        Đang tải dữ liệu...
+                    </div>
                 ) : (
                     <div className={cx('order-list')}>
                         {orders.length === 0 ? (
                             <div className={cx('empty-state')}>
-
                                 <p>Chưa có đơn hàng nào ở mục này.</p>
                             </div>
                         ) : (
@@ -414,30 +266,19 @@ const MyOrderPage = () => {
                                     )}
                                 </div>
                                 {postOrderGroups.map((group) => (
-                                    <div key={group.groupKey} className={cx('post-order-group')}>
-                                        <div className={cx('post-group-header')}>
-                                            {group.postImageUrl ? (
-                                                <img
-                                                    className={cx('post-thumb')}
-                                                    src={group.postImageUrl}
-                                                    alt=""
-                                                />
-                                            ) : (
-                                                <div className={cx('post-thumb', 'placeholder')}>📦</div>
-                                            )}
-                                            <div className={cx('post-group-meta')}>
-                                                <h3 className={cx('post-group-title')}>
-                                                    {group.postTitle || 'Tin đăng'}
-                                                </h3>
-                                                <p className={cx('post-group-sub')}>
-                                                    {group.orders.length} đơn — thứ tự theo lúc tạo
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className={cx('post-group-orders')}>
-                                            {group.orders.map((order) => renderOrderCard(order))}
-                                        </div>
-                                    </div>
+                                    <PostOrderGroup
+                                        key={group.groupKey}
+                                        group={group}
+                                        activeTab={activeTab}
+                                        onFeedback={handleFeedbackClick}
+                                        onPayment={handlePaymentClick}
+                                        onReject={(orderId) => handleUpdateStatus(orderId, 'CANCELLED')}
+                                        onApprove={(orderId, paymentMethod) => handleUpdateStatus(orderId, 'CONFIRMED', paymentMethod)}
+                                        onPaymentConfirmed={handlePaymentConfirmed}
+                                        onShipping={(orderId) => handleUpdateStatus(orderId, 'SHIPPING')}
+                                        onDelivered={(orderId) => handleUpdateStatus(orderId, 'DELIVERED')}
+                                        actionLoading={actionLoading}
+                                    />
                                 ))}
                             </>
                         )}
@@ -482,108 +323,24 @@ const MyOrderPage = () => {
                 </div>
             )}
 
-            {showSellerBankModal && (
-                <div className={cx('feedback-modal-overlay')} onClick={() => setShowSellerBankModal(false)}>
-                    <div className={cx('feedback-modal')} onClick={(e) => e.stopPropagation()}>
-                        <h3 style={{ marginBottom: '20px', color: '#2f3542', fontSize: '18px', fontWeight: '700' }}>
-                            Nhập thông tin ngân hàng
-                        </h3>
-                        <div className={cx('form-section')}>
-                            <input
-                                type="text"
-                                name="bankName"
-                                value={sellerBankForm.bankName}
-                                onChange={handleSellerBankChange}
-                                placeholder="Tên ngân hàng"
-                            />
-                            <input
-                                type="text"
-                                name="accountName"
-                                value={sellerBankForm.accountName}
-                                onChange={handleSellerBankChange}
-                                placeholder="Tên chủ tài khoản"
-                            />
-                            <input
-                                type="text"
-                                name="accountNumber"
-                                value={sellerBankForm.accountNumber}
-                                onChange={handleSellerBankChange}
-                                placeholder="Số tài khoản"
-                            />
-                        </div>
-                        <div className={cx('modal-actions')}>
-                            <button
-                                className={cx('btn', 'btn-cancel')}
-                                onClick={() => setShowSellerBankModal(false)}
-                                disabled={actionLoading}
-                            >
-                                Hủy
-                            </button>
-                            <button
-                                className={cx('btn', 'btn-primary')}
-                                onClick={handleConfirmSellerBank}
-                                disabled={actionLoading}
-                            >
-                                {actionLoading ? '⏳ Đang xử lý...' : 'Xác nhận đơn'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Seller Bank Modal */}
+            <SellerBankModal
+                show={showSellerBankModal}
+                bankInfo={sellerBankForm}
+                onBankInfoChange={handleSellerBankChange}
+                onConfirm={handleConfirmSellerBank}
+                onCancel={() => setShowSellerBankModal(false)}
+                loading={actionLoading}
+            />
 
-            {/* Payment Modal - Hiển thị QR Code */}
-            {showPaymentModal && paymentOrderId && (
-                <div className={cx('feedback-modal-overlay')} onClick={handlePaymentCancel}>
-                    <div className={cx('feedback-modal')} onClick={(e) => e.stopPropagation()}>
-                        <div style={{ textAlign: 'center' }}>
-                            <h3 style={{ marginBottom: '20px', color: '#2f3542', fontSize: '18px', fontWeight: '700' }}>
-                                💳 Thanh toán cho đơn hàng
-                            </h3>
-                            <p style={{ marginBottom: '15px', color: '#666' }}>
-                                Mã đơn: <strong>#{paymentOrderId?.substring(0, 8).toUpperCase()}</strong>
-                            </p>
-                            
-                            <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center' }}>
-                                <QRCodeDemo value={`Order:${paymentOrderId}`} />
-                            </div>
-
-                            <div style={{
-                                backgroundColor: '#f8f9fa',
-                                padding: '15px',
-                                borderRadius: '8px',
-                                marginBottom: '20px',
-                                fontSize: '13px',
-                                color: '#555'
-                            }}>
-                                <strong>Hướng dẫn:</strong>
-                                <ol style={{ textAlign: 'left', marginTop: '10px', margin: '0' }}>
-                                    <li>Mở ứng dụng ngân hàng</li>
-                                    <li>Quét mã QR hoặc nhập thông tin chuyển khoản</li>
-                                    <li>Xác nhận chuyển khoản vào tài khoản của admin</li>
-                                    <li>Ấn nút "Đã thanh toán" khi hoàn tất</li>
-                                </ol>
-                            </div>
-                        </div>
-
-                        <div className={cx('modal-actions')}>
-                            <button
-                                className={cx('btn', 'btn-cancel')}
-                                onClick={handlePaymentCancel}
-                                disabled={actionLoading}
-                            >
-                                Hủy
-                            </button>
-                            <button
-                                className={cx('btn', 'btn-primary')}
-                                onClick={handleConfirmPayment}
-                                disabled={actionLoading}
-                            >
-                                {actionLoading ? '⏳ Đang xử lý...' : '✅ Đã thanh toán'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Payment Modal */}
+            <PaymentModal
+                show={showPaymentModal}
+                orderId={paymentOrderId}
+                onConfirm={handleConfirmPayment}
+                onCancel={handlePaymentCancel}
+                loading={actionLoading}
+            />
         </>
     );
 };
