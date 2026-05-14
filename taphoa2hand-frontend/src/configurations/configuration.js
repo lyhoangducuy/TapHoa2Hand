@@ -73,6 +73,10 @@ export const API = {
     REPORT_SUBMIT_USER: "/reports/submit/user",
     REPORT_SUBMIT_POST: "/reports/submit/post",
     REPORT_SUBMIT_ORDER: "/reports/submit/order",
+    ADMIN_GET_ALL_REPORTS: "/reports",
+    ADMIN_GET_REPORT_BY_ID: (reportId) => `/reports/${reportId}`,
+    ADMIN_GET_REPORTS_BY_STATUS: (status) => `/reports/status/${status}`,
+    ADMIN_UPDATE_REPORT_STATUS: (reportId) => `/reports/${reportId}/status`,
 
     // Notification
     GET_NOTIFICATIONS: (userId) => `/notification/user/${userId}`,

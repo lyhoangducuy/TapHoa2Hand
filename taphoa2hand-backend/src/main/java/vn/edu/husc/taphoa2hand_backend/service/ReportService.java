@@ -179,6 +179,7 @@ public class ReportService {
         return reportMapper.toReportResponseList(reports);
     }
 
+    @Transactional(readOnly = true)
     public List<ReportResponse> getAllReports() {
         List<Report> reports = reportRepository.findAll();
         return reportMapper.toReportResponseList(reports);

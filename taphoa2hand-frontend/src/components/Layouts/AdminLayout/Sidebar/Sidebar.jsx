@@ -4,7 +4,7 @@ import classNames from 'classnames/bind';
 import styles from './Sidebar.module.scss';
 import { CSidebar, CSidebarBrand, CSidebarNav, CNavItem, CNavTitle, CSidebarToggler } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { cilSpeedometer, cilBasket, cilPeople, cilSettings, cilChartLine, cilImage, cilList } from '@coreui/icons';
+import { cilSpeedometer, cilBasket, cilPeople, cilSettings, cilChartLine, cilImage, cilList, cilWarning } from '@coreui/icons';
 
 const cx = classNames.bind(styles);
 
@@ -68,6 +68,11 @@ const Sidebar = ({ visible, onVisibleChange }) => {
         </CNavItem>
 
         <CNavTitle>Báo cáo & Cài đặt</CNavTitle>
+        <CNavItem>
+          <Link to="/admin/reports" className={`nav-link ${location.pathname === '/admin/reports' ? 'active' : ''}`}>
+            <CIcon icon={cilWarning} customClassName="nav-icon" /> Quản lý báo cáo
+          </Link>
+        </CNavItem>
         <CNavItem>
           <Link to="/admin/analytics" className={`nav-link ${location.pathname === '/admin/analytics' ? 'active' : ''}`}>
             <CIcon icon={cilChartLine} customClassName="nav-icon" /> Thống kê doanh thu

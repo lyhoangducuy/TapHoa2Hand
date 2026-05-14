@@ -23,6 +23,14 @@ public interface ReportMapper {
     @Mapping(source = "evidences", target = "evidences")
     ReportResponse toReportResponse(Report report);
 
+    @Mapping(source = "reporter.id", target = "reporterId")
+    @Mapping(source = "reporter.fullName", target = "reporterName")
+    @Mapping(source = "reportedUser.id", target = "reportedUserId")
+    @Mapping(source = "reportedUser.fullName", target = "reportedUserName")
+    @Mapping(source = "order.id", target = "orderId")
+    @Mapping(source = "reportedPost.id", target = "postId")
+    @Mapping(source = "reportedPost.title", target = "postTitle")
+    @Mapping(source = "evidences", target = "evidences")
     List<ReportResponse> toReportResponseList(List<Report> reports);
 
     ReportEvidenceResponse toReportEvidenceResponse(ReportEvidence evidence);

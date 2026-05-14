@@ -30,6 +30,7 @@ import BannerSlider from '../pages/Banner/BannerSlider';
 import AdminBannerPage from '../pages/Admin/Banner/AdminBannerPage';
 import AdminFeedbackPage from '../pages/Admin/Feedback/AdminFeedbackPage';
 import OrderAdminPage from '../pages/Admin/Orders/OrderAdminPage';
+import ReportAdminPage from '../pages/Admin/Reports';
 import NoSearchLayout from '../components/Layouts/NoSearchLayout';
 const publicRoutes = [
     { path: '/', component: HomePage },
@@ -80,6 +81,8 @@ const adminRoutes = [
     //order admin
     {path:'/admin/orders', component: OrderAdminPage, layout: AdminLayout},
     {path:'/admin/orders/:orderId', component: OrderDetailPage, layout: AdminLayout},
+    //reports
+    {path:'/admin/reports', component: ReportAdminPage, layout: AdminLayout},
     //noti
     {path:"/admin/notifications",component:Notificationpage,layout:AdminLayout}
 ];

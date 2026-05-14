@@ -1,0 +1,235 @@
+$primary-color: #007bff;
+$success-color: #28a745;
+$danger-color: #dc3545;
+$warning-color: #ffc107;
+$light-bg: #f8f9fa;
+$border-color: #dee2e6;
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+
+    .modalContent {
+        background: white;
+        border-radius: 8px;
+        max-width: 800px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid $border-color;
+            background: $light-bg;
+
+            h2 {
+                margin: 0;
+                font-size: 20px;
+                font-weight: 600;
+                color: #333;
+            }
+
+            .closeBtn {
+                background: none;
+                border: none;
+                font-size: 24px;
+                cursor: pointer;
+                color: #666;
+                padding: 0;
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                &:hover {
+                    color: #000;
+                    background: rgba(0, 0, 0, 0.1);
+                    border-radius: 4px;
+                }
+            }
+        }
+
+        .body {
+            padding: 20px;
+
+            .section {
+                margin-bottom: 20px;
+                padding-bottom: 20px;
+                border-bottom: 1px solid $border-color;
+
+                &:last-of-type {
+                    border-bottom: none;
+                }
+
+                label {
+                    display: block;
+                    font-weight: 600;
+                    color: #333;
+                    margin-bottom: 8px;
+                    font-size: 14px;
+                }
+
+                p {
+                    margin: 0;
+                    color: #666;
+                    word-break: break-word;
+                }
+
+                .reason {
+                    background: $light-bg;
+                    padding: 12px;
+                    border-radius: 4px;
+                    line-height: 1.5;
+                    color: #555;
+                    white-space: pre-wrap;
+                    word-wrap: break-word;
+                }
+
+                .badge {
+                    display: inline-block;
+                    background: $primary-color;
+                    color: white;
+                    padding: 6px 12px;
+                    border-radius: 20px;
+                    font-size: 12px;
+                    font-weight: 600;
+                }
+
+                .row {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 20px;
+
+                    @media (max-width: 600px) {
+                        grid-template-columns: 1fr;
+                    }
+
+                    .col {
+                        label {
+                            font-size: 13px;
+                        }
+                    }
+                }
+
+                .evidenceGrid {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 12px;
+                    margin-top: 10px;
+
+                    @media (max-width: 600px) {
+                        grid-template-columns: repeat(2, 1fr);
+                    }
+
+                    a {
+                        text-decoration: none;
+                        cursor: pointer;
+
+                        img {
+                            width: 100%;
+                            height: 150px;
+                            object-fit: cover;
+                            border-radius: 4px;
+                            transition: transform 0.2s;
+
+                            &:hover {
+                                transform: scale(1.05);
+                            }
+                        }
+                    }
+                }
+
+                .statusControl {
+                    display: flex;
+                    gap: 10px;
+                    align-items: center;
+
+                    .statusSelect {
+                        padding: 8px 12px;
+                        border: 1px solid $border-color;
+                        border-radius: 4px;
+                        background: white;
+                        cursor: pointer;
+                        font-size: 14px;
+                        color: #333;
+
+                        &:focus {
+                            outline: none;
+                            border-color: $primary-color;
+                            box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+                        }
+                    }
+
+                    .statusBadge {
+                        display: inline-block;
+                        padding: 6px 12px;
+                        border-radius: 20px;
+                        color: white;
+                        font-size: 12px;
+                        font-weight: 600;
+                    }
+                }
+            }
+        }
+
+        .footer {
+            padding: 20px;
+            border-top: 1px solid $border-color;
+            background: $light-bg;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+
+            button {
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s;
+
+                &:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                }
+
+                &:not(:disabled):hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+                }
+            }
+
+            .updateBtn {
+                background: $success-color;
+                color: white;
+
+                &:not(:disabled):hover {
+                    background: darken($success-color, 10%);
+                }
+            }
+
+            .cancelBtn {
+                background: #e9ecef;
+                color: #333;
+
+                &:hover {
+                    background: #dee2e6;
+                }
+            }
+        }
+    }
+}
