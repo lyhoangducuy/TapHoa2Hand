@@ -256,12 +256,15 @@ const MyOrderPage = () => {
                                 <div className={cx('sales-group-hint')}>
                                     {activeTab === 'sales' ? (
                                         <>
-                                            Mỗi tin đăng có thể nhận nhiều yêu cầu. Đơn được sắp theo thời gian tạo. Khi bạn{' '}
+                                            Mỗi tin đăng có thể nhận nhiều yêu cầu — mỗi tin chỉ hiện sẵn hai đơn đầu, bấm{' '}
+                                            <strong>Xem thêm</strong> để mở hết. Bạn có thể{' '}
+                                            <strong>sắp xếp theo giá</strong> hoặc <strong>gõ một phần SĐT</strong> để lọc. Khi bạn{' '}
                                             <strong>chọn một đơn</strong>, các đơn chờ khác cùng tin sẽ tự động hủy.
                                         </>
                                     ) : (
                                         <>
-                                            Đơn mua được gom theo <strong>tin đăng</strong>. Trong mỗi tin, đơn xếp theo thời gian tạo (cũ đến mới).
+                                            Đơn mua được gom theo <strong>tin đăng</strong> (mỗi tin hiện hai đơn đầu, có nút{' '}
+                                            <strong>Xem thêm</strong>). Sắp xếp theo thời gian/giá hoặc lọc theo SĐT (một phần số).
                                         </>
                                     )}
                                 </div>
@@ -285,8 +288,8 @@ const MyOrderPage = () => {
                     </div>
                 )}
 
-                {/* Phân trang */}
-                {pagination.totalPages > 1 && (
+                {/* Phân trang — luôn hiện khi có ≥1 trang (kể cả chỉ 1 trang) */}
+                {!loading && pagination.totalPages >= 1 && (
                     <div className={cx('pagination')}>
                         <button
                             className={cx('page-btn')}

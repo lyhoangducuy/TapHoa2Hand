@@ -166,6 +166,101 @@
             color: #747d8c;
             font-weight: 500;
         }
+
+        .post-group-phone-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .post-group-phone-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #57606f;
+            flex-shrink: 0;
+        }
+
+        .post-group-phone-input {
+            flex: 1;
+            min-width: 160px;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-family: inherit;
+            border: 1px solid #dfe4ea;
+            border-radius: 8px;
+            background: #fff;
+            color: #2f3542;
+
+            &::placeholder {
+                color: #a4b0be;
+                font-size: 12px;
+            }
+
+            &:focus {
+                outline: none;
+                border-color: #0084ff;
+                box-shadow: 0 0 0 2px rgba(0, 132, 255, 0.12);
+            }
+        }
+
+        .post-group-phone-clear {
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: inherit;
+            border-radius: 8px;
+            border: 1px solid #dfe4ea;
+            background: #fff;
+            color: #57606f;
+            cursor: pointer;
+            flex-shrink: 0;
+
+            &:hover {
+                border-color: #ff6b6b;
+                color: #c0392b;
+            }
+        }
+
+        .post-group-sort {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .post-group-sort-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #57606f;
+            margin-right: 2px;
+        }
+
+        .post-group-sort-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: inherit;
+            border-radius: 8px;
+            border: 1px solid #dfe4ea;
+            background: #fff;
+            color: #57606f;
+            cursor: pointer;
+            transition: border-color 0.2s, color 0.2s, background 0.2s;
+
+            &:hover {
+                border-color: #0084ff;
+                color: #0084ff;
+            }
+
+            &.active {
+                border-color: #0084ff;
+                color: #0084ff;
+                background: #e8f4ff;
+            }
+        }
     }
 
     .post-group-orders {
@@ -173,6 +268,58 @@
         flex-direction: column;
         gap: 12px;
         padding: 14px 16px 16px;
+
+        .post-group-empty-filter {
+            margin: 0;
+            padding: 12px 14px;
+            font-size: 14px;
+            color: #57606f;
+            text-align: center;
+            background: #fff;
+            border-radius: 10px;
+            border: 1px dashed #ced6e0;
+        }
+
+        .post-group-more-wrap {
+            display: flex;
+            justify-content: center;
+            padding: 4px 0 2px;
+        }
+
+        .post-group-expand-btn,
+        .post-group-collapse-btn {
+            width: 100%;
+            max-width: 320px;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s, color 0.2s;
+        }
+
+        .post-group-expand-btn {
+            border: 1.5px dashed #0084ff;
+            background: #f0f7ff;
+            color: #0066cc;
+
+            &:hover {
+                background: #e0efff;
+                border-style: solid;
+            }
+        }
+
+        .post-group-collapse-btn {
+            border: 1px solid #dfe4ea;
+            background: #fff;
+            color: #57606f;
+
+            &:hover {
+                border-color: #a4b0be;
+                color: #2f3542;
+            }
+        }
 
         .order-card {
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
