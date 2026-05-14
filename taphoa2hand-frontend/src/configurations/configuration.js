@@ -70,6 +70,10 @@ export const API = {
     ADMIN_GET_ORDERS:"/order/admin",
     GET_BANNERS:"/banners",
 
+    REPORT_SUBMIT_USER: "/reports/submit/user",
+    REPORT_SUBMIT_POST: "/reports/submit/post",
+    REPORT_SUBMIT_ORDER: "/reports/submit/order",
+
     // Notification
     GET_NOTIFICATIONS: (userId) => `/notification/user/${userId}`,
     CREATE_NOTIFICATION: "/notification/create",

@@ -537,3 +537,35 @@
         }
     }
 }
+
+/* Báo cáo hồ sơ (trang user công khai) */
+.reportProfileRow {
+    margin-top: 14px;
+    display: flex;
+    justify-content: flex-start;
+
+    @media (max-width: 767px) {
+        justify-content: center;
+    }
+}
+
+.reportUserBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    border-radius: 10px;
+    border: 1.5px solid #c2410c;
+    background: linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%);
+    color: #9a3412;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s;
+
+    &:hover {
+        border-color: #9a3412;
+        transform: translateY(-1px);
+    }
+}

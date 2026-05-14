@@ -430,6 +430,30 @@
     }
 }
 
+.reportPostBtn {
+    width: 100%;
+    margin-top: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    border-radius: 10px;
+    border: 1.5px solid #7c3aed;
+    background: linear-gradient(180deg, #faf5ff 0%, #f3e8ff 100%);
+    color: #5b21b6;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+
+    &:hover {
+        border-color: #5b21b6;
+        box-shadow: 0 4px 12px rgba(91, 33, 182, 0.15);
+    }
+}
+
 /* --- STYLE MENU DROP DOWN (QUAN TRỌNG) --- */
 .dropdown-container {
     position: relative;

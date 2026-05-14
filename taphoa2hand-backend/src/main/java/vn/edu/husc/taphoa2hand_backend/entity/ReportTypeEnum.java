@@ -6,7 +6,8 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum ReportTypeEnum {
     USER("USER", "Người dùng"),
-    ORDER("ORDER", "Đơn hàng");
+    ORDER("ORDER", "Đơn hàng"),
+    POST("POST", "Bài đăng");
     private String name;
     private String displayName;
 }

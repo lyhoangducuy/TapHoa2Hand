@@ -67,7 +67,10 @@ public enum ErrorCode {
     INVALID_POST_TYPE(7004, "Post type is invalid",HttpStatus.BAD_REQUEST),
     FILE_UPLOAD_LIMIT_EXCEEDED(10006, "Maximum 10 images allowed",HttpStatus.BAD_REQUEST),
     INVALID_PAYMENT_METHOD(12001, "Payment method is invalid",HttpStatus.BAD_REQUEST),
-    REPORT_NOT_FOUND(13001, "Report not found",HttpStatus.NOT_FOUND)
+    REPORT_NOT_FOUND(13001, "Report not found",HttpStatus.NOT_FOUND),
+    REPORT_CANNOT_SELF(13002, "Không thể báo cáo chính mình", HttpStatus.BAD_REQUEST),
+    REPORT_ORDER_FORBIDDEN(13003, "Chỉ có thể báo cáo đơn hàng mà bạn tham gia (mua hoặc bán)", HttpStatus.FORBIDDEN),
+    REPORT_OWN_POST(13004, "Không thể báo cáo tin đăng của chính bạn", HttpStatus.BAD_REQUEST),
     ;
     private int code;
     private String message;

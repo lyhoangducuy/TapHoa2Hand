@@ -18,6 +18,8 @@ public interface ReportMapper {
     @Mapping(source = "reportedUser.id", target = "reportedUserId")
     @Mapping(source = "reportedUser.fullName", target = "reportedUserName")
     @Mapping(source = "order.id", target = "orderId")
+    @Mapping(source = "reportedPost.id", target = "postId")
+    @Mapping(source = "reportedPost.title", target = "postTitle")
     @Mapping(source = "evidences", target = "evidences")
     ReportResponse toReportResponse(Report report);
 
@@ -31,6 +33,7 @@ public interface ReportMapper {
     @Mapping(target = "reporter", ignore = true)
     @Mapping(target = "reportedUser", ignore = true)
     @Mapping(target = "order", ignore = true)
+    @Mapping(target = "reportedPost", ignore = true)
     @Mapping(target = "evidences", ignore = true)
     @Mapping(target = "status", ignore = true)
     Report toReport(ReportCreateRequest request);

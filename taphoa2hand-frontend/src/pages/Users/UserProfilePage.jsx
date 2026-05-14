@@ -4,8 +4,10 @@ import classNames from 'classnames/bind';
 import styles from '../Profile/ProfilePage.module.scss';
 import { getUserById } from '../../services/userService';
 import { getUserPosts } from '../../services/postService';
+import { getToken } from '../../services/localStorageService';
 import UserPosts from '../Profile/Post/UserPosts';
-import { FiMail, FiPhone, FiMapPin, FiCalendar, FiLoader, FiShield } from 'react-icons/fi';
+import ReportModal from '../../components/Report/ReportModal';
+import { FiMail, FiPhone, FiMapPin, FiCalendar, FiLoader, FiShield, FiFlag } from 'react-icons/fi';
 
 const cx = classNames.bind(styles);
 
@@ -13,6 +15,7 @@ function UserProfilePage() {
     const { userId } = useParams();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [reportOpen, setReportOpen] = useState(false);
 
     const [posts, setPosts] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
@@ -43,6 +46,23 @@ function UserProfilePage() {
         };
         fetchData();
     }, [userId]);
+
+    const token = getToken();
+    let me = null;
+    if (token) {
+        try {
+            me = JSON.parse(atob(token.split('.')[1]));
+        } catch {
+            me = null;
+        }
+    }
+    const isOwnProfile =
+        me &&
+        user &&
+        (me.sub === user.username ||
+            me.username === user.username ||
+            me.id === user.id ||
+            me.userId === user.id);
 
     const handleLoadMorePosts = async () => {
         const nextPage = currentPage + 1;
@@ -113,6 +133,19 @@ function UserProfilePage() {
                                 <span>Người theo dõi</span>
                             </div>
                         </div>
+
+                        {token && !isOwnProfile ? (
+                            <div className={cx('reportProfileRow')}>
+                                <button
+                                    type="button"
+                                    className={cx('reportUserBtn')}
+                                    onClick={() => setReportOpen(true)}
+                                >
+                                    <FiFlag size={18} />
+                                    Báo cáo hồ sơ
+                                </button>
+                            </div>
+                        ) : null}
                     </div>
                 </div>
 
@@ -152,6 +185,14 @@ function UserProfilePage() {
                     />
                 </div>
             </div>
+
+            <ReportModal
+                open={reportOpen}
+                onClose={() => setReportOpen(false)}
+                variant="user"
+                targetId={user?.id}
+                subtitle={`@${user?.username || ''}`}
+            />
         </div>
     );
 }

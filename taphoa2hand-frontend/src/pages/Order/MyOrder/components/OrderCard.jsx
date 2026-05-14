@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import classNames from 'classnames/bind';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -8,8 +8,11 @@ import {
     FiCheck, 
     FiCreditCard, 
     FiPackage, 
-    FiCheckCircle
+    FiCheckCircle,
+    FiFlag
 } from 'react-icons/fi';
+import { getToken } from '../../../../services/localStorageService';
+import ReportModal from '../../../../components/Report/ReportModal';
 import styles from '../MyOrderPage.module.scss';
 
 const cx = classNames.bind(styles);
@@ -27,6 +30,8 @@ const OrderCard = ({
     actionLoading
 }) => {
     const navigate = useNavigate();
+    const [reportOpen, setReportOpen] = useState(false);
+    const hasToken = Boolean(getToken());
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
     };
@@ -93,6 +98,17 @@ const OrderCard = ({
                     <FiEye size={18} />
                     Xem chi tiết
                 </button>
+
+                {hasToken ? (
+                    <button
+                        type="button"
+                        className={cx('btn-report')}
+                        onClick={() => setReportOpen(true)}
+                    >
+                        <FiFlag size={18} />
+                        Báo cáo đơn
+                    </button>
+                ) : null}
 
                 {/* Buyer Actions */}
                 {activeTab === 'purchases' && order.status?.name === 'DELIVERED' && (
@@ -170,6 +186,14 @@ const OrderCard = ({
                     </button>
                 )}
             </div>
+
+            <ReportModal
+                open={reportOpen}
+                onClose={() => setReportOpen(false)}
+                variant="order"
+                targetId={order.id}
+                subtitle={`Mã đơn #${order.id?.substring(0, 8).toUpperCase()}`}
+            />
         </div>
     );
 };

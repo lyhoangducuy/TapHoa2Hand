@@ -6,7 +6,10 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.husc.taphoa2hand_backend.dto.request.ReportDTO.ReportCreateRequest;
+import vn.edu.husc.taphoa2hand_backend.dto.request.ReportDTO.ReportOrderSubmitRequest;
+import vn.edu.husc.taphoa2hand_backend.dto.request.ReportDTO.ReportPostSubmitRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.ReportDTO.ReportUpdateStatusRequest;
+import vn.edu.husc.taphoa2hand_backend.dto.request.ReportDTO.ReportUserSubmitRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.response.ApiResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Report.ReportResponse;
 import vn.edu.husc.taphoa2hand_backend.entity.ReportStatusEnum;
@@ -22,6 +25,33 @@ import org.springframework.http.MediaType;
 public class ReportController {
 
     ReportService reportService;
+
+    /** Báo cáo hồ sơ người dùng (multipart: reason, reportedUserId, evidenceImages*). */
+    @PostMapping(value = "/submit/user", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<ReportResponse> submitUserReport(@Valid @ModelAttribute ReportUserSubmitRequest body) {
+        return ApiResponse.<ReportResponse>builder()
+                .message("Đã gửi báo cáo người dùng")
+                .result(reportService.submitUserReport(body))
+                .build();
+    }
+
+    /** Báo cáo tin đăng (multipart: reason, postId, evidenceImages*). */
+    @PostMapping(value = "/submit/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<ReportResponse> submitPostReport(@Valid @ModelAttribute ReportPostSubmitRequest body) {
+        return ApiResponse.<ReportResponse>builder()
+                .message("Đã gửi báo cáo bài đăng")
+                .result(reportService.submitPostReport(body))
+                .build();
+    }
+
+    /** Báo cáo đơn hàng — chỉ người mua/bán; multipart: reason, orderId, evidenceImages*. */
+    @PostMapping(value = "/submit/order", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<ReportResponse> submitOrderReport(@Valid @ModelAttribute ReportOrderSubmitRequest body) {
+        return ApiResponse.<ReportResponse>builder()
+                .message("Đã gửi báo cáo đơn hàng")
+                .result(reportService.submitOrderReport(body))
+                .build();
+    }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<ReportResponse> createReport(@Valid @ModelAttribute ReportCreateRequest request) {

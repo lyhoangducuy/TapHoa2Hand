@@ -32,6 +32,9 @@ public class ReportResponse {
 
     String orderId;
 
+    String postId;
+    String postTitle;
+
     List<ReportEvidenceResponse> evidences;
 
     LocalDateTime createdAt;

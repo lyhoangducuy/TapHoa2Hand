@@ -460,6 +460,7 @@
                 margin-top: 20px;
                 display: flex;
                 justify-content: flex-end;
+                flex-wrap: wrap;
                 gap: 12px;
 
                 button {
@@ -476,6 +477,19 @@
                     border: 1px solid #ced4da;
                     color: #495057;
                     &:hover { background: #f8f9fa; border-color: #adb5bd; }
+                }
+
+                .btn-report {
+                    background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
+                    border: 1px solid #0369a1;
+                    color: #0c4a6e;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    &:hover {
+                        background: linear-gradient(180deg, #e0f2fe 0%, #bae6fd 100%);
+                        border-color: #0c4a6e;
+                    }
                 }
 
                 .btn-feedback {

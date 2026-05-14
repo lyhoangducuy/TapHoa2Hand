@@ -31,6 +31,7 @@ public class Report extends BaseEntity{
     // Phân loại báo cáo để dễ xử lý (ví dụ: SPAM, FRAUD, HARASSMENT)
     @NotNull(message = "Loại báo cáo là bắt buộc")
     @Enumerated(EnumType.STRING)
+    @Column(length = 20)
     ReportTypeEnum type;
 
     // Người thực hiện báo cáo (Buyer/Seller)
@@ -48,10 +49,16 @@ public class Report extends BaseEntity{
     @JoinColumn(name = "order_id")
     Order order;
 
+    /** Tin đăng bị báo cáo (type = POST). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id")
+    Posts reportedPost;
+
     @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<ReportEvidence> evidences = new ArrayList<>();
+     List<ReportEvidence> evidences = new ArrayList<>();
     // Trạng thái xử lý của Admin
     @Enumerated(EnumType.STRING)
-    private ReportStatusEnum status = ReportStatusEnum.PENDING;
+    @Column(length = 20)
+     ReportStatusEnum status = ReportStatusEnum.PENDING;
 }
