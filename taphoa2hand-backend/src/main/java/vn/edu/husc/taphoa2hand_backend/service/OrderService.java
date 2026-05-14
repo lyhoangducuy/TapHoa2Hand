@@ -203,6 +203,7 @@ public class OrderService {
 
     private static final List<OrderStatusEnum> POST_WINNER_STATUSES = List.of(
             OrderStatusEnum.CONFIRMED,
+            OrderStatusEnum.PAID_WAITING_PICKUP,
             OrderStatusEnum.SHIPPING,
             OrderStatusEnum.DELIVERED);
 
@@ -247,15 +248,36 @@ public class OrderService {
             }
             return;
         }
+        if (newStatus == OrderStatusEnum.PAID_WAITING_PICKUP) {
+            if (!isBuyer && !isAdmin) {
+                throw new AppException(ErrorCode.UNAUTHORIZED);
+            }
+            if (order.getStatus() != OrderStatusEnum.CONFIRMED) {
+                throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+            }
+            return;
+        }
         if (newStatus == OrderStatusEnum.CANCELLED) {
             if (!isSeller && !isBuyer && !isAdmin) {
                 throw new AppException(ErrorCode.UNAUTHORIZED);
             }
             return;
         }
-        if (newStatus == OrderStatusEnum.DELIVERED || newStatus == OrderStatusEnum.SHIPPING) {
+        if (newStatus == OrderStatusEnum.SHIPPING || newStatus == OrderStatusEnum.DELIVERED) {
             if (!isSeller && !isAdmin) {
                 throw new AppException(ErrorCode.UNAUTHORIZED);
+            }
+            // Cho phép chuyển từ CONFIRMED hoặc PAID_WAITING_PICKUP sang SHIPPING
+            if (newStatus == OrderStatusEnum.SHIPPING) {
+                if (order.getStatus() != OrderStatusEnum.CONFIRMED && order.getStatus() != OrderStatusEnum.PAID_WAITING_PICKUP) {
+                    throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+                }
+            }
+            // Cho phép chuyển từ SHIPPING sang DELIVERED
+            if (newStatus == OrderStatusEnum.DELIVERED) {
+                if (order.getStatus() != OrderStatusEnum.SHIPPING) {
+                    throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+                }
             }
         }
     }
@@ -622,5 +644,41 @@ public class OrderService {
                 .userIds(List.of(order.getBuyer().getId(), order.getSeller().getId()))
                 .link("/order/myOrder/" + order.getId())
                 .build());
+    }
+
+    // 6. Xác nhận thanh toán - chuyển từ CONFIRMED sang PAID_WAITING_PICKUP
+    @Transactional
+    public OrderResponse confirmPayment(String orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        Users currentUser = usersRepository.findByUsername(
+                SecurityContextHolder.getContext().getAuthentication().getName())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        // Chỉ người mua mới có thể xác nhận thanh toán
+        boolean isBuyer = order.getBuyer() != null && Objects.equals(order.getBuyer().getId(), currentUser.getId());
+        if (!isBuyer) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        // Chỉ có thể xác nhận khi đơn ở trạng thái CONFIRMED (chờ thanh toán)
+        if (order.getStatus() != OrderStatusEnum.CONFIRMED) {
+            throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+        }
+
+        // Chuyển sang trạng thái PAID_WAITING_PICKUP
+        order.setStatus(OrderStatusEnum.PAID_WAITING_PICKUP);
+        Order saved = orderRepository.save(order);
+
+        // Gửi thông báo cho người bán
+        String orderLink = "/order/myOrder/" + order.getId();
+        notificationService.createNotification(NotificationRequest.builder()
+                .content("Người mua đã xác nhận thanh toán cho đơn hàng #" + order.getId() + ". Vui lòng chuẩn bị lấy hàng.")
+                .userIds(List.of(order.getSeller().getId()))
+                .link(orderLink)
+                .build());
+
+        return orderMapper.toResponse(saved);
     }
 }

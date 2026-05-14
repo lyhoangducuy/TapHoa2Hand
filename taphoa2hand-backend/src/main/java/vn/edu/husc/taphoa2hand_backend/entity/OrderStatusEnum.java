@@ -10,7 +10,8 @@ import lombok.Getter;
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum OrderStatusEnum {
     PENDING("PENDING", "Chờ xác nhận"),
-    CONFIRMED("CONFIRMED", "Đã xác nhận, chờ lấy hàng"),
+    CONFIRMED("CONFIRMED", "Đã xác nhận, chờ thanh toán"),
+    PAID_WAITING_PICKUP("PAID_WAITING_PICKUP", "Đã thanh toán, chờ lấy hàng"),
     SHIPPING("SHIPPING", "Đang giao hàng"),
     DELIVERED("DELIVERED", "Đã giao thành công"),
     CANCELLED("CANCELLED", "Đã hủy"),

@@ -8,6 +8,31 @@ import * as orderService from '../../../services/orderService';
 import { FeedbackForm } from '../../../components/Feedback';
 const cx = classNames.bind(styles);
 
+// QR Code component đơn giản (demo)
+const QRCodeDemo = ({ value }) => {
+    // Tạm dùng placeholder, sau có thể thay bằng thư viện qrcode.react
+    return (
+        <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#f0f0f0',
+            width: '200px',
+            height: '200px',
+            fontSize: '12px',
+            padding: '10px',
+            textAlign: 'center',
+            borderRadius: '8px'
+        }}>
+            <div>
+                <div style={{ fontSize: '48px', marginBottom: '10px' }}>📱</div>
+                <div>Mã QR chuyển khoản</div>
+                <div style={{ fontSize: '10px', marginTop: '5px', wordBreak: 'break-all' }}>{value}</div>
+            </div>
+        </div>
+    );
+};
+
 const MyOrderPage = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -29,6 +54,9 @@ const MyOrderPage = () => {
     const [confirmOrderId, setConfirmOrderId] = useState(null);
     const [sellerBankForm, setSellerBankForm] = useState({ bankName: '', accountName: '', accountNumber: '' });
     const [actionLoading, setActionLoading] = useState(false);
+    // State cho modal thanh toán
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [paymentOrderId, setPaymentOrderId] = useState(null);
 
     useEffect(() => {
         if (newOrderId) {
@@ -142,6 +170,32 @@ const MyOrderPage = () => {
         setSelectedOrder(null);
     };
 
+    const handlePaymentClick = (orderId) => {
+        setPaymentOrderId(orderId);
+        setShowPaymentModal(true);
+    };
+
+    const handleConfirmPayment = async () => {
+        try {
+            setActionLoading(true);
+            await orderService.confirmPayment(paymentOrderId);
+            toast.success('Xác nhận thanh toán thành công! Chờ người bán lấy hàng.');
+            setShowPaymentModal(false);
+            setPaymentOrderId(null);
+            fetchOrders();
+        } catch (error) {
+            toast.error('Có lỗi xảy ra khi xác nhận thanh toán');
+            console.error(error);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handlePaymentCancel = () => {
+        setShowPaymentModal(false);
+        setPaymentOrderId(null);
+    };
+
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
     };
@@ -246,6 +300,16 @@ const MyOrderPage = () => {
                     </button>
                 )}
 
+                {activeTab === 'purchases' && order.status?.name === 'CONFIRMED' && (
+                    <button
+                        className={cx('btn-payment')}
+                        onClick={() => handlePaymentClick(order.id)}
+                        disabled={actionLoading}
+                    >
+                        💳 Xác nhận thanh toán
+                    </button>
+                )}
+
                 {activeTab === 'sales' && order.status?.name === 'PENDING' && (
                     <div className={cx('seller-actions')}>
                         <button
@@ -265,12 +329,21 @@ const MyOrderPage = () => {
                     </div>
                 )}
 
-                {activeTab === 'sales' && order.status?.name === 'CONFIRMED' && (
+                {activeTab === 'sales' && order.status?.name === 'PAID_WAITING_PICKUP' && (
+                    <button
+                        className={cx('btn-deliver')}
+                        onClick={() => handleUpdateStatus(order.id, 'SHIPPING')}
+                    >
+                        📦 Chuyển sang giao hàng
+                    </button>
+                )}
+
+                {activeTab === 'sales' && order.status?.name === 'SHIPPING' && (
                     <button
                         className={cx('btn-deliver')}
                         onClick={() => handleUpdateStatus(order.id, 'DELIVERED')}
                     >
-                        📦 Chuyển sang giao hàng thành công
+                        ✔️ Giao hàng thành công
                     </button>
                 )}
             </div>
@@ -296,18 +369,13 @@ const MyOrderPage = () => {
                         💰 Đơn bán
                     </div>
                 </div>
-
-                {newOrderId && (
-                    <div className={cx('new-order-banner')}>
-                        Đã tạo đơn hàng mới #{newOrderId?.substring(0, 8)}. Vui lòng thanh toán trong 180 phút.
-                    </div>
-                )}
                 <div className={cx('filter-row')}>
                     <label className={cx('filter-label')}>Trạng thái:</label>
                     <select className={cx('status-select')} value={selectedStatus} onChange={(e) => { setSelectedStatus(e.target.value); setPagination(prev => ({ ...prev, page: 0 })); }}>
                         <option value={'ALL'}>Tất cả</option>
                         <option value={'PENDING'}>Chờ xác nhận</option>
-                        <option value={'CONFIRMED'}>Đã xác nhận</option>
+                        <option value={'CONFIRMED'}>Đã xác nhận, chờ thanh toán</option>
+                        <option value={'PAID_WAITING_PICKUP'}>Đã thanh toán, chờ lấy hàng</option>
                         <option value={'SHIPPING'}>Đang giao</option>
                         <option value={'DELIVERED'}>Đã giao</option>
                         <option value={'CANCELLED'}>Đã hủy</option>
@@ -457,6 +525,60 @@ const MyOrderPage = () => {
                                 disabled={actionLoading}
                             >
                                 {actionLoading ? '⏳ Đang xử lý...' : 'Xác nhận đơn'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Payment Modal - Hiển thị QR Code */}
+            {showPaymentModal && paymentOrderId && (
+                <div className={cx('feedback-modal-overlay')} onClick={handlePaymentCancel}>
+                    <div className={cx('feedback-modal')} onClick={(e) => e.stopPropagation()}>
+                        <div style={{ textAlign: 'center' }}>
+                            <h3 style={{ marginBottom: '20px', color: '#2f3542', fontSize: '18px', fontWeight: '700' }}>
+                                💳 Thanh toán cho đơn hàng
+                            </h3>
+                            <p style={{ marginBottom: '15px', color: '#666' }}>
+                                Mã đơn: <strong>#{paymentOrderId?.substring(0, 8).toUpperCase()}</strong>
+                            </p>
+                            
+                            <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center' }}>
+                                <QRCodeDemo value={`Order:${paymentOrderId}`} />
+                            </div>
+
+                            <div style={{
+                                backgroundColor: '#f8f9fa',
+                                padding: '15px',
+                                borderRadius: '8px',
+                                marginBottom: '20px',
+                                fontSize: '13px',
+                                color: '#555'
+                            }}>
+                                <strong>Hướng dẫn:</strong>
+                                <ol style={{ textAlign: 'left', marginTop: '10px', margin: '0' }}>
+                                    <li>Mở ứng dụng ngân hàng</li>
+                                    <li>Quét mã QR hoặc nhập thông tin chuyển khoản</li>
+                                    <li>Xác nhận chuyển khoản vào tài khoản của admin</li>
+                                    <li>Ấn nút "Đã thanh toán" khi hoàn tất</li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <div className={cx('modal-actions')}>
+                            <button
+                                className={cx('btn', 'btn-cancel')}
+                                onClick={handlePaymentCancel}
+                                disabled={actionLoading}
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                className={cx('btn', 'btn-primary')}
+                                onClick={handleConfirmPayment}
+                                disabled={actionLoading}
+                            >
+                                {actionLoading ? '⏳ Đang xử lý...' : '✅ Đã thanh toán'}
                             </button>
                         </div>
                     </div>

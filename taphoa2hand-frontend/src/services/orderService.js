@@ -54,6 +54,14 @@ export const updateOrderStatusPost = async (orderId, newStatus) => {
         { orderId, newStatus }
     );
 };
+
+export const confirmPayment = async (orderId) => {
+    return await httpClient.post(
+        `${API.GET_DETAIL_ORDER(orderId)}/confirm-payment`,
+        {}
+    );
+};
+
 // Thêm cục này vào cuối cùng file orderService.js của bạn
 const orderService = {
     createOrder,
@@ -62,7 +70,8 @@ const orderService = {
     getOrderDetail,
     getAdminOrders,
     updateOrderStatus,
-    updateOrderStatusPost
+    updateOrderStatusPost,
+    confirmPayment
 };
 
 export default orderService;

@@ -103,5 +103,13 @@ public class OrderController {
                 .message("Cập nhật trạng thái thanh cong")
                 .build();
     }
-    
+
+    // Xác nhận thanh toán - chuyển từ CONFIRMED sang PAID_WAITING_PICKUP
+    @PostMapping("/{orderId}/confirm-payment")
+    public ApiResponse<OrderResponse> confirmPayment(@PathVariable String orderId) {
+        return ApiResponse.<OrderResponse>builder()
+                .result(orderService.confirmPayment(orderId))
+                .message("Xác nhận thanh toán thành công")
+                .build();
+    }
 }
