@@ -565,6 +565,21 @@
     margin-top: 16px;
 }
 
+.adminEscrow {
+    margin-top: 20px;
+    padding: 16px;
+    background: #fefce8;
+    border: 1px solid #facc15;
+    border-radius: 8px;
+}
+
+.adminEscrowText {
+    margin: 0 0 12px;
+    font-size: 14px;
+    color: #713f12;
+    line-height: 1.5;
+}
+
 .loading,
 .error {
     max-width: 820px;

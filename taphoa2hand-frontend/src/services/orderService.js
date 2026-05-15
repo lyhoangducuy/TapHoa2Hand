@@ -37,8 +37,12 @@ export const getOrderDetail = async (orderId) => {
     return await httpClient.get(API.GET_DETAIL_ORDER(orderId));
 };
 
-export const getAdminOrders = async (page = 0, size = 10) => {
-    return await httpClient.get(`${API.ADMIN_GET_ORDERS}?page=${page}&size=${size}`);
+export const getAdminOrders = async (page = 0, size = 10, orderStatus, paymentMethod, paymentStatus) => {
+    const params = new URLSearchParams({ page: String(page), size: String(size) });
+    if (orderStatus) params.set('orderStatus', orderStatus);
+    if (paymentMethod) params.set('paymentMethod', paymentMethod);
+    if (paymentStatus) params.set('paymentStatus', paymentStatus);
+    return await httpClient.get(`${API.ADMIN_GET_ORDERS}?${params.toString()}`);
 };
 
 export const updateOrderStatus = async (orderId, newStatus, body = {}) => {
@@ -56,10 +60,11 @@ export const updateOrderStatusPost = async (orderId, newStatus) => {
 };
 
 export const confirmPayment = async (orderId) => {
-    return await httpClient.post(
-        `${API.GET_DETAIL_ORDER(orderId)}/confirm-payment`,
-        {}
-    );
+    return await httpClient.post(API.ORDER_CONFIRM_PAYMENT(orderId), {});
+};
+
+export const adminEscrowPayout = async (orderId) => {
+    return await httpClient.post(API.ORDER_ADMIN_ESCROW_PAYOUT(orderId), {});
 };
 
 // Thêm cục này vào cuối cùng file orderService.js của bạn
@@ -71,7 +76,8 @@ const orderService = {
     getAdminOrders,
     updateOrderStatus,
     updateOrderStatusPost,
-    confirmPayment
+    confirmPayment,
+    adminEscrowPayout,
 };
 
 export default orderService;

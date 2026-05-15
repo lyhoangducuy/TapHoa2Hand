@@ -68,6 +68,8 @@ export const API = {
     ADMIN_DELETE_BANNER:(bannerId)=>`/admin/banner/${bannerId}`,
     ADMIN_CREATE_BANNER:"/admin/banner",
     ADMIN_GET_ORDERS:"/order/admin",
+    ORDER_CONFIRM_PAYMENT: (orderId) => `/order/${orderId}/confirm-payment`,
+    ORDER_ADMIN_ESCROW_PAYOUT: (orderId) => `/order/${orderId}/admin-escrow-payout`,
     GET_BANNERS:"/banners",
 
     REPORT_SUBMIT_USER: "/reports/submit/user",

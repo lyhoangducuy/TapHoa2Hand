@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import classNames from 'classnames/bind';
 import styles from './OrderDetailPage.module.scss';
@@ -26,9 +26,22 @@ const getMeUsername = () => {
     return typeof u === 'string' && u.trim() ? u.trim() : null;
 };
 
+function canAdminEscrowPayout(order) {
+    if (!order) return false;
+    if (order.paymentMethod?.name !== 'MIDDLEMAN') return false;
+    if (order.status?.name !== 'DELIVERED') return false;
+    if (!order.holdUntil) return false;
+    if (order.paymentStatus?.name === 'PAID') return false;
+    const end = new Date(order.holdUntil);
+    if (Number.isNaN(end.getTime())) return false;
+    return end.getTime() <= Date.now();
+}
+
 const OrderDetailPage = () => {
     const { orderId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const isAdminOrderRoute = location.pathname.startsWith('/admin/orders');
 
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -116,6 +129,25 @@ const OrderDetailPage = () => {
             fetchUserInfo(buyerId, setBuyerInfo),
             fetchUserInfo(sellerId, setSellerInfo),
         ]);
+    };
+
+    const handleAdminEscrowPayout = async () => {
+        if (!window.confirm('Xác nhận đã chuyển tiền ký quỹ cho người bán (sau khi hết thời gian giữ tiền)?')) return;
+        try {
+            setActionLoading(true);
+            const res = await orderService.adminEscrowPayout(orderId);
+            const body = res?.data ?? res;
+            if (body?.code === 1000) {
+                toast.success('Đã ghi nhận giải ngân ký quỹ');
+                await refreshOrder();
+            } else {
+                toast.error(body?.message || 'Thao tác thất bại');
+            }
+        } catch (err) {
+            toast.error(err?.response?.data?.message || 'Thao tác thất bại');
+        } finally {
+            setActionLoading(false);
+        }
     };
 
     const handleConfirm = async () => {
@@ -412,6 +444,23 @@ const OrderDetailPage = () => {
                                     </div>
                                 )}
                         </dl>
+
+                        {isAdminOrderRoute && canAdminEscrowPayout(order) && (
+                            <div className={cx('adminEscrow')}>
+                                <p className={cx('adminEscrowText')}>
+                                    Đơn trung gian đã quá thời gian giữ tiền. Ghi nhận sau khi bạn đã chuyển tiền cho
+                                    người bán (thủ công qua ngân hàng).
+                                </p>
+                                <button
+                                    type="button"
+                                    className={cx('btn', 'primary')}
+                                    onClick={handleAdminEscrowPayout}
+                                    disabled={actionLoading}
+                                >
+                                    {actionLoading ? 'Đang xử lý…' : 'Xác nhận giải ngân ký quỹ'}
+                                </button>
+                            </div>
+                        )}
 
                         {order.paymentMethod?.name === 'MIDDLEMAN' && (
                             <>

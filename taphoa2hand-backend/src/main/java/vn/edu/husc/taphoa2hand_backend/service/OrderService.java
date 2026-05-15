@@ -3,6 +3,7 @@ package vn.edu.husc.taphoa2hand_backend.service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -10,11 +11,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.persistence.criteria.Predicate;
 
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -30,6 +34,7 @@ import vn.edu.husc.taphoa2hand_backend.entity.OrderItem;
 import vn.edu.husc.taphoa2hand_backend.entity.OrderStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.ParticipantInfo;
 import vn.edu.husc.taphoa2hand_backend.entity.PaymentMethodEnum;
+import vn.edu.husc.taphoa2hand_backend.entity.PaymentStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.PostStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.PostTypeEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.Posts;
@@ -442,9 +447,79 @@ public class OrderService {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    public Page<OrderResponse> getAllOrders(Pageable pageable) {
-        return orderRepository.findAll(pageable)
-                .map(orderMapper::toResponse);
+    @Transactional(readOnly = true)
+    public Page<OrderResponse> getAllOrders(
+            Pageable pageable,
+            String orderStatusStr,
+            String paymentMethodStr,
+            String paymentStatusStr) {
+        boolean hasFilter = (orderStatusStr != null && !orderStatusStr.isBlank())
+                || (paymentMethodStr != null && !paymentMethodStr.isBlank())
+                || (paymentStatusStr != null && !paymentStatusStr.isBlank());
+        if (!hasFilter) {
+            return orderRepository.findAll(pageable).map(orderMapper::toResponse);
+        }
+        Specification<Order> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (orderStatusStr != null && !orderStatusStr.isBlank()) {
+                try {
+                    predicates.add(cb.equal(root.get("status"), OrderStatusEnum.valueOf(orderStatusStr.trim())));
+                } catch (IllegalArgumentException ignored) {
+                    // bỏ qua giá trị không hợp lệ
+                }
+            }
+            if (paymentMethodStr != null && !paymentMethodStr.isBlank()) {
+                try {
+                    predicates.add(cb.equal(root.get("paymentMethod"), PaymentMethodEnum.valueOf(paymentMethodStr.trim())));
+                } catch (IllegalArgumentException ignored) {
+                }
+            }
+            if (paymentStatusStr != null && !paymentStatusStr.isBlank()) {
+                try {
+                    predicates.add(cb.equal(root.get("paymentStatus"), PaymentStatusEnum.valueOf(paymentStatusStr.trim())));
+                } catch (IllegalArgumentException ignored) {
+                }
+            }
+            if (predicates.isEmpty()) {
+                return cb.conjunction();
+            }
+            return cb.and(predicates.toArray(Predicate[]::new));
+        };
+        return orderRepository.findAll(spec, pageable).map(orderMapper::toResponse);
+    }
+
+    /**
+     * Admin xác nhận đã chuyển tiền cho người bán sau khi hết thời gian giữ ký quỹ (đơn trung gian, đã giao).
+     */
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public OrderResponse adminConfirmEscrowPayout(String orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (order.getPaymentMethod() != PaymentMethodEnum.MIDDLEMAN) {
+            throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+        }
+        if (order.getStatus() != OrderStatusEnum.DELIVERED) {
+            throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+        }
+        if (order.getHoldUntil() == null) {
+            throw new AppException(ErrorCode.VALID_EXCEPTION);
+        }
+        if (LocalDateTime.now().isBefore(order.getHoldUntil())) {
+            throw new AppException(ErrorCode.VALID_EXCEPTION);
+        }
+        if (order.getPaymentStatus() == PaymentStatusEnum.PAID) {
+            return orderMapper.toResponse(order);
+        }
+        order.setPaymentStatus(PaymentStatusEnum.PAID);
+        Order saved = orderRepository.save(order);
+        String orderLink = "/order/myOrder/" + order.getId();
+        notificationService.createNotification(NotificationRequest.builder()
+                .content("Admin đã xác nhận giải ngân ký quỹ cho đơn hàng #" + order.getId() + ".")
+                .userIds(List.of(order.getBuyer().getId(), order.getSeller().getId()))
+                .link(orderLink)
+                .build());
+        return orderMapper.toResponse(saved);
     }
 
     // 4. READ: Chi tiết 1 đơn hàng

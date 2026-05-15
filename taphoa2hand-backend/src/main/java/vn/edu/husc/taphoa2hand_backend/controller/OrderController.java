@@ -66,13 +66,27 @@ public class OrderController {
                 .build();
     }
 
-    // Lấy tất cả đơn hàng cho admin (phân trang)
+    // Lấy tất cả đơn hàng cho admin (phân trang + lọc tùy chọn)
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin")
-    public ApiResponse<Page<OrderResponse>> getAllOrders(Pageable pageable) {
+    public ApiResponse<Page<OrderResponse>> getAllOrders(
+            Pageable pageable,
+            @RequestParam(required = false) String orderStatus,
+            @RequestParam(required = false) String paymentMethod,
+            @RequestParam(required = false) String paymentStatus) {
         return ApiResponse.<Page<OrderResponse>>builder()
                 .message("Lấy tất cả đơn hàng thành công")
-                .result(orderService.getAllOrders(pageable))
+                .result(orderService.getAllOrders(pageable, orderStatus, paymentMethod, paymentStatus))
+                .build();
+    }
+
+    /** Admin xác nhận đã chuyển tiền cho người bán (trung gian, sau khi hết thời gian giữ ký quỹ). */
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{orderId}/admin-escrow-payout")
+    public ApiResponse<OrderResponse> adminEscrowPayout(@PathVariable String orderId) {
+        return ApiResponse.<OrderResponse>builder()
+                .message("Đã ghi nhận giải ngân ký quỹ")
+                .result(orderService.adminConfirmEscrowPayout(orderId))
                 .build();
     }
 
