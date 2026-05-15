@@ -135,10 +135,6 @@ const SidebarRight = ({ post, seller, address, isFavorite, setIsFavorite, curren
 
                 <div className={cx('price-tag')}>{formatPrice(post.price)}</div>
 
-                <div className={cx('meta')}>
-                    <span><FiClock /> {new Date(post.createdAt).toLocaleDateString('vi-VN')}</span>
-                    <span><FiEye /> {post.viewCount || 0} lượt xem</span>
-                </div>
 
                 {!isOwner && (
                     <button

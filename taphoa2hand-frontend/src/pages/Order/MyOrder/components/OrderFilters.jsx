@@ -28,6 +28,8 @@ const OrderFilters = ({
                 <option value={'PAID_WAITING_PICKUP'}>Đã thanh toán, chờ lấy hàng</option>
                 <option value={'SHIPPING'}>Đang giao</option>
                 <option value={'DELIVERED'}>Đã giao</option>
+                <option value={'SETTLING'}>Đang giải ngân</option>
+                <option value={'COMPLETED'}>Hoàn tất</option>
                 <option value={'CANCELLED'}>Đã hủy</option>
                 <option value={'RETURNED'}>Trả hàng</option>
             </select>

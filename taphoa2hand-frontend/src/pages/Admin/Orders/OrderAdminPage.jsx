@@ -21,6 +21,7 @@ import {
 } from '@coreui/react';
 import styles from './OrderAdminPage.module.scss';
 import orderService from '../../../services/orderService';
+import AdminSettlementModal, { canAdminOpenSettlementModal, isMiddlemanDeliveredHoldPassed } from './AdminSettlementModal';
 
 const cx = classNames.bind(styles);
 
@@ -31,6 +32,8 @@ const ORDER_STATUSES = [
     { value: 'PAID_WAITING_PICKUP', label: 'Đã thanh toán, chờ lấy hàng' },
     { value: 'SHIPPING', label: 'Đang giao hàng' },
     { value: 'DELIVERED', label: 'Đã giao thành công' },
+    { value: 'SETTLING', label: 'Đang giải ngân (trung gian)' },
+    { value: 'COMPLETED', label: 'Hoàn tất (đã chuyển tiền NB)' },
     { value: 'CANCELLED', label: 'Đã hủy' },
     { value: 'RETURNED', label: 'Trả hàng/Hoàn tiền' },
 ];
@@ -60,18 +63,6 @@ const formatDateTime = (value) => {
     if (Number.isNaN(d.getTime())) return '---';
     return d.toLocaleString('vi-VN');
 };
-
-/** Trung gian + đã giao + đã quá mốc giữ tiền + chưa ghi nhận giải ngân (paymentStatus !== PAID). */
-function canShowAdminEscrowPayoutButton(order) {
-    if (!order) return false;
-    if (order.paymentMethod?.name !== 'MIDDLEMAN') return false;
-    if (order.status?.name !== 'DELIVERED') return false;
-    if (!order.holdUntil) return false;
-    if (order.paymentStatus?.name === 'PAID') return false;
-    const end = new Date(order.holdUntil);
-    if (Number.isNaN(end.getTime())) return false;
-    return end.getTime() <= Date.now();
-}
 
 function OrderUserCell({ username, avatar, userId }) {
     const showName = username?.trim();
@@ -105,6 +96,9 @@ const OrderAdminPage = () => {
     const [filterPaymentMethod, setFilterPaymentMethod] = useState('');
     const [filterPaymentStatus, setFilterPaymentStatus] = useState('');
     const [payoutLoadingId, setPayoutLoadingId] = useState(null);
+    const [settlementOpen, setSettlementOpen] = useState(false);
+    const [settlementOrder, setSettlementOrder] = useState(null);
+    const [settlementBeginId, setSettlementBeginId] = useState(null);
 
     const fetchOrders = useCallback(async (page) => {
         try {
@@ -149,15 +143,42 @@ const OrderAdminPage = () => {
         setCurrentPage(0);
     };
 
-    const handleAdminEscrowPayout = async (e, orderId) => {
+    const handleOpenSettlement = async (e, order) => {
         e.stopPropagation();
-        if (!window.confirm('Xác nhận đã chuyển tiền ký quỹ cho người bán (sau khi hết thời gian giữ tiền)?')) return;
+        setSettlementBeginId(order.id);
         try {
-            setPayoutLoadingId(orderId);
-            const res = await orderService.adminEscrowPayout(orderId);
+            let next = order;
+            if (order.status?.name === 'DELIVERED' && isMiddlemanDeliveredHoldPassed(order)) {
+                const res = await orderService.updateOrderStatus(order.id, 'SETTLING');
+                const body = res?.data ?? res;
+                if (body?.code !== 1000) {
+                    toast.error(body?.message || 'Không chuyển được sang bước giải ngân');
+                    return;
+                }
+                await fetchOrders(currentPage);
+                const detail = await orderService.getOrderDetail(order.id);
+                const dbody = detail?.data ?? detail;
+                next = dbody?.result ?? dbody ?? order;
+            }
+            setSettlementOrder(next);
+            setSettlementOpen(true);
+        } catch (err) {
+            toast.error(err?.response?.data?.message || 'Không mở được bước giải ngân');
+        } finally {
+            setSettlementBeginId(null);
+        }
+    };
+
+    const handleConfirmSettlementTransfer = async () => {
+        if (!settlementOrder?.id) return;
+        try {
+            setPayoutLoadingId(settlementOrder.id);
+            const res = await orderService.adminEscrowPayout(settlementOrder.id);
             const body = res?.data ?? res;
             if (body?.code === 1000) {
-                toast.success('Đã ghi nhận giải ngân');
+                toast.success('Đã xác nhận hoàn tất chuyển tiền cho người bán');
+                setSettlementOpen(false);
+                setSettlementOrder(null);
                 await fetchOrders(currentPage);
             } else {
                 toast.error(body?.message || 'Thao tác thất bại');
@@ -324,16 +345,16 @@ const OrderAdminPage = () => {
                                                         >
                                                             Chi tiết
                                                         </CButton>
-                                                        {canShowAdminEscrowPayoutButton(order) && (
+                                                        {canAdminOpenSettlementModal(order) && (
                                                             <CButton
-                                                                color="success"
+                                                                color="warning"
                                                                 size="sm"
-                                                                disabled={payoutLoadingId === order.id}
-                                                                onClick={(e) => handleAdminEscrowPayout(e, order.id)}
+                                                                disabled={settlementBeginId === order.id}
+                                                                onClick={(e) => handleOpenSettlement(e, order)}
                                                             >
-                                                                {payoutLoadingId === order.id
+                                                                {settlementBeginId === order.id
                                                                     ? '…'
-                                                                    : 'Giải ngân ký quỹ'}
+                                                                    : 'Giải ngân'}
                                                             </CButton>
                                                         )}
                                                     </div>
@@ -379,6 +400,16 @@ const OrderAdminPage = () => {
                     )}
                 </CCardBody>
             </CCard>
+            <AdminSettlementModal
+                visible={settlementOpen}
+                order={settlementOrder}
+                onClose={() => {
+                    setSettlementOpen(false);
+                    setSettlementOrder(null);
+                }}
+                confirmLoading={Boolean(settlementOrder?.id && payoutLoadingId === settlementOrder.id)}
+                onConfirmTransfer={handleConfirmSettlementTransfer}
+            />
         </div>
     );
 };

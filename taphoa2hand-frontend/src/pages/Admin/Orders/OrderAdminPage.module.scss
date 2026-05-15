@@ -61,3 +61,65 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.settlementGrid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1.25rem;
+  align-items: start;
+  margin-bottom: 1rem;
+
+  @media (max-width: 576px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.settlementLabel {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+
+.settlementAmount {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0d9488;
+  margin: 0;
+}
+
+.settlementHint {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin: 0.35rem 0 0;
+}
+
+.settlementQr {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px;
+  background: #fff;
+}
+
+.settlementBank {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  display: grid;
+  gap: 0.5rem;
+
+  dt {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin: 0;
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+}

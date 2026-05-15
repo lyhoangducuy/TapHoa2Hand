@@ -15,6 +15,8 @@ public enum OrderStatusEnum {
     SHIPPING("SHIPPING", "Đang giao hàng"),
     DELIVERED("DELIVERED", "Đã giao thành công"),
     CANCELLED("CANCELLED", "Đã hủy"),
+    SETTLING("SETTLING", "Đang xử lý giải ngân tiền cho người bán"),
+    COMPLETED("COMPLETED", "Hoàn tất, đã chuyển tiền cho người bán"),
     RETURNED("RETURNED", "Trả hàng/Hoàn tiền");
 
     private final String name;

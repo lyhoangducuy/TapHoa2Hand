@@ -4,6 +4,10 @@ import { toast } from 'react-toastify';
 import classNames from 'classnames/bind';
 import styles from './OrderDetailPage.module.scss';
 import orderService from '../../../services/orderService';
+import AdminSettlementModal, {
+    canAdminOpenSettlementModal,
+    isMiddlemanDeliveredHoldPassed,
+} from '../../Admin/Orders/AdminSettlementModal';
 import { getUserById } from '../../../services/userService';
 import * as feedbackService from '../../../services/feedbackService';
 import { FeedbackForm, FeedbackList } from '../../../components/Feedback';
@@ -26,17 +30,6 @@ const getMeUsername = () => {
     return typeof u === 'string' && u.trim() ? u.trim() : null;
 };
 
-function canAdminEscrowPayout(order) {
-    if (!order) return false;
-    if (order.paymentMethod?.name !== 'MIDDLEMAN') return false;
-    if (order.status?.name !== 'DELIVERED') return false;
-    if (!order.holdUntil) return false;
-    if (order.paymentStatus?.name === 'PAID') return false;
-    const end = new Date(order.holdUntil);
-    if (Number.isNaN(end.getTime())) return false;
-    return end.getTime() <= Date.now();
-}
-
 const OrderDetailPage = () => {
     const { orderId } = useParams();
     const navigate = useNavigate();
@@ -51,6 +44,9 @@ const OrderDetailPage = () => {
     const [buyerInfo, setBuyerInfo] = useState(null);
     const [sellerInfo, setSellerInfo] = useState(null);
     const [sellerBankForm, setSellerBankForm] = useState({ bankName: '', accountName: '', accountNumber: '' });
+    const [settlementOpen, setSettlementOpen] = useState(false);
+    const [settlementBegin, setSettlementBegin] = useState(false);
+    const [settlementConfirm, setSettlementConfirm] = useState(false);
 
     const meUsername = getMeUsername();
 
@@ -131,14 +127,35 @@ const OrderDetailPage = () => {
         ]);
     };
 
-    const handleAdminEscrowPayout = async () => {
-        if (!window.confirm('Xác nhận đã chuyển tiền ký quỹ cho người bán (sau khi hết thời gian giữ tiền)?')) return;
+    const handleOpenAdminSettlement = async () => {
+        if (!order) return;
+        setSettlementBegin(true);
         try {
-            setActionLoading(true);
+            if (order.status?.name === 'DELIVERED' && isMiddlemanDeliveredHoldPassed(order)) {
+                const res = await orderService.updateOrderStatus(orderId, 'SETTLING');
+                const body = res?.data ?? res;
+                if (body?.code !== 1000) {
+                    toast.error(body?.message || 'Không chuyển được sang bước giải ngân');
+                    return;
+                }
+                await refreshOrder();
+            }
+            setSettlementOpen(true);
+        } catch (err) {
+            toast.error(err?.response?.data?.message || 'Lỗi');
+        } finally {
+            setSettlementBegin(false);
+        }
+    };
+
+    const handleConfirmAdminSettlement = async () => {
+        try {
+            setSettlementConfirm(true);
             const res = await orderService.adminEscrowPayout(orderId);
             const body = res?.data ?? res;
             if (body?.code === 1000) {
-                toast.success('Đã ghi nhận giải ngân ký quỹ');
+                toast.success('Đã xác nhận hoàn tất chuyển tiền cho người bán');
+                setSettlementOpen(false);
                 await refreshOrder();
             } else {
                 toast.error(body?.message || 'Thao tác thất bại');
@@ -146,7 +163,7 @@ const OrderDetailPage = () => {
         } catch (err) {
             toast.error(err?.response?.data?.message || 'Thao tác thất bại');
         } finally {
-            setActionLoading(false);
+            setSettlementConfirm(false);
         }
     };
 
@@ -234,6 +251,8 @@ const OrderDetailPage = () => {
         PAID_WAITING_PICKUP: { bg: '#ecfdf5', border: '#6ee7b7', color: '#065f46' },
         SHIPPING: { bg: '#f5f3ff', border: '#c4b5fd', color: '#5b21b6' },
         DELIVERED: { bg: '#ecfdf5', border: '#34d399', color: '#065f46' },
+        SETTLING: { bg: '#fff7ed', border: '#fdba74', color: '#9a3412' },
+        COMPLETED: { bg: '#ecfeff', border: '#22d3ee', color: '#155e75' },
         CANCELLED: { bg: '#fef2f2', border: '#fca5a5', color: '#991b1b' },
     };
 
@@ -436,7 +455,7 @@ const OrderDetailPage = () => {
                                     </div>
                                 )}
                             {order.paymentMethod?.name === 'MIDDLEMAN' &&
-                                orderStatus === 'DELIVERED' &&
+                                (orderStatus === 'DELIVERED' || orderStatus === 'SETTLING') &&
                                 order.holdUntil && (
                                     <div className={cx('kvRow')}>
                                         <dt>Giữ tiền đến</dt>
@@ -445,19 +464,20 @@ const OrderDetailPage = () => {
                                 )}
                         </dl>
 
-                        {isAdminOrderRoute && canAdminEscrowPayout(order) && (
+                        {isAdminOrderRoute && canAdminOpenSettlementModal(order) && (
                             <div className={cx('adminEscrow')}>
                                 <p className={cx('adminEscrowText')}>
-                                    Đơn trung gian đã quá thời gian giữ tiền. Ghi nhận sau khi bạn đã chuyển tiền cho
-                                    người bán (thủ công qua ngân hàng).
+                                    Đơn trung gian: mở bước giải ngân để xem QR demo và số tiền chuyển cho người bán
+                                    (đã trừ phí sàn). Sau khi chuyển khoản thủ công, xác nhận để chuyển đơn sang hoàn
+                                    tất.
                                 </p>
                                 <button
                                     type="button"
                                     className={cx('btn', 'primary')}
-                                    onClick={handleAdminEscrowPayout}
-                                    disabled={actionLoading}
+                                    onClick={handleOpenAdminSettlement}
+                                    disabled={settlementBegin}
                                 >
-                                    {actionLoading ? 'Đang xử lý…' : 'Xác nhận giải ngân ký quỹ'}
+                                    {settlementBegin ? 'Đang xử lý…' : 'Giải ngân (QR demo)'}
                                 </button>
                             </div>
                         )}
@@ -559,7 +579,18 @@ const OrderDetailPage = () => {
                     </div>
                 </article>
 
-                {isBuyer && orderStatus === 'DELIVERED' && (
+                <AdminSettlementModal
+                    visible={settlementOpen}
+                    order={order}
+                    onClose={() => setSettlementOpen(false)}
+                    confirmLoading={settlementConfirm}
+                    onConfirmTransfer={handleConfirmAdminSettlement}
+                />
+
+                {isBuyer &&
+                    (orderStatus === 'DELIVERED' ||
+                        orderStatus === 'SETTLING' ||
+                        orderStatus === 'COMPLETED') && (
                     <section className={cx('feedbackBlock')}>
                         <h2>Đánh giá</h2>
                         <p className={cx('sub')}>Chia sẻ trải nghiệm sau khi nhận hàng</p>
@@ -599,7 +630,10 @@ const OrderDetailPage = () => {
                     </section>
                 )}
 
-                {isSeller && orderStatus === 'DELIVERED' && (
+                {isSeller &&
+                    (orderStatus === 'DELIVERED' ||
+                        orderStatus === 'SETTLING' ||
+                        orderStatus === 'COMPLETED') && (
                     <section className={cx('feedbackBlock')}>
                         <h2>Đánh giá từ khách</h2>
                         {existingFeedback ? (

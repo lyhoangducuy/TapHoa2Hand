@@ -79,6 +79,10 @@ const OrderCard = ({
                             {order.status?.name === 'DELIVERED' && order.holdUntil && (
                                 <span> — đến {new Date(order.holdUntil).toLocaleDateString('vi-VN')}</span>
                             )}
+                            {(order.status?.name === 'SETTLING' || order.status?.name === 'COMPLETED') &&
+                                order.holdUntil && (
+                                <span> — giữ đến {new Date(order.holdUntil).toLocaleDateString('vi-VN')}</span>
+                            )}
                         </div>
                     )}
                     <div className={cx('total-amount')}>
@@ -111,7 +115,10 @@ const OrderCard = ({
                 ) : null}
 
                 {/* Buyer Actions */}
-                {activeTab === 'purchases' && order.status?.name === 'DELIVERED' && (
+                {activeTab === 'purchases' &&
+                    (order.status?.name === 'DELIVERED' ||
+                        order.status?.name === 'SETTLING' ||
+                        order.status?.name === 'COMPLETED') && (
                     <button
                         className={cx('btn-feedback')}
                         onClick={() => onFeedback(order)}

@@ -80,12 +80,12 @@ public class OrderController {
                 .build();
     }
 
-    /** Admin xác nhận đã chuyển tiền cho người bán (trung gian, sau khi hết thời gian giữ ký quỹ). */
+    /** Admin xác nhận đã chuyển tiền cho người bán (trung gian: SETTLING → COMPLETED). */
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{orderId}/admin-escrow-payout")
     public ApiResponse<OrderResponse> adminEscrowPayout(@PathVariable String orderId) {
         return ApiResponse.<OrderResponse>builder()
-                .message("Đã ghi nhận giải ngân ký quỹ")
+                .message("Đã hoàn tất giải ngân cho người bán")
                 .result(orderService.adminConfirmEscrowPayout(orderId))
                 .build();
     }
@@ -124,6 +124,13 @@ public class OrderController {
         return ApiResponse.<OrderResponse>builder()
                 .result(orderService.confirmPayment(orderId))
                 .message("Xác nhận thanh toán thành công")
+                .build();
+    }
+    @GetMapping("/count/{postId}")
+    public ApiResponse<Long> countOrders(@PathVariable String postId) {
+        return ApiResponse.<Long>builder()
+                .result(orderService.countOrdersOfPost(postId))
+                .message("Đếm đơn hàng thành công")
                 .build();
     }
 }

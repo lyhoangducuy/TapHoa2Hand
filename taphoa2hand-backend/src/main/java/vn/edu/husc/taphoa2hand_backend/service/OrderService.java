@@ -210,7 +210,9 @@ public class OrderService {
             OrderStatusEnum.CONFIRMED,
             OrderStatusEnum.PAID_WAITING_PICKUP,
             OrderStatusEnum.SHIPPING,
-            OrderStatusEnum.DELIVERED);
+            OrderStatusEnum.DELIVERED,
+            OrderStatusEnum.SETTLING,
+            OrderStatusEnum.COMPLETED);
 
     private Posts getFirstPostFromOrder(Order order) {
         if (order.getItems() == null || order.getItems().isEmpty()) {
@@ -221,7 +223,7 @@ public class OrderService {
 
     /**
      * Khi hủy đơn: chỉ mở bán lại nếu không còn đơn nào ở trạng thái đã chốt
-     * (CONFIRMED/SHIPPING/DELIVERED).
+     * (CONFIRMED … COMPLETED).
      */
     private void refreshPostAfterOrdersChanged(Posts post) {
         if (post == null || post.getStatus() == PostStatusEnum.HIDDEN) {
@@ -284,7 +286,36 @@ public class OrderService {
                     throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
                 }
             }
+            return;
         }
+        if (newStatus == OrderStatusEnum.SETTLING) {
+            if (!isAdmin) {
+                throw new AppException(ErrorCode.UNAUTHORIZED);
+            }
+            if (order.getPaymentMethod() != PaymentMethodEnum.MIDDLEMAN) {
+                throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+            }
+            if (order.getStatus() != OrderStatusEnum.DELIVERED) {
+                throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+            }
+            if (order.getHoldUntil() == null || LocalDateTime.now().isBefore(order.getHoldUntil())) {
+                throw new AppException(ErrorCode.VALID_EXCEPTION);
+            }
+            return;
+        }
+        if (newStatus == OrderStatusEnum.COMPLETED) {
+            if (!isAdmin) {
+                throw new AppException(ErrorCode.UNAUTHORIZED);
+            }
+            if (order.getPaymentMethod() != PaymentMethodEnum.MIDDLEMAN) {
+                throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+            }
+            if (order.getStatus() != OrderStatusEnum.SETTLING) {
+                throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+            }
+            return;
+        }
+        throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
     }
 
     /**
@@ -489,37 +520,12 @@ public class OrderService {
     }
 
     /**
-     * Admin xác nhận đã chuyển tiền cho người bán sau khi hết thời gian giữ ký quỹ (đơn trung gian, đã giao).
+     * Admin xác nhận đã chuyển tiền cho người bán (đơn trung gian ở bước SETTLING → COMPLETED).
      */
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     public OrderResponse adminConfirmEscrowPayout(String orderId) {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
-
-        if (order.getPaymentMethod() != PaymentMethodEnum.MIDDLEMAN) {
-            throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
-        }
-        if (order.getStatus() != OrderStatusEnum.DELIVERED) {
-            throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
-        }
-        if (order.getHoldUntil() == null) {
-            throw new AppException(ErrorCode.VALID_EXCEPTION);
-        }
-        if (LocalDateTime.now().isBefore(order.getHoldUntil())) {
-            throw new AppException(ErrorCode.VALID_EXCEPTION);
-        }
-        if (order.getPaymentStatus() == PaymentStatusEnum.PAID) {
-            return orderMapper.toResponse(order);
-        }
-        order.setPaymentStatus(PaymentStatusEnum.PAID);
-        Order saved = orderRepository.save(order);
-        String orderLink = "/order/myOrder/" + order.getId();
-        notificationService.createNotification(NotificationRequest.builder()
-                .content("Admin đã xác nhận giải ngân ký quỹ cho đơn hàng #" + order.getId() + ".")
-                .userIds(List.of(order.getBuyer().getId(), order.getSeller().getId()))
-                .link(orderLink)
-                .build());
-        return orderMapper.toResponse(saved);
+        return updateStatus(orderId, OrderStatusEnum.COMPLETED.name());
     }
 
     // 4. READ: Chi tiết 1 đơn hàng
@@ -632,13 +638,39 @@ public class OrderService {
             }
         }
 
+        if (newStatus == OrderStatusEnum.COMPLETED) {
+            order.setPaymentStatus(PaymentStatusEnum.PAID);
+        }
+
         order.setStatus(newStatus);
         Order saved = orderRepository.save(order);
+
+        if (newStatus == OrderStatusEnum.SETTLING) {
+            String orderLink = "/order/myOrder/" + saved.getId();
+            order.setStatus(OrderStatusEnum.COMPLETED);
+            Order saved3 = orderRepository.save(order);
+            notificationService.createNotification(NotificationRequest.builder()
+                    .content("Đơn hàng #" + saved.getId() + " đang ở bước giải ngân tiền cho người bán (trung gian).")
+                    .userIds(List.of(saved.getBuyer().getId(), saved.getSeller().getId()))
+                    .link(orderLink)
+                    .build());
+        }
+        if (newStatus == OrderStatusEnum.COMPLETED) {
+            order.setStatus(OrderStatusEnum.SETTLING);
+            Order saved2 = orderRepository.save(order);
+            String orderLink = "/order/myOrder/" + saved.getId();
+            notificationService.createNotification(NotificationRequest.builder()
+                    .content("Đơn hàng #" + saved.getId() + " đã hoàn tất: đã chuyển tiền cho người bán.")
+                    .userIds(List.of(saved.getBuyer().getId(), saved.getSeller().getId()))
+                    .link(orderLink)
+                    .build());
+        }
+
         if (newStatus == OrderStatusEnum.CANCELLED) {
             refreshPostAfterOrdersChanged(getFirstPostFromOrder(saved));
             String orderLink = "/order/myOrder/" + order.getId();
             notificationService.createNotification(NotificationRequest.builder()
-                    .content("Don hang " + order.getId() + " da bi huy bo boi " + order.getBuyer().getUsername())
+                    .content("Đơn hàng #" + order.getId() + " đã bị hủy bởi " + order.getBuyer().getUsername())
                     .userIds(List.of(order.getBuyer().getId()))
                     .link(orderLink)
                     .build());
@@ -692,6 +724,18 @@ public class OrderService {
                 if (order.getHoldUntil() != null && order.getHoldUntil().plusDays(2).isBefore(now)) {
                     completeOrder(order);
                 }
+            }
+        }
+
+        // 3. Trung gian: hết thời gian giữ tiền sau khi đã giao → chuyển sang SETTLING (chờ admin giải ngân)
+        List<Order> middlemanDelivered = orderRepository.findByStatusAndPaymentMethod(
+                OrderStatusEnum.DELIVERED, PaymentMethodEnum.MIDDLEMAN);
+        for (Order order : middlemanDelivered) {
+            if (order.getHoldUntil() != null && !now.isBefore(order.getHoldUntil())) {
+                order.setStatus(OrderStatusEnum.SETTLING);
+                orderRepository.save(order);
+                sendSystemNotification(order,
+                        "Đơn hàng #" + order.getId() + " đã chuyển sang giai đoạn giải ngân cho người bán (trung gian).");
             }
         }
     }
@@ -755,5 +799,9 @@ public class OrderService {
                 .build());
 
         return orderMapper.toResponse(saved);
+    }
+
+    public Long countOrdersOfPost(String postId) {
+        return orderRepository.countByPostId(postId);
     }
 }

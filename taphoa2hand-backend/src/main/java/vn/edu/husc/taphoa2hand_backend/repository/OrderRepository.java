@@ -68,4 +68,8 @@ public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecif
 
     List<Order> findByStatusIn(List<OrderStatusEnum> of);
 
+    List<Order> findByStatusAndPaymentMethod(OrderStatusEnum status, PaymentMethodEnum paymentMethod);
+
+    Long countByPostId(String postId);
+
 }

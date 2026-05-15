@@ -400,10 +400,12 @@
                     font-size: 12px;
                     font-weight: 700;
 
-                    &.PENDING { background: #fff9db; color: #f59f00; }
-                    &.CONFIRMED { background: #e7f5ff; color: #1c7ed6; }
-                    &.DELIVERED { background: #ebfbee; color: #2f9e44; }
-                    &.CANCELLED { background: #fff5f5; color: #fa5252; }
+                    &.pending { background: #fff9db; color: #f59f00; }
+                    &.confirmed { background: #e7f5ff; color: #1c7ed6; }
+                    &.delivered { background: #ebfbee; color: #2f9e44; }
+                    &.settling { background: #fff4e6; color: #d9480f; }
+                    &.completed { background: #e3fafc; color: #0b7285; }
+                    &.cancelled { background: #fff5f5; color: #fa5252; }
                 }
             }
 
