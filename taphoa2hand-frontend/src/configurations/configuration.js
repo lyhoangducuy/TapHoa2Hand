@@ -85,6 +85,10 @@ export const API = {
     DELETE_NOTIFICATION: (id) => `/notification/${id}`,
     GET_UNREAD_NOTI_COUNT: (userId) => `/notification/${userId}`,
     GET_CHECK_AI:(postId)=>`/chat-ai/check-product/${postId}`,
+    /** Danh mục địa giới (proxy backend → provinces.open-api.vn) */
+    GET_LOCATION_PROVINCES: "/location/provinces",
+    GET_LOCATION_WARDS_BY_PROVINCE: (provinceCode) =>
+        `/location/provinces/${encodeURIComponent(provinceCode)}/wards`,
     //Order
     GET_DETAIL_ORDER: (orderId)=> `/order/${orderId}`,
     Get_DETAIL_USER:"/order/myOrder",

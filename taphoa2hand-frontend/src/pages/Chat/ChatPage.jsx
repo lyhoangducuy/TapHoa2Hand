@@ -76,6 +76,10 @@ function ChatPage() {
         method: 'MIDDLEMAN',
         receiverName: '',
         receiverPhone: '',
+        shippingProvinceCode: '',
+        shippingProvinceName: '',
+        shippingWardCode: '',
+        shippingWardName: '',
         shippingAddress: '',
         holdDurationUnit: 'DAYS',
         holdDurationAmount: 3,
@@ -340,12 +344,25 @@ function ChatPage() {
 
         const receiverName = orderForm.receiverName?.trim() ?? '';
         const receiverPhone = orderForm.receiverPhone?.trim() ?? '';
-        const shippingAddress = orderForm.shippingAddress?.trim() ?? '';
+        const provinceName = orderForm.shippingProvinceName?.trim() ?? '';
+        const provinceCode = String(orderForm.shippingProvinceCode ?? '').trim();
+        const wardName = orderForm.shippingWardName?.trim() ?? '';
+        const wardCode = String(orderForm.shippingWardCode ?? '').trim();
+        const lineDetail = orderForm.shippingAddress?.trim() ?? '';
 
-        if (!receiverName || !receiverPhone || !shippingAddress) {
+        if (!receiverName || !receiverPhone || !lineDetail) {
             toast.warning('Vui lòng điền đủ thông tin nhận hàng!');
             return;
         }
+        if (!provinceName || !provinceCode) {
+            toast.warning('Vui lòng chọn Tỉnh/Thành phố.');
+            return;
+        }
+        if (!wardName || !wardCode) {
+            toast.warning('Vui lòng chọn Phường/Xã.');
+            return;
+        }
+        const shippingAddress = [lineDetail, wardName, provinceName].filter(Boolean).join(', ');
         if (/\p{Nd}/u.test(receiverName)) {
             toast.warning('Tên người nhận không được chứa chữ số');
             return;
@@ -506,7 +523,7 @@ function ChatPage() {
                 <OrderModal 
                     currentChat={currentChat} 
                     orderForm={orderForm}
-                    setOrderForm={setOrderForm} 
+                    setOrderForm={setOrderForm}
                     submitOrderRequest={submitOrderRequest}
                     handleOrderFormChange={handleOrderFormChange}
                     isSubmittingOrder={isSubmittingOrder} 

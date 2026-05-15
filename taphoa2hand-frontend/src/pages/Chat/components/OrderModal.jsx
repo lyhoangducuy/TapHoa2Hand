@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import classNames from 'classnames/bind';
 import styles from '../ChatPage.module.scss';
+import { getProvinces, getWardsByProvince } from '../../../services/locationService';
 
 const cx = classNames.bind(styles);
 
@@ -20,16 +21,86 @@ const formatEscrowHold = (unit, amount) => {
 const MIDDLEMAN_FEE_RATE = 0.02;
 
 function OrderModal({
-    currentChat, 
-    orderForm, 
-    handleOrderFormChange, 
-    submitOrderRequest, 
-    isSubmittingOrder, 
+    currentChat,
+    orderForm,
+    setOrderForm,
+    handleOrderFormChange,
+    submitOrderRequest,
+    isSubmittingOrder,
     createdOrder,
     onCheckout,
-    close 
+    close,
 }) {
     const isBuyPost = String(currentChat?.postType || '').toUpperCase() === 'BUY';
+
+    const [provinces, setProvinces] = useState([]);
+    const [provincesLoading, setProvincesLoading] = useState(true);
+    const [provincesError, setProvincesError] = useState(null);
+
+    const [wards, setWards] = useState([]);
+    const [wardsLoading, setWardsLoading] = useState(false);
+    const [wardsError, setWardsError] = useState(null);
+
+    const loadProvinces = useCallback(async () => {
+        setProvincesLoading(true);
+        setProvincesError(null);
+        try {
+            const res = await getProvinces();
+            if (res?.code === 1000 && Array.isArray(res.result)) {
+                setProvinces(res.result);
+            } else {
+                setProvinces([]);
+                setProvincesError(res?.message || 'Không lấy được danh sách tỉnh/thành');
+            }
+        } catch (err) {
+            setProvinces([]);
+            setProvincesError(err?.message || 'Lỗi kết nối khi tải tỉnh/thành');
+        } finally {
+            setProvincesLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadProvinces();
+    }, [loadProvinces]);
+
+    useEffect(() => {
+        const code = orderForm.shippingProvinceCode;
+        if (!code) {
+            setWards([]);
+            setWardsError(null);
+            setWardsLoading(false);
+            return;
+        }
+        let cancelled = false;
+        (async () => {
+            setWardsLoading(true);
+            setWardsError(null);
+            try {
+                const res = await getWardsByProvince(code);
+                if (cancelled) return;
+                if (res?.code === 1000 && Array.isArray(res.result)) {
+                    setWards(res.result);
+                    if (res.result.length === 0) {
+                        setWardsError('Không có dữ liệu phường/xã cho tỉnh đã chọn.');
+                    }
+                } else {
+                    setWards([]);
+                    setWardsError(res?.message || 'Không lấy được danh sách phường/xã');
+                }
+            } catch (err) {
+                if (!cancelled) {
+                    setWards([]);
+                    setWardsError(err?.message || 'Lỗi kết nối khi tải phường/xã');
+                }
+            } finally {
+                if (!cancelled) setWardsLoading(false);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [orderForm.shippingProvinceCode]);
 
     const middlemanPreview = useMemo(() => {
         if (orderForm.method !== 'MIDDLEMAN') return null;
@@ -212,12 +283,100 @@ function OrderModal({
                             onChange={handleOrderFormChange} 
                             placeholder="Số điện thoại (chỉ số, 8–15 số)" 
                         />
+                        <label className={cx('form-hint')} style={{ display: 'block', marginTop: 8 }}>
+                            Tỉnh / Thành phố
+                        </label>
+                        {provincesError && (
+                            <p className={cx('form-hint')} style={{ color: '#c0392b', marginBottom: 6 }}>
+                                {provincesError}{' '}
+                                <button
+                                    type="button"
+                                    className={cx('btn-cancel')}
+                                    style={{ marginLeft: 8, padding: '4px 10px', fontSize: 13 }}
+                                    onClick={loadProvinces}
+                                >
+                                    Thử lại
+                                </button>
+                            </p>
+                        )}
+                        <select
+                            required
+                            name="shippingProvinceCode"
+                            value={orderForm.shippingProvinceCode || ''}
+                            disabled={provincesLoading || provinces.length === 0}
+                            onChange={(e) => {
+                                const code = e.target.value;
+                                const item = provinces.find((p) => String(p.code) === code);
+                                setOrderForm((prev) => ({
+                                    ...prev,
+                                    shippingProvinceCode: code,
+                                    shippingProvinceName: item?.name ?? '',
+                                    shippingWardCode: '',
+                                    shippingWardName: '',
+                                }));
+                            }}
+                        >
+                            <option value="">
+                                {provincesLoading ? 'Đang tải danh sách…' : 'Chọn Tỉnh / Thành phố'}
+                            </option>
+                            {provinces.map((p) => (
+                                <option key={p.code} value={String(p.code)}>
+                                    {p.name}
+                                </option>
+                            ))}
+                        </select>
+                        <label className={cx('form-hint')} style={{ display: 'block', marginTop: 8 }}>
+                            Phường / Xã
+                        </label>
+                        {wardsError && orderForm.shippingProvinceCode && (
+                            <p className={cx('form-hint')} style={{ color: '#c0392b', marginBottom: 6 }}>
+                                {wardsError}
+                            </p>
+                        )}
+                        <select
+                            required
+                            name="shippingWardCode"
+                            value={orderForm.shippingWardCode || ''}
+                            disabled={
+                                !orderForm.shippingProvinceCode ||
+                                provincesLoading ||
+                                wardsLoading ||
+                                wards.length === 0
+                            }
+                            onChange={(e) => {
+                                const wcode = e.target.value;
+                                const item = wards.find((w) => String(w.code) === wcode);
+                                setOrderForm((prev) => ({
+                                    ...prev,
+                                    shippingWardCode: wcode,
+                                    shippingWardName: item?.name ?? '',
+                                }));
+                            }}
+                        >
+                            <option value="">
+                                {!orderForm.shippingProvinceCode
+                                    ? 'Chọn tỉnh/thành trước'
+                                    : wardsLoading
+                                      ? 'Đang tải phường/xã…'
+                                      : wards.length === 0
+                                        ? 'Không có phường/xã'
+                                        : 'Chọn Phường / Xã'}
+                            </option>
+                            {wards.map((w) => (
+                                <option key={`${w.code}-${w.name}`} value={String(w.code)}>
+                                    {w.name}
+                                </option>
+                            ))}
+                        </select>
+                        <label className={cx('form-hint')} style={{ display: 'block', marginTop: 8 }}>
+                            Địa chỉ chi tiết (số nhà, tên đường…)
+                        </label>
                         <textarea 
                             required 
                             name="shippingAddress" 
                             value={orderForm.shippingAddress} 
                             onChange={handleOrderFormChange} 
-                            placeholder="Địa chỉ giao hàng..." 
+                            placeholder="Ví dụ: 12 Nguyễn Huệ (đã chọn phường/xã ở trên)" 
                         />
                     </div>
                     <div className={cx('form-section')}>
