@@ -254,12 +254,34 @@ function ChatPage() {
         const { name, value } = e.target;
         if (name.startsWith('buyerBank.')) {
             const field = name.split('.')[1];
+            let next = value;
+            if (field === 'accountNumber') {
+                next = value.replace(/\D/g, '');
+            } else if (field === 'bankName' || field === 'accountName') {
+                next = value.replace(/\p{Nd}/gu, '');
+            }
             setOrderForm((prev) => ({
                 ...prev,
                 buyerBank: {
                     ...prev.buyerBank,
-                    [field]: value
-                }
+                    [field]: next,
+                },
+            }));
+            return;
+        }
+
+        if (name === 'receiverPhone') {
+            setOrderForm((prev) => ({
+                ...prev,
+                receiverPhone: value.replace(/\D/g, ''),
+            }));
+            return;
+        }
+
+        if (name === 'receiverName') {
+            setOrderForm((prev) => ({
+                ...prev,
+                receiverName: value.replace(/\p{Nd}/gu, ''),
             }));
             return;
         }
@@ -276,10 +298,18 @@ function ChatPage() {
         }
 
         if (name === 'holdDurationAmount') {
-            const parsed = parseInt(value, 10);
+            const digits = value.replace(/\D/g, '');
+            if (digits === '') {
+                setOrderForm((prev) => ({
+                    ...prev,
+                    holdDurationAmount: '',
+                }));
+                return;
+            }
+            const parsed = parseInt(digits, 10);
             setOrderForm((prev) => ({
                 ...prev,
-                holdDurationAmount: Number.isNaN(parsed) ? '' : parsed
+                holdDurationAmount: Number.isNaN(parsed) ? '' : parsed,
             }));
             return;
         }
@@ -308,19 +338,41 @@ function ChatPage() {
     const submitOrderRequest = async (e) => {
         e.preventDefault();
 
-        if (
-            !orderForm.receiverName ||
-            !orderForm.receiverPhone ||
-            !orderForm.shippingAddress
-        ) {
+        const receiverName = orderForm.receiverName?.trim() ?? '';
+        const receiverPhone = orderForm.receiverPhone?.trim() ?? '';
+        const shippingAddress = orderForm.shippingAddress?.trim() ?? '';
+
+        if (!receiverName || !receiverPhone || !shippingAddress) {
             toast.warning('Vui lòng điền đủ thông tin nhận hàng!');
+            return;
+        }
+        if (/\p{Nd}/u.test(receiverName)) {
+            toast.warning('Tên người nhận không được chứa chữ số');
+            return;
+        }
+        if (!/^\d{8,15}$/.test(receiverPhone)) {
+            toast.warning('Số điện thoại chỉ được nhập chữ số (8–15 số)');
             return;
         }
 
         if (orderForm.method === 'MIDDLEMAN') {
-            const { bankName, accountName, accountNumber } = orderForm.buyerBank;
+            const bankName = orderForm.buyerBank.bankName?.trim() ?? '';
+            const accountName = orderForm.buyerBank.accountName?.trim() ?? '';
+            const accountNumber = orderForm.buyerBank.accountNumber?.trim() ?? '';
             if (!bankName || !accountName || !accountNumber) {
                 toast.warning('Vui lòng điền đầy đủ thông tin tài khoản ngân hàng cho giao dịch trung gian!');
+                return;
+            }
+            if (/\p{Nd}/u.test(bankName)) {
+                toast.warning('Tên ngân hàng không được chứa chữ số');
+                return;
+            }
+            if (/\p{Nd}/u.test(accountName)) {
+                toast.warning('Họ tên chủ tài khoản không được chứa chữ số');
+                return;
+            }
+            if (!/^\d+$/.test(accountNumber)) {
+                toast.warning('Số tài khoản chỉ được nhập chữ số (0–9)');
                 return;
             }
             const holdAmt = Number(orderForm.holdDurationAmount);
@@ -353,10 +405,17 @@ function ChatPage() {
                 buyerId: String(currentUserId), 
                 postId: String(currentChat?.postId || ''),
                 method: orderForm.method,
-                receiverName: orderForm.receiverName,
-                receiverPhone: orderForm.receiverPhone,
-                shippingAddress: orderForm.shippingAddress,
-                buyerBank: orderForm.method === 'MIDDLEMAN' ? orderForm.buyerBank : undefined,
+                receiverName,
+                receiverPhone,
+                shippingAddress,
+                buyerBank:
+                    orderForm.method === 'MIDDLEMAN'
+                        ? {
+                              bankName: orderForm.buyerBank.bankName.trim(),
+                              accountName: orderForm.buyerBank.accountName.trim(),
+                              accountNumber: orderForm.buyerBank.accountNumber.trim(),
+                          }
+                        : undefined,
                 holdDurationUnit: orderForm.method === 'MIDDLEMAN' ? orderForm.holdDurationUnit : undefined,
                 holdDurationAmount: orderForm.method === 'MIDDLEMAN' ? Number(orderForm.holdDurationAmount) : undefined,
                 ...(isBuyPost ? { offeredPrice: Number(orderForm.offeredPrice) } : {})

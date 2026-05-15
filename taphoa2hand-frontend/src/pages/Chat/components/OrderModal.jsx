@@ -200,15 +200,17 @@ function OrderModal({
                             name="receiverName" 
                             value={orderForm.receiverName} 
                             onChange={handleOrderFormChange} 
-                            placeholder="Tên người nhận" 
+                            placeholder="Họ tên người nhận (không nhập số)" 
                         />
                         <input 
                             required 
                             type="text" 
+                            inputMode="numeric"
+                            pattern="[0-9]*"
                             name="receiverPhone" 
                             value={orderForm.receiverPhone} 
                             onChange={handleOrderFormChange} 
-                            placeholder="Số điện thoại" 
+                            placeholder="Số điện thoại (chỉ số, 8–15 số)" 
                         />
                         <textarea 
                             required 
@@ -277,10 +279,10 @@ function OrderModal({
                                 <label className={cx('hold-label')}>
                                     <span>{orderForm.holdDurationUnit === 'HOURS' ? 'Số giờ (1–240)' : 'Số ngày (1–10)'}</span>
                                     <input
-                                        type="number"
+                                        type="text"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
                                         name="holdDurationAmount"
-                                        min={1}
-                                        max={orderForm.holdDurationUnit === 'HOURS' ? 240 : 10}
                                         value={orderForm.holdDurationAmount}
                                         onChange={handleOrderFormChange}
                                         required
@@ -298,7 +300,8 @@ function OrderModal({
                                 name="buyerBank.bankName"
                                 value={orderForm.buyerBank.bankName}
                                 onChange={handleOrderFormChange}
-                                placeholder="Tên ngân hàng"
+                                placeholder="Tên ngân hàng (không nhập số)"
+                                autoComplete="organization"
                             />
                             <input
                                 required
@@ -306,7 +309,8 @@ function OrderModal({
                                 name="buyerBank.accountName"
                                 value={orderForm.buyerBank.accountName}
                                 onChange={handleOrderFormChange}
-                                placeholder="Tên chủ tài khoản"
+                                placeholder="Họ tên chủ tài khoản (không nhập số)"
+                                autoComplete="name"
                             />
                             <input
                                 required
@@ -314,7 +318,10 @@ function OrderModal({
                                 name="buyerBank.accountNumber"
                                 value={orderForm.buyerBank.accountNumber}
                                 onChange={handleOrderFormChange}
-                                placeholder="Số tài khoản"
+                                placeholder="Số tài khoản (chỉ số)"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                autoComplete="off"
                             />
                         </div>
                     )}
