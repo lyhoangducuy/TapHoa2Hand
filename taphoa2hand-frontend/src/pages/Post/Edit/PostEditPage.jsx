@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import { 
@@ -17,6 +17,7 @@ import { getAllCategories } from '../../../services/categoryService';
 import { getAllPayments } from '../../../services/paymentsService';
 import { getPostDetail, editPost } from '../../../services/postService'; 
 import { getAllPostStatuses } from '../../../services/postStatus';
+import AddressSection from '../Create/components/AddressSection';
 
 const cx = classNames.bind(styles);
 
@@ -50,8 +51,10 @@ function PostEditPage() {
         postAddress: {
             city: "",
             ward: "",
-            street: ""
-        }
+            street: "",
+            provinceCode: "",
+            wardCode: "",
+        },
     });
 
     useEffect(() => {
@@ -91,7 +94,13 @@ function PostEditPage() {
                         listCategoriesId: data.categories?.map(c => c.id.toString()) || [],
                         listAcceptedPaymentMethodsValue: data.paymentMethods?.map(p => p.value) || [],
                         postDetail: { ...data.postDetail },
-                        postAddress: { ...data.postAddress }
+                        postAddress: {
+                            city: data.postAddress?.city || "",
+                            ward: data.postAddress?.ward || "",
+                            street: data.postAddress?.street || "",
+                            provinceCode: "",
+                            wardCode: "",
+                        },
                     });
                 }
             } catch (error) {
@@ -113,6 +122,13 @@ function PostEditPage() {
             [section]: { ...prev[section], [name]: value }
         }));
     };
+
+    const patchPostAddress = useCallback((patch) => {
+        setFormData((prev) => ({
+            ...prev,
+            postAddress: { ...prev.postAddress, ...patch },
+        }));
+    }, []);
 
     const handleToggle = (id, field) => {
         const idStr = id.toString();
@@ -154,7 +170,15 @@ function PostEditPage() {
 
         setIsLoading(true);
         try {
-            await editPost(postId, formData, selectedFiles);
+            const payload = {
+                ...formData,
+                postAddress: {
+                    city: formData.postAddress.city,
+                    ward: formData.postAddress.ward,
+                    street: formData.postAddress.street,
+                },
+            };
+            await editPost(postId, payload, selectedFiles);
             alert("Cập nhật bài đăng thành công!");
             navigate('/post-detail/' + postId);
         // eslint-disable-next-line no-unused-vars
@@ -294,15 +318,13 @@ function PostEditPage() {
 
                     <section className={cx('card')}>
                         <div className={cx('card-title')}><FiMapPin /> Địa chỉ người bán</div>
-                        <div className={cx('input-group')}>
-                            <input placeholder="Tỉnh / Thành phố" name="city" value={formData.postAddress.city} onChange={(e) => handleNestedChange(e, 'postAddress')} />
-                        </div>
-                        <div className={cx('input-group')}>
-                            <input placeholder="Quận / Phường" name="ward" value={formData.postAddress.ward} onChange={(e) => handleNestedChange(e, 'postAddress')} />
-                        </div>
-                        <div className={cx('input-group')}>
-                            <input placeholder="Số nhà, đường cụ thể" name="street" value={formData.postAddress.street} onChange={(e) => handleNestedChange(e, 'postAddress')} />
-                        </div>
+                        <AddressSection
+                            embedded
+                            postAddress={formData.postAddress}
+                            fieldErrors={{}}
+                            onAddressChange={(e) => handleNestedChange(e, 'postAddress')}
+                            onPostAddressPatch={patchPostAddress}
+                        />
                     </section>
 
                     {/* Dính Nút Submit ở cuối cột phải */}

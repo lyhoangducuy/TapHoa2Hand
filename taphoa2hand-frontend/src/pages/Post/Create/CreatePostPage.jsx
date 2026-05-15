@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { getAllCategories } from "../../../services/categoryService";
 import { getAllPayments } from "../../../services/paymentsService";
 import { getAllPostsType } from "../../../services/postTypeService";
@@ -41,7 +41,9 @@ function CreatePostPage() {
         postAddress: {
             city: "",
             ward: "",
-            street: ""
+            street: "",
+            provinceCode: "",
+            wardCode: ""
         }
     });
 
@@ -80,6 +82,13 @@ function CreatePostPage() {
             postAddress: { ...formData.postAddress, [e.target.name]: e.target.value }
         });
     };
+
+    const patchPostAddress = useCallback((patch) => {
+        setFormData((prev) => ({
+            ...prev,
+            postAddress: { ...prev.postAddress, ...patch },
+        }));
+    }, []);
 
     const handleCategoryToggle = (categoryId) => {
         const currentList = [...formData.listCategoriesId];
@@ -219,7 +228,7 @@ function CreatePostPage() {
                 postAddress: {
                     city: formData.postAddress.city,
                     ward: formData.postAddress.ward,
-                    street: formData.postAddress.street
+                    street: formData.postAddress.street,
                 }
             };
 
@@ -245,7 +254,9 @@ function CreatePostPage() {
                 postAddress: {
                     city: "",
                     ward: "",
-                    street: ""
+                    street: "",
+                    provinceCode: "",
+                    wardCode: ""
                 }
             });
             setImages([]);
@@ -293,6 +304,7 @@ function CreatePostPage() {
                     postAddress={formData.postAddress}
                     fieldErrors={fieldErrors}
                     onAddressChange={handleAddressChange}
+                    onPostAddressPatch={patchPostAddress}
                 />
 
                 <ImageUploadSection
