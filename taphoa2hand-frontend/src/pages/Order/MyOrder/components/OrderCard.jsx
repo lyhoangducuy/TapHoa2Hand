@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import classNames from 'classnames/bind';
 import { useNavigate } from 'react-router-dom';
-import { 
-    FiEye, 
-    FiStar, 
-    FiX, 
-    FiCheck, 
-    FiCreditCard, 
-    FiPackage, 
+import {
+    FiEye,
+    FiStar,
+    FiX,
+    FiCheck,
+    FiCreditCard,
+    FiPackage,
     FiCheckCircle,
     FiFlag
 } from 'react-icons/fi';
@@ -17,14 +17,13 @@ import styles from '../MyOrderPage.module.scss';
 
 const cx = classNames.bind(styles);
 
-const OrderCard = ({ 
-    order, 
+const OrderCard = ({
+    order,
     activeTab,
     onFeedback,
     onPayment,
     onReject,
     onApprove,
-    onPaymentConfirmed,
     onShipping,
     onDelivered,
     actionLoading
@@ -71,20 +70,20 @@ const OrderCard = ({
                     {order.paymentMethod?.name === 'MIDDLEMAN' &&
                         order.holdDurationAmount != null &&
                         order.holdDurationUnit && (
-                        <div className={cx('escrow-hold')}>
-                            Giữ tiền:{' '}
-                            {order.holdDurationUnit === 'HOURS'
-                                ? `${order.holdDurationAmount} giờ`
-                                : `${order.holdDurationAmount} ngày`}
-                            {order.status?.name === 'DELIVERED' && order.holdUntil && (
-                                <span> — đến {new Date(order.holdUntil).toLocaleDateString('vi-VN')}</span>
-                            )}
-                            {(order.status?.name === 'SETTLING' || order.status?.name === 'COMPLETED') &&
-                                order.holdUntil && (
-                                <span> — giữ đến {new Date(order.holdUntil).toLocaleDateString('vi-VN')}</span>
-                            )}
-                        </div>
-                    )}
+                            <div className={cx('escrow-hold')}>
+                                Giữ tiền:{' '}
+                                {order.holdDurationUnit === 'HOURS'
+                                    ? `${order.holdDurationAmount} giờ`
+                                    : `${order.holdDurationAmount} ngày`}
+                                {order.status?.name === 'DELIVERED' && order.holdUntil && (
+                                    <span> — đến {new Date(order.holdUntil).toLocaleDateString('vi-VN')}</span>
+                                )}
+                                {(order.status?.name === 'SETTLING' || order.status?.name === 'COMPLETED') &&
+                                    order.holdUntil && (
+                                        <span> — giữ đến {new Date(order.holdUntil).toLocaleDateString('vi-VN')}</span>
+                                    )}
+                            </div>
+                        )}
                     <div className={cx('total-amount')}>
                         {formatCurrency(order.totalAmount)}
                     </div>
@@ -119,14 +118,14 @@ const OrderCard = ({
                     (order.status?.name === 'DELIVERED' ||
                         order.status?.name === 'SETTLING' ||
                         order.status?.name === 'COMPLETED') && (
-                    <button
-                        className={cx('btn-feedback')}
-                        onClick={() => onFeedback(order)}
-                    >
-                        <FiStar size={18} />
-                        Đánh giá
-                    </button>
-                )}
+                        <button
+                            className={cx('btn-feedback')}
+                            onClick={() => onFeedback(order)}
+                        >
+                            <FiStar size={18} />
+                            Đánh giá
+                        </button>
+                    )}
 
                 {activeTab === 'purchases' && order.status?.name === 'CONFIRMED' && (
                     <button
@@ -139,37 +138,37 @@ const OrderCard = ({
                     </button>
                 )}
 
-                {activeTab === 'sales' && order.status?.name === 'PENDING' && (
-                    <div className={cx('seller-actions')}>
-                        <button
-                            className={cx('btn-reject')}
-                            onClick={() => onReject(order.id)}
-                            disabled={actionLoading}
-                        >
-                            <FiX size={18} />
-                            Từ chối
-                        </button>
-                        <button
-                            className={cx('btn-approve')}
-                            onClick={() => onApprove(order.id, order.paymentMethod?.name)}
-                            disabled={actionLoading}
-                        >
-                            <FiCheck size={18} />
-                            {order.paymentMethod?.name === 'MIDDLEMAN' ? 'Chọn đơn + TK NH' : 'Chọn đơn này'}
-                        </button>
-                    </div>
-                )}
+                {(order.status?.name === 'PENDING' ||
+                    order.status?.name === 'CONFIRMED') && (
+                        <div className={cx('seller-actions')}>
+                            <button
+                                className={cx('btn-reject')}
+                                onClick={() => onReject(order.id)}
+                                disabled={actionLoading}
+                            >
+                                <FiX size={18} />
+                                {activeTab === 'sales' ? 'Từ chối' : 'Hủy đơn'}
+                            </button>
 
-                {activeTab === 'sales' && order.status?.name === 'CONFIRMED' && (
-                    <button
-                        className={cx('btn-deliver')}
-                        onClick={() => onPaymentConfirmed(order.id)}
-                        disabled={actionLoading}
-                    >
-                        <FiCheckCircle size={18} />
-                        Xác nhận thanh toán
-                    </button>
-                )}
+                            {activeTab === 'sales' &&
+                                order.status?.name === 'PENDING' && (
+                                    <button
+                                        className={cx('btn-approve')}
+                                        onClick={() =>
+                                            onApprove(order.id, order.paymentMethod?.name)
+                                        }
+                                        disabled={actionLoading}
+                                    >
+                                        <FiCheck size={18} />
+                                        {order.paymentMethod?.name === 'MIDDLEMAN'
+                                            ? 'Chọn đơn + TK NH'
+                                            : 'Chọn đơn này'}
+                                    </button>
+                                )}
+                        </div>
+                    )}
+
+            
 
                 {activeTab === 'sales' && order.status?.name === 'PAID_WAITING_PICKUP' && (
                     <button

@@ -56,7 +56,10 @@ import vn.edu.husc.taphoa2hand_backend.repository.UsersRepository;
 public class OrderService {
 
     private static final int MAX_ESCROW_HOLD_HOURS = 10 * 24;
-    /** Phí trung gian: 2% trên giá hàng (làm tròn VND). Khớp tạm tính trên OrderModal. */
+    /**
+     * Phí trung gian: 2% trên giá hàng (làm tròn VND). Khớp tạm tính trên
+     * OrderModal.
+     */
     private static final BigDecimal MIDDLEMAN_PLATFORM_FEE_RATE = new BigDecimal("0.02");
 
     OrderRepository orderRepository;
@@ -180,7 +183,8 @@ public class OrderService {
 
         BigDecimal lineItemPrice = isBuyPost ? request.getOfferedPrice() : post.getPrice();
 
-        // Phí nền tảng: chỉ áp dụng trung gian, trên giá hàng (SELL = giá tin; BUY = giá đề xuất)
+        // Phí nền tảng: chỉ áp dụng trung gian, trên giá hàng (SELL = giá tin; BUY =
+        // giá đề xuất)
         BigDecimal platformFee = BigDecimal.ZERO;
         if (order.getPaymentMethod() == PaymentMethodEnum.MIDDLEMAN) {
             platformFee = lineItemPrice.multiply(MIDDLEMAN_PLATFORM_FEE_RATE).setScale(0, RoundingMode.HALF_UP);
@@ -278,7 +282,8 @@ public class OrderService {
             }
             // Cho phép chuyển từ CONFIRMED hoặc PAID_WAITING_PICKUP sang SHIPPING
             if (newStatus == OrderStatusEnum.SHIPPING) {
-                if (order.getStatus() != OrderStatusEnum.CONFIRMED && order.getStatus() != OrderStatusEnum.PAID_WAITING_PICKUP) {
+                if (order.getStatus() != OrderStatusEnum.CONFIRMED
+                        && order.getStatus() != OrderStatusEnum.PAID_WAITING_PICKUP) {
                     throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
                 }
             }
@@ -503,13 +508,15 @@ public class OrderService {
             }
             if (paymentMethodStr != null && !paymentMethodStr.isBlank()) {
                 try {
-                    predicates.add(cb.equal(root.get("paymentMethod"), PaymentMethodEnum.valueOf(paymentMethodStr.trim())));
+                    predicates.add(
+                            cb.equal(root.get("paymentMethod"), PaymentMethodEnum.valueOf(paymentMethodStr.trim())));
                 } catch (IllegalArgumentException ignored) {
                 }
             }
             if (paymentStatusStr != null && !paymentStatusStr.isBlank()) {
                 try {
-                    predicates.add(cb.equal(root.get("paymentStatus"), PaymentStatusEnum.valueOf(paymentStatusStr.trim())));
+                    predicates.add(
+                            cb.equal(root.get("paymentStatus"), PaymentStatusEnum.valueOf(paymentStatusStr.trim())));
                 } catch (IllegalArgumentException ignored) {
                 }
             }
@@ -522,7 +529,8 @@ public class OrderService {
     }
 
     /**
-     * Admin xác nhận đã chuyển tiền cho người bán (đơn trung gian ở bước SETTLING → COMPLETED).
+     * Admin xác nhận đã chuyển tiền cho người bán (đơn trung gian ở bước SETTLING →
+     * COMPLETED).
      */
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
@@ -586,18 +594,18 @@ public class OrderService {
                         .accountNumber(sellerBankInfo.getAccountNumber())
                         .build());
             }
-            
+
         }
 
         if (newStatus == OrderStatusEnum.CONFIRMED) {
             cancelOtherPendingOrdersForSamePost(order);
             String orderLink = "/order/myOrder/" + order.getId();
-                notificationService.createNotification(NotificationRequest.builder()
-                        .content("Don hang " + order.getId() + " da duoc xac nhan boi nguoi ban "
-                                + order.getBuyer().getUsername())
-                        .userIds(List.of(order.getBuyer().getId()))
-                        .link(orderLink)
-                        .build());
+            notificationService.createNotification(NotificationRequest.builder()
+                    .content("Don hang " + order.getId() + " da duoc xac nhan boi nguoi ban "
+                            + order.getBuyer().getUsername())
+                    .userIds(List.of(order.getBuyer().getId()))
+                    .link(orderLink)
+                    .build());
         }
 
         // Trung gian: sau giao thành công, thiết lập mốc hết hạn giữ tiền theo thời
@@ -611,12 +619,12 @@ public class OrderService {
                 order.setHoldUntil(now.plusDays(3));
             }
             String orderLink = "/order/myOrder/" + order.getId();
-                notificationService.createNotification(NotificationRequest.builder()
-                        .content("Don hang " + order.getId() + " da hoan thanh va duoc xac nhan boi nguoi ban "
-                                + order.getBuyer().getUsername())
-                        .userIds(List.of(order.getBuyer().getId()))
-                        .link(orderLink)
-                        .build());
+            notificationService.createNotification(NotificationRequest.builder()
+                    .content("Don hang " + order.getId() + " da hoan thanh va duoc xac nhan boi nguoi ban "
+                            + order.getBuyer().getUsername())
+                    .userIds(List.of(order.getBuyer().getId()))
+                    .link(orderLink)
+                    .build());
 
         }
 
@@ -639,13 +647,51 @@ public class OrderService {
 
             }
         }
+        OrderStatusEnum oldStatus = order.getStatus();
+        order.setStatus(newStatus);
+
+        Order saved = orderRepository.save(order);
+        if (newStatus == OrderStatusEnum.CANCELLED) {
+            boolean canCancel = oldStatus == OrderStatusEnum.PENDING ||
+                    oldStatus == OrderStatusEnum.CONFIRMED;
+
+            if (!canCancel) {
+                throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+            }
+        }
+        if (newStatus == OrderStatusEnum.CANCELLED  && oldStatus == OrderStatusEnum.CONFIRMED) {
+
+            restoreOtherOrdersToPending(order);
+
+            refreshPostAfterOrdersChanged(getFirstPostFromOrder(saved));
+
+            String orderLink = "/order/myOrder/" + order.getId();
+
+            notificationService.createNotification(NotificationRequest.builder()
+                    .content("Đơn hàng #" + order.getId()
+                            + " đã bị hủy bởi " + currentUser.getUsername())
+                    .userIds(List.of(
+                            order.getBuyer().getId(),
+                            order.getSeller().getId()))
+                    .link(orderLink)
+                    .build());
+        }
+        if (newStatus == OrderStatusEnum.CANCELLED  && oldStatus == OrderStatusEnum.CONFIRMED) {
+            String orderLink = "/order/myOrder/" + order.getId();
+
+            notificationService.createNotification(NotificationRequest.builder()
+                    .content("Đơn hàng #" + order.getId()
+                            + " đã bị hủy bởi " + currentUser.getUsername())
+                    .userIds(List.of(
+                            order.getBuyer().getId(),
+                            order.getSeller().getId()))
+                    .link(orderLink)
+                    .build());
+        }
 
         if (newStatus == OrderStatusEnum.COMPLETED) {
             order.setPaymentStatus(PaymentStatusEnum.PAID);
         }
-
-        order.setStatus(newStatus);
-        Order saved = orderRepository.save(order);
 
         if (newStatus == OrderStatusEnum.SETTLING) {
             String orderLink = "/order/myOrder/" + saved.getId();
@@ -668,16 +714,47 @@ public class OrderService {
                     .build());
         }
 
-        if (newStatus == OrderStatusEnum.CANCELLED) {
-            refreshPostAfterOrdersChanged(getFirstPostFromOrder(saved));
-            String orderLink = "/order/myOrder/" + order.getId();
-            notificationService.createNotification(NotificationRequest.builder()
-                    .content("Đơn hàng #" + order.getId() + " đã bị hủy bởi " + order.getBuyer().getUsername())
-                    .userIds(List.of(order.getBuyer().getId()))
-                    .link(orderLink)
-                    .build());
-        }
         return orderMapper.toResponse(saved);
+    }
+
+    private void restoreOtherOrdersToPending(Order cancelledOrder) {
+
+        if (cancelledOrder.getItems() == null || cancelledOrder.getItems().isEmpty()) {
+            return;
+        }
+
+        Posts post = cancelledOrder.getItems().get(0).getPost();
+
+        if (post == null) {
+            return;
+        }
+
+        List<Order> relatedOrders = orderRepository.findAll();
+
+        List<Order> ordersToRestore = relatedOrders.stream()
+                .filter(o -> !o.getId().equals(cancelledOrder.getId()))
+                .filter(o -> o.getItems() != null && !o.getItems().isEmpty())
+                .filter(o -> {
+                    Posts p = o.getItems().get(0).getPost();
+                    String orderLink = "/order/myOrder/" + cancelledOrder.getId();
+
+                    notificationService.createNotification(NotificationRequest.builder()
+                            .content("Đơn hàng #" + cancelledOrder.getId() + "cua ban"
+                                    + " đã duoc khoi phuc boi " + cancelledOrder.getSeller().getUsername())
+                            .userIds(List.of(
+                                    cancelledOrder.getBuyer().getId()))
+                            .link(orderLink)
+                            .build());
+                    return p != null && p.getId().equals(post.getId());
+                })
+                .filter(o -> o.getStatus() == OrderStatusEnum.CANCELLED)
+                .toList();
+
+        for (Order o : ordersToRestore) {
+            o.setStatus(OrderStatusEnum.PENDING);
+        }
+
+        orderRepository.saveAll(ordersToRestore);
     }
 
     // 6. DELETE (Logical): Hủy đơn hàng
@@ -688,6 +765,7 @@ public class OrderService {
 
         orderRepository.save(order);
     }
+
     @Transactional
     @Scheduled(cron = "0 0 * * * *")
     public void scanAndProcessOrders() {
@@ -700,7 +778,7 @@ public class OrderService {
                 order.setStatus(OrderStatusEnum.CANCELLED);
                 orderRepository.save(order);
                 refreshPostAfterOrdersChanged(getFirstPostFromOrder(order));
-                
+
                 // Gửi thông báo hủy (tùy chọn)
                 sendSystemNotification(order, "Đơn hàng đã tự động hủy do không được xác nhận sau 24h.");
             }
@@ -708,28 +786,31 @@ public class OrderService {
 
         // 2. Xử lý đơn đã CONFIRMED/SHIPPING để chuyển sang DELIVERED
         // Lấy các đơn chưa hoàn thành
-        List<Order> activeOrders = orderRepository.findByStatusIn(List.of(OrderStatusEnum.CONFIRMED, OrderStatusEnum.SHIPPING));
-        
+        List<Order> activeOrders = orderRepository
+                .findByStatusIn(List.of(OrderStatusEnum.CONFIRMED, OrderStatusEnum.SHIPPING));
+
         for (Order order : activeOrders) {
             Posts post = getFirstPostFromOrder(order);
-            if (post == null) continue;
+            if (post == null)
+                continue;
 
             if (post.getPostType() == PostTypeEnum.SELL) {
                 // Nếu là tin BÁN: Tự động hoàn thành sau 7 ngày kể từ khi xác nhận (Confirmed)
                 if (order.getUpdatedAt().plusDays(7).isBefore(now)) {
                     completeOrder(order);
                 }
-            } 
-            else if (post.getPostType() == PostTypeEnum.BUY) {
+            } else if (post.getPostType() == PostTypeEnum.BUY) {
                 // Nếu là tin MUA: Tự động hoàn thành sau 2 ngày kể từ mốc HoldUntil
-                // Giả định: Người bán tin MUA giao hàng -> qua ngày giữ tiền -> +2 ngày thì auto confirm
+                // Giả định: Người bán tin MUA giao hàng -> qua ngày giữ tiền -> +2 ngày thì
+                // auto confirm
                 if (order.getHoldUntil() != null && order.getHoldUntil().plusDays(2).isBefore(now)) {
                     completeOrder(order);
                 }
             }
         }
 
-        // 3. Trung gian: hết thời gian giữ tiền sau khi đã giao → chuyển sang SETTLING (chờ admin giải ngân)
+        // 3. Trung gian: hết thời gian giữ tiền sau khi đã giao → chuyển sang SETTLING
+        // (chờ admin giải ngân)
         List<Order> middlemanDelivered = orderRepository.findByStatusAndPaymentMethod(
                 OrderStatusEnum.DELIVERED, PaymentMethodEnum.MIDDLEMAN);
         for (Order order : middlemanDelivered) {
@@ -737,14 +818,16 @@ public class OrderService {
                 order.setStatus(OrderStatusEnum.SETTLING);
                 orderRepository.save(order);
                 sendSystemNotification(order,
-                        "Đơn hàng #" + order.getId() + " đã chuyển sang giai đoạn giải ngân cho người bán (trung gian).");
+                        "Đơn hàng #" + order.getId()
+                                + " đã chuyển sang giai đoạn giải ngân cho người bán (trung gian).");
             }
         }
     }
 
     private void completeOrder(Order order) {
         order.setStatus(OrderStatusEnum.DELIVERED);
-        // Nếu là trung gian, thiết lập lại mốc hold tiền nếu chưa có (để admin biết khi nào được giải ngân)
+        // Nếu là trung gian, thiết lập lại mốc hold tiền nếu chưa có (để admin biết khi
+        // nào được giải ngân)
         if (order.getPaymentMethod() == PaymentMethodEnum.MIDDLEMAN && order.getHoldUntil() == null) {
             LocalDateTime now = LocalDateTime.now();
             if (order.getHoldDurationUnit() != null && order.getHoldDurationAmount() != null) {
@@ -753,7 +836,7 @@ public class OrderService {
                 order.setHoldUntil(now.plusDays(3));
             }
         }
-        
+
         orderRepository.save(order);
         sendSystemNotification(order, "Đơn hàng #" + order.getId() + " đã được hệ thống xác nhận hoàn thành.");
     }
@@ -794,7 +877,8 @@ public class OrderService {
         // Gửi thông báo cho người bán
         String orderLink = "/order/myOrder/" + order.getId();
         notificationService.createNotification(NotificationRequest.builder()
-                .content("Người mua đã xác nhận thanh toán cho đơn hàng #" + order.getId() + ". Vui lòng chuẩn bị lấy hàng.")
+                .content("Người mua đã xác nhận thanh toán cho đơn hàng #" + order.getId()
+                        + ". Vui lòng chuẩn bị lấy hàng.")
                 .userIds(List.of(order.getSeller().getId()))
                 .link(orderLink)
                 .build());
