@@ -73,6 +73,27 @@ function canShowAdminEscrowPayoutButton(order) {
     return end.getTime() <= Date.now();
 }
 
+function OrderUserCell({ username, avatar, userId }) {
+    const showName = username?.trim();
+    const initial = (showName || userId || '?').charAt(0).toUpperCase();
+    return (
+        <div className={cx('userCell')} title={userId ? `ID: ${userId}` : undefined}>
+            {avatar ? (
+                <img className={cx('userAvatar')} src={avatar} alt="" referrerPolicy="no-referrer" />
+            ) : (
+                <div className={cx('userAvatar', 'userAvatarPlaceholder')} aria-hidden>
+                    {initial}
+                </div>
+            )}
+            <div className={cx('userMeta')}>
+                <span className={cx('userName')}>
+                    {showName ? `@${showName}` : userId ? `${userId.slice(0, 8)}…` : '—'}
+                </span>
+            </div>
+        </div>
+    );
+}
+
 const OrderAdminPage = () => {
     const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
@@ -155,6 +176,8 @@ const OrderAdminPage = () => {
             order.id?.toLowerCase().includes(value) ||
             order.buyerId?.toLowerCase().includes(value) ||
             order.sellerId?.toLowerCase().includes(value) ||
+            order.buyerUsername?.toLowerCase().includes(value) ||
+            order.sellerUsername?.toLowerCase().includes(value) ||
             order.status?.name?.toLowerCase().includes(value) ||
             order.status?.displayName?.toLowerCase().includes(value) ||
             order.paymentMethod?.name?.toLowerCase().includes(value) ||
@@ -262,8 +285,20 @@ const OrderAdminPage = () => {
                                         filteredOrders.map((order) => (
                                             <CTableRow key={order.id}>
                                                 <CTableDataCell className={cx('order-id')}>{order.id}</CTableDataCell>
-                                                <CTableDataCell>{order.buyerId || '---'}</CTableDataCell>
-                                                <CTableDataCell>{order.sellerId || '---'}</CTableDataCell>
+                                                <CTableDataCell>
+                                                    <OrderUserCell
+                                                        username={order.buyerUsername}
+                                                        avatar={order.buyerAvatar}
+                                                        userId={order.buyerId}
+                                                    />
+                                                </CTableDataCell>
+                                                <CTableDataCell>
+                                                    <OrderUserCell
+                                                        username={order.sellerUsername}
+                                                        avatar={order.sellerAvatar}
+                                                        userId={order.sellerId}
+                                                    />
+                                                </CTableDataCell>
                                                 <CTableDataCell>
                                                     {order.status?.displayName || order.status?.name || '---'}
                                                 </CTableDataCell>

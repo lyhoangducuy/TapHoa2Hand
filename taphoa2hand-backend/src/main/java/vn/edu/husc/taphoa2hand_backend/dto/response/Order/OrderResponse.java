@@ -17,10 +17,11 @@ import vn.edu.husc.taphoa2hand_backend.dto.response.Order.BankInfoResponse;
 @Builder
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class OrderResponse {
-     String id;
-     String buyerId;
-     String sellerId;
-     OrderStatusEnumResponse status;
+    String id;
+    /** Giữ id để liên kết hồ sơ / báo cáo; hiển thị ưu tiên username + avatar. */
+    String buyerId;
+    String sellerId;
+    OrderStatusEnumResponse status;
      PaymentMethodEnumResponse paymentMethod;
      PaymentStatusEnumResponse paymentStatus;
      BigDecimal totalAmount;
@@ -39,8 +40,12 @@ public class OrderResponse {
     String postId;
     String postTitle;
     String postImageUrl;
-     /** Người mua (username) — người bán xem khi có nhiều yêu cầu */
-     String buyerUsername;
+    /** Người mua */
+    String buyerUsername;
+    String buyerAvatar;
+    /** Người bán */
+    String sellerUsername;
+    String sellerAvatar;
 
     /** Hết hạn giữ tiền ký quỹ (trung gian, sau DELIVERED). */
     LocalDateTime holdUntil;

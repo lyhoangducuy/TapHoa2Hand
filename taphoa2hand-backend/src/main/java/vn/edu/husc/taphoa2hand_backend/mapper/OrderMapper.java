@@ -47,6 +47,9 @@ public interface OrderMapper {
     @Mapping(target = "postTitle", ignore = true)
     @Mapping(target = "postImageUrl", ignore = true)
     @Mapping(target = "buyerUsername", ignore = true)
+    @Mapping(target = "buyerAvatar", ignore = true)
+    @Mapping(target = "sellerUsername", ignore = true)
+    @Mapping(target = "sellerAvatar", ignore = true)
     @Mapping(target = "holdDurationUnit", ignore = true)
     OrderResponse toResponse(Order order);
 
@@ -54,6 +57,11 @@ public interface OrderMapper {
     default void fillPostAndBuyerSummary(Order order, @MappingTarget OrderResponse response) {
         if (order.getBuyer() != null) {
             response.setBuyerUsername(order.getBuyer().getUsername());
+            response.setBuyerAvatar(order.getBuyer().getAvatar());
+        }
+        if (order.getSeller() != null) {
+            response.setSellerUsername(order.getSeller().getUsername());
+            response.setSellerAvatar(order.getSeller().getAvatar());
         }
         if (order.getHoldDurationUnit() != null) {
             response.setHoldDurationUnit(order.getHoldDurationUnit().name());

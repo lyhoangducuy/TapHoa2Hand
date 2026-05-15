@@ -19,3 +19,45 @@
   max-width: 220px;
   word-break: break-all;
 }
+
+.userCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  max-width: 240px;
+}
+
+.userAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid #e5e7eb;
+}
+
+.userAvatarPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.userMeta {
+  min-width: 0;
+  flex: 1;
+}
+
+.userName {
+  display: block;
+  font-weight: 600;
+  font-size: 13px;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
