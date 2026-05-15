@@ -32,21 +32,26 @@ const SellerBankModal = ({
                         name="bankName"
                         value={bankName}
                         onChange={onBankInfoChange}
-                        placeholder="Tên ngân hàng"
+                        placeholder="Tên ngân hàng (không nhập số)"
+                        autoComplete="organization"
                     />
                     <input
                         type="text"
                         name="accountName"
                         value={accountName}
                         onChange={onBankInfoChange}
-                        placeholder="Tên chủ tài khoản"
+                        placeholder="Họ tên chủ tài khoản (không nhập số)"
+                        autoComplete="name"
                     />
                     <input
                         type="text"
                         name="accountNumber"
                         value={accountNumber}
                         onChange={onBankInfoChange}
-                        placeholder="Số tài khoản"
+                        placeholder="Số tài khoản (chỉ số)"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        autoComplete="off"
                     />
                 </div>
                 <div className={cx('modal-actions')}>

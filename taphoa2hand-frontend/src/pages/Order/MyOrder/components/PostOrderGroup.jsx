@@ -107,9 +107,11 @@ const PostOrderGroup = ({
                             type="search"
                             enterKeyHint="search"
                             className={cx('post-group-phone-input')}
-                            placeholder="Gõ một phần số (không cần đúng hết, có thể có dấu cách)"
+                            placeholder="Chỉ nhập số (một phần SĐT)"
                             value={phoneQuery}
-                            onChange={(e) => setPhoneQuery(e.target.value)}
+                            onChange={(e) => setPhoneQuery(e.target.value.replace(/\D/g, ''))}
+                            inputMode="numeric"
+                            autoComplete="off"
                             onKeyDown={(e) => {
                                 if (e.key === 'Escape') setPhoneQuery('');
                             }}

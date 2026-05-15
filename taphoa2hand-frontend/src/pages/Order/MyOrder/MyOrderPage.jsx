@@ -113,20 +113,45 @@ const MyOrderPage = () => {
         }
     };
 
+    /** Số tài khoản: chỉ chữ số. Tên ngân hàng / chủ TK: không cho nhập số (mọi ký tự số Unicode). */
     const handleSellerBankChange = (e) => {
         const { name, value } = e.target;
-        setSellerBankForm(prev => ({ ...prev, [name]: value }));
+        let next = value;
+        if (name === 'accountNumber') {
+            next = value.replace(/\D/g, '');
+        } else if (name === 'bankName' || name === 'accountName') {
+            next = value.replace(/\p{Nd}/gu, '');
+        }
+        setSellerBankForm((prev) => ({ ...prev, [name]: next }));
     };
 
     const handleConfirmSellerBank = async () => {
-        const { bankName, accountName, accountNumber } = sellerBankForm;
+        const bankName = sellerBankForm.bankName?.trim() ?? '';
+        const accountName = sellerBankForm.accountName?.trim() ?? '';
+        const accountNumber = sellerBankForm.accountNumber?.trim() ?? '';
         if (!bankName || !accountName || !accountNumber) {
             toast.warning('Vui lòng nhập đầy đủ thông tin ngân hàng');
             return;
         }
+        if (/\p{Nd}/u.test(bankName)) {
+            toast.warning('Tên ngân hàng không được chứa chữ số');
+            return;
+        }
+        if (/\p{Nd}/u.test(accountName)) {
+            toast.warning('Họ tên chủ tài khoản không được chứa chữ số');
+            return;
+        }
+        if (!/^\d+$/.test(accountNumber)) {
+            toast.warning('Số tài khoản chỉ được nhập chữ số (0–9)');
+            return;
+        }
         try {
             setActionLoading(true);
-            await orderService.updateOrderStatus(confirmOrderId, 'CONFIRMED', sellerBankForm);
+            await orderService.updateOrderStatus(confirmOrderId, 'CONFIRMED', {
+                bankName,
+                accountName,
+                accountNumber,
+            });
             toast.success('Đã chốt đơn. Các yêu cầu khác cùng tin đăng đã được hủy.');
             setShowSellerBankModal(false);
             setConfirmOrderId(null);
