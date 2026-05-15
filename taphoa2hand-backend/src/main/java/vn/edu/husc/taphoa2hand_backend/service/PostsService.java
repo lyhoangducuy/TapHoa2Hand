@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import vn.edu.husc.taphoa2hand_backend.dto.request.PostsDTO.PostCreateRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.PostsDTO.PostEditRequest;
+import vn.edu.husc.taphoa2hand_backend.dto.response.Order.OrderOfPostResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostDeleteResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostDetailResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostImageResponse;
@@ -61,6 +62,7 @@ public class PostsService {
     PostDetailRepository postDetailRepository;
     CategoryRepository categoryRepository;
     PostImageRepository postImageRepository;
+    OrderService orderService;
 
     // Sử dụng FileService mới thay cho FileClient
     FileService fileService;
@@ -129,6 +131,7 @@ public class PostsService {
                 dateTo,
                 pageable
         );
+        
 
         System.out.println("Found " + postsPage.getTotalElements() + " posts");
 
@@ -163,6 +166,11 @@ public class PostsService {
 
         var postDetailResponse = postsMapper.toPostDetailResponse(post);
         postDetailResponse.setPostImages(imageResponses);
+
+        OrderOfPostResponse ordersOfPost = orderService.countOrdersOfPost(postId);
+        postDetailResponse.setOrderCount(ordersOfPost.getOrderCount());
+        postDetailResponse.setOrders(ordersOfPost.getOrders());
+
         return postDetailResponse;
     }
 

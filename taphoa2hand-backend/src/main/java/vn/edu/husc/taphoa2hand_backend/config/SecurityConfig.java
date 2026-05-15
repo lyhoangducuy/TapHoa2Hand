@@ -47,7 +47,8 @@ public class SecurityConfig {
             "/posts/{postId}",
             "/categories/getAll",
             "/posts/search/*",
-            "/banners"
+            "/banners",
+            "/orders/count/**"
     };
 
     @Bean

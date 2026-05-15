@@ -11,6 +11,7 @@ import AdminSettlementModal, {
 import { getUserById } from '../../../services/userService';
 import * as feedbackService from '../../../services/feedbackService';
 import { FeedbackForm, FeedbackList } from '../../../components/Feedback';
+import PostOrdersList from '../../../components/PostOrdersList/PostOrdersList';
 
 const cx = classNames.bind(styles);
 
@@ -310,6 +311,8 @@ const OrderDetailPage = () => {
         </div>
     );
 
+    const adminOrderPath = (id) => `/admin/orders/${id}`;
+
     return (
         <div className={cx('page')}>
             <div className={cx('inner')}>
@@ -319,6 +322,7 @@ const OrderDetailPage = () => {
                     </button>
                 </div>
 
+                <div className={cx('layout')}>
                 <article className={cx('invoice')}>
                     <header className={cx('invoiceHeader')}>
                         <div className={cx('brandBlock')}>
@@ -578,6 +582,19 @@ const OrderDetailPage = () => {
                         )}
                     </div>
                 </article>
+
+                {order.postId ? (
+                    <aside className={cx('sidebar')}>
+                        <PostOrdersList
+                            postId={order.postId}
+                            currentOrderId={order.id}
+                            orderDetailPath={
+                                isAdminOrderRoute ? adminOrderPath : (id) => `/order/myOrder/${id}`
+                            }
+                        />
+                    </aside>
+                ) : null}
+                </div>
 
                 <AdminSettlementModal
                     visible={settlementOpen}

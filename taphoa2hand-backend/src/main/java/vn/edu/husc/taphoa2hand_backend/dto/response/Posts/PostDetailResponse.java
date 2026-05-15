@@ -18,6 +18,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Categories.CategoryResponse;
+import vn.edu.husc.taphoa2hand_backend.dto.response.Order.OrderPostResponse;
 import vn.edu.husc.taphoa2hand_backend.entity.Categories;
 import vn.edu.husc.taphoa2hand_backend.entity.PaymentMethodEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.PostAddress;
@@ -55,4 +56,9 @@ public class PostDetailResponse {
     
     // Người bán (từ Users)
     UsersResponse user;
+
+    /** Số đơn hàng gắn với tin đăng này. */
+    Long orderCount;
+    /** Danh sách đơn (người mua / người bán tùy loại tin). */
+    List<OrderPostResponse> orders;
 }

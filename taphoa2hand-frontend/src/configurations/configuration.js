@@ -97,6 +97,7 @@ export const API = {
     CREATE_ORDER:"/order",
     UPDATE_ORDER_STATUS: (orderId) => `/order/${orderId}/status`,
     UPDATE_ORDER_STATUS_POST: "/order/update",
+    COUNT_ORDER_OF_POST: (postId) => `/order/count/${postId}`,
     //
     POST_CHAT_AI:"/chat-ai/chat-with-image",
     //Feedback

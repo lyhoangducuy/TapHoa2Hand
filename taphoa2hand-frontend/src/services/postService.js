@@ -23,6 +23,17 @@ export const getPostDetail = async (postId) => {
     }
 };
 
+export const getCountOfPost = async (postId) => {
+    try {
+        // Sử dụng hàm COUNT_ORDER_OF_POST từ configuration của bạn
+        const response = await httpClient.get(API.COUNT_ORDER_OF_POST(postId));
+        return response.data;
+    } catch (error) {
+        console.error(`Error fetching order count for ID ${postId}:`, error);
+        throw error;
+    }
+};
+
 export const createPost = async (postData, images) => {
     try {
         const token = localStorage.getItem('token');

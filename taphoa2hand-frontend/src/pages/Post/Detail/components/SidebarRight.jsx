@@ -11,6 +11,7 @@ import { addPostToFavorites, removePostFromFavorites } from '../../../../service
 import { createConversation } from '../../../../services/chatService';
 import AiAssessment from './AiAssessment';
 import ReportModal from '../../../../components/Report/ReportModal';
+import PostOrdersList from '../../../../components/PostOrdersList/PostOrdersList';
 
 const cx = classNames.bind(styles);
 
@@ -197,8 +198,16 @@ const SidebarRight = ({ post, seller, address, isFavorite, setIsFavorite, curren
                     </button>
                 </div>
             </div>
+
+            <PostOrdersList
+                postId={postId}
+                orders={post.orders}
+                orderCount={post.orderCount}
+                className={cx('postOrdersPanel')}
+            />
+
             {/* Check AI */}<br/>
-                    <AiAssessment postId={postId} />
+            <AiAssessment postId={postId} />
 
             <ReportModal
                 open={reportOpen}

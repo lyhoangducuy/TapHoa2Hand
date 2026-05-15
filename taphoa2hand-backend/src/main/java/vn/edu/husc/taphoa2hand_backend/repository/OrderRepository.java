@@ -70,6 +70,17 @@ public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecif
 
     List<Order> findByStatusAndPaymentMethod(OrderStatusEnum status, PaymentMethodEnum paymentMethod);
 
-    Long countByPostId(String postId);
+    @Query("SELECT COUNT(DISTINCT o) FROM Order o JOIN o.items i WHERE i.post.id = :postId")
+    long countByPostId(@Param("postId") String postId);
+
+    @Query("""
+            SELECT DISTINCT o FROM Order o
+            JOIN FETCH o.buyer
+            JOIN FETCH o.seller
+            JOIN o.items i
+            WHERE i.post.id = :postId
+            ORDER BY o.createdAt DESC
+            """)
+    List<Order> findAllByPostIdOrderByCreatedAtDesc(@Param("postId") String postId);
 
 }

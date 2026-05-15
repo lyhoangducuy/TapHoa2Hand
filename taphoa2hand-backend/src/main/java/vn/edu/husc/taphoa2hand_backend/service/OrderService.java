@@ -25,6 +25,8 @@ import lombok.experimental.FieldDefaults;
 import vn.edu.husc.taphoa2hand_backend.dto.request.Noti.NotificationRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.Order.OrderRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.response.AdminUsers.AdminUsersResponse;
+import vn.edu.husc.taphoa2hand_backend.dto.response.Order.OrderOfPostResponse;
+import vn.edu.husc.taphoa2hand_backend.dto.response.Order.OrderPostResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Order.OrderResponse;
 import vn.edu.husc.taphoa2hand_backend.entity.Conversation;
 import vn.edu.husc.taphoa2hand_backend.entity.HoldDurationUnit;
@@ -742,7 +744,6 @@ public class OrderService {
 
     private void completeOrder(Order order) {
         order.setStatus(OrderStatusEnum.DELIVERED);
-        
         // Nếu là trung gian, thiết lập lại mốc hold tiền nếu chưa có (để admin biết khi nào được giải ngân)
         if (order.getPaymentMethod() == PaymentMethodEnum.MIDDLEMAN && order.getHoldUntil() == null) {
             LocalDateTime now = LocalDateTime.now();
@@ -801,7 +802,21 @@ public class OrderService {
         return orderMapper.toResponse(saved);
     }
 
-    public Long countOrdersOfPost(String postId) {
-        return orderRepository.countByPostId(postId);
+    @Transactional(readOnly = true)
+    public OrderOfPostResponse countOrdersOfPost(String postId) {
+        Posts post = postsRepository.findById(postId)
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+
+        List<Order> orders = orderRepository.findAllByPostIdOrderByCreatedAtDesc(postId);
+        PostTypeEnum postType = post.getPostType();
+
+        List<OrderPostResponse> orderResponses = orders.stream()
+                .map(order -> orderMapper.toOrderPostResponse(order, postType))
+                .toList();
+
+        return OrderOfPostResponse.builder()
+                .orderCount((long) orderResponses.size())
+                .orders(orderResponses)
+                .build();
     }
 }

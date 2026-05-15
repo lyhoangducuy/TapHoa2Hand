@@ -19,6 +19,7 @@ import lombok.experimental.FieldDefaults;
 import vn.edu.husc.taphoa2hand_backend.dto.request.Order.OrderRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.Order.OrderUpdateStatusRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.response.ApiResponse;
+import vn.edu.husc.taphoa2hand_backend.dto.response.Order.OrderOfPostResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Order.OrderResponse;
 import vn.edu.husc.taphoa2hand_backend.service.OrderService;
 
@@ -127,8 +128,8 @@ public class OrderController {
                 .build();
     }
     @GetMapping("/count/{postId}")
-    public ApiResponse<Long> countOrders(@PathVariable String postId) {
-        return ApiResponse.<Long>builder()
+    public ApiResponse<OrderOfPostResponse> countOrders(@PathVariable String postId) {
+        return ApiResponse.<OrderOfPostResponse>builder()
                 .result(orderService.countOrdersOfPost(postId))
                 .message("Đếm đơn hàng thành công")
                 .build();

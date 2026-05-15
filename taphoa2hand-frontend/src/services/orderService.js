@@ -67,6 +67,10 @@ export const adminEscrowPayout = async (orderId) => {
     return await httpClient.post(API.ORDER_ADMIN_ESCROW_PAYOUT(orderId), {});
 };
 
+export const getOrdersOfPost = async (postId) => {
+    return await httpClient.get(API.COUNT_ORDER_OF_POST(postId));
+};
+
 // Thêm cục này vào cuối cùng file orderService.js của bạn
 const orderService = {
     createOrder,
@@ -78,6 +82,7 @@ const orderService = {
     updateOrderStatusPost,
     confirmPayment,
     adminEscrowPayout,
+    getOrdersOfPost,
 };
 
 export default orderService;

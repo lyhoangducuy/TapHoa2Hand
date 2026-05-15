@@ -19,7 +19,6 @@ function PostDetailPage() {
     const [post, setPost] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isFavorite, setIsFavorite] = useState(false);
-
     const token = localStorage.getItem('token');
     const currentUser = token ? JSON.parse(atob(token.split('.')[1])) : null;
 

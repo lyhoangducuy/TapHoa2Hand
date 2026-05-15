@@ -7,6 +7,7 @@ import org.mapstruct.MappingTarget;
 
 import vn.edu.husc.taphoa2hand_backend.dto.request.Order.OrderRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Order.BankInfoResponse;
+import vn.edu.husc.taphoa2hand_backend.dto.response.Order.OrderPostResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Order.OrderResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Order.OrderStatusEnumResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Order.PaymentStatusEnumResponse;
@@ -17,7 +18,9 @@ import vn.edu.husc.taphoa2hand_backend.entity.OrderStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.PaymentMethodEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.PaymentStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.PostImage;
+import vn.edu.husc.taphoa2hand_backend.entity.PostTypeEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.Posts;
+import vn.edu.husc.taphoa2hand_backend.entity.Users;
 
 @Mapper(componentModel = "spring")
 public interface OrderMapper {
@@ -113,6 +116,26 @@ public interface OrderMapper {
         return PaymentStatusEnumResponse.builder()
                 .name(status.name())
                 .displayName(status.getDisplayName()) // phải có trong enum
+                .build();
+    }
+
+    /**
+     * Tin BÁN: hiển thị người mua đặt đơn. Tin MUA: hiển thị người bán (người nhận đơn).
+     */
+    default OrderPostResponse toOrderPostResponse(Order order, PostTypeEnum postType) {
+        if (order == null) {
+            return null;
+        }
+        Users displayUser = postType == PostTypeEnum.BUY ? order.getSeller() : order.getBuyer();
+        var price = order.getItems() != null && !order.getItems().isEmpty()
+                ? order.getItems().get(0).getPrice()
+                : order.getTotalAmount();
+        return OrderPostResponse.builder()
+                .orderId(order.getId())
+                .username(displayUser != null ? displayUser.getUsername() : null)
+                .avatar(displayUser != null ? displayUser.getAvatar() : null)
+                .createdAt(order.getCreatedAt())
+                .price(price)
                 .build();
     }
 }
