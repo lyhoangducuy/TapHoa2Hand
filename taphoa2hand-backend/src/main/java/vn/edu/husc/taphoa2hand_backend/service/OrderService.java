@@ -276,7 +276,8 @@ public class OrderService {
             }
             return;
         }
-        if (newStatus == OrderStatusEnum.SHIPPING || newStatus == OrderStatusEnum.DELIVERED || newStatus == OrderStatusEnum.SETTLING) {
+        if (newStatus == OrderStatusEnum.SHIPPING || newStatus == OrderStatusEnum.DELIVERED
+                || newStatus == OrderStatusEnum.SETTLING) {
             // Cho phép chuyển từ CONFIRMED hoặc PAID_WAITING_PICKUP sang SHIPPING
             if (newStatus == OrderStatusEnum.SHIPPING) {
                 if (order.getStatus() != OrderStatusEnum.CONFIRMED
@@ -603,7 +604,7 @@ public class OrderService {
             cancelOtherPendingOrdersForSamePost(order);
             String orderLink = "/order/myOrder/" + order.getId();
             notificationService.createNotification(NotificationRequest.builder()
-                    .content("Don hang " + order.getId() + " da duoc xac nhan boi nguoi ban "
+                    .content("Đơn hàng " + order.getId() + " đã được xác nhận bởi người bán"
                             + order.getBuyer().getUsername())
                     .userIds(List.of(order.getBuyer().getId()))
                     .link(orderLink)
@@ -612,7 +613,7 @@ public class OrderService {
         if (newStatus == OrderStatusEnum.DELIVERED) {
             String orderLink = "/order/myOrder/" + order.getId();
             notificationService.createNotification(NotificationRequest.builder()
-                    .content("Vui long xac nhan " + order.getId() +" da duoc giao thanh cong boi nguoi ban " 
+                    .content("Vui lòng xác nhận " + order.getId() + " đã được giao thành công bởi người bán "
                             + order.getSeller().getUsername())
                     .userIds(List.of(order.getBuyer().getId()))
                     .link(orderLink)
@@ -631,7 +632,7 @@ public class OrderService {
             }
             String orderLink = "/order/myOrder/" + order.getId();
             notificationService.createNotification(NotificationRequest.builder()
-                    .content("Don hang " + order.getId() + " da hoan thanh va duoc xac nhan boi nguoi ban "
+                    .content("Đơn hàng " + order.getId() + " đã hoàn thành và được xác nhận bởi người bán "
                             + order.getBuyer().getUsername())
                     .userIds(List.of(order.getBuyer().getId()))
                     .link(orderLink)
@@ -650,7 +651,7 @@ public class OrderService {
                 }
                 String orderLink = "/order/myOrder/" + order.getId();
                 notificationService.createNotification(NotificationRequest.builder()
-                        .content("Don hang " + order.getId() + " da duoc xac nhan boi nguoi ban "
+                        .content("Đơn hàng " + order.getId() + " đã được xác nhận bởi người bán "
                                 + order.getBuyer().getUsername())
                         .userIds(List.of(order.getBuyer().getId()))
                         .link(orderLink)
@@ -670,7 +671,7 @@ public class OrderService {
                 throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
             }
         }
-        if (newStatus == OrderStatusEnum.CANCELLED  && oldStatus == OrderStatusEnum.CONFIRMED) {
+        if (newStatus == OrderStatusEnum.CANCELLED && oldStatus == OrderStatusEnum.CONFIRMED) {
 
             restoreOtherOrdersToPending(order);
 
@@ -687,7 +688,7 @@ public class OrderService {
                     .link(orderLink)
                     .build());
         }
-        if (newStatus == OrderStatusEnum.CANCELLED  && oldStatus == OrderStatusEnum.CONFIRMED) {
+        if (newStatus == OrderStatusEnum.CANCELLED && oldStatus == OrderStatusEnum.CONFIRMED) {
             String orderLink = "/order/myOrder/" + order.getId();
 
             notificationService.createNotification(NotificationRequest.builder()
@@ -704,18 +705,20 @@ public class OrderService {
             order.setPaymentStatus(PaymentStatusEnum.PAID);
         }
 
-
         if (newStatus == OrderStatusEnum.COMPLETED) {
-            order.setStatus(OrderStatusEnum.SETTLING);
-            Order saved2 = orderRepository.save(order);
+            order.setPaymentStatus(PaymentStatusEnum.PAID);
+
             String orderLink = "/order/myOrder/" + saved.getId();
+
             notificationService.createNotification(NotificationRequest.builder()
-                    .content("Đơn hàng #" + saved.getId() + " đã hoàn tất: đã chuyển tiền cho người bán.")
-                    .userIds(List.of(saved.getBuyer().getId(), saved.getSeller().getId()))
+                    .content("Đơn hàng #" + saved.getId()
+                            + " đã hoàn tất. Tiền đã được chuyển cho người bán.")
+                    .userIds(List.of(
+                            saved.getBuyer().getId(),
+                            saved.getSeller().getId()))
                     .link(orderLink)
                     .build());
         }
-
         return orderMapper.toResponse(saved);
     }
 
@@ -904,5 +907,43 @@ public class OrderService {
                 .orderCount((long) orderResponses.size())
                 .orders(orderResponses)
                 .build();
+    }
+
+    @Scheduled(cron = "0 */5 * * * *")
+    @Transactional
+    public void autoReleaseEscrowOrders() {
+
+        LocalDateTime now = LocalDateTime.now();
+
+        List<Order> orders = orderRepository.findByStatusAndPaymentMethod(
+                OrderStatusEnum.SETTLING,
+                PaymentMethodEnum.MIDDLEMAN);
+
+        for (Order order : orders) {
+
+            if (order.getHoldUntil() == null) {
+                continue;
+            }
+
+            boolean isExpired = !now.isBefore(order.getHoldUntil());
+
+            if (!isExpired) {
+                continue;
+            }
+
+            // TODO:
+            // check report/dispute here
+            // if(hasActiveReport(order)) continue;
+
+            order.setStatus(OrderStatusEnum.COMPLETED);
+            order.setPaymentStatus(PaymentStatusEnum.PAID);
+
+            orderRepository.save(order);
+
+            sendSystemNotification(
+                    order,
+                    "Tiền của đơn hàng #" + order.getId()
+                            + " đã được tự động chuyển cho người bán.");
+        }
     }
 }
