@@ -123,3 +123,100 @@
     font-size: 0.9rem;
   }
 }
+
+.amountHeader {
+  text-align: right;
+  padding-right: 1rem !important;
+}
+
+.amountCell {
+  text-align: right;
+  padding-right: 1rem !important;
+
+  font-weight: 700;
+  color: #059669;
+
+  white-space: nowrap;
+  min-width: 160px;
+
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0.42rem 0.8rem;
+  border-radius: 999px;
+
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+/* Chờ xác nhận */
+.statusPending {
+  background: #fff7ed;
+  color: #c2410c;
+  border-color: #fdba74;
+}
+
+/* Đã xác nhận */
+.statusConfirmed {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #93c5fd;
+}
+
+/* Đã thanh toán */
+.statusPaidWaitingPickup {
+  background: #ecfeff;
+  color: #0f766e;
+  border-color: #67e8f9;
+}
+
+/* Đang giao */
+.statusShipping {
+  background: #eef2ff;
+  color: #4338ca;
+  border-color: #a5b4fc;
+}
+
+/* Đã giao */
+.statusDelivered {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: #86efac;
+}
+
+/* Đang giải ngân */
+.statusSettling {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #fcd34d;
+}
+
+/* Hoàn tất */
+.statusCompleted {
+  background: #dcfce7;
+  color: #166534;
+  border-color: #4ade80;
+}
+
+/* Hủy */
+.statusCancelled {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+/* Hoàn tiền */
+.statusReturned {
+  background: #f5f3ff;
+  color: #6d28d9;
+  border-color: #c4b5fd;
+}

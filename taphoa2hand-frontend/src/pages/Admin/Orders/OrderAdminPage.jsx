@@ -50,7 +50,31 @@ const PAYMENT_STATUSES = [
     { value: 'PAID', label: 'Đã thanh toán' },
     { value: 'REFUNDED', label: 'Đã hoàn tiền' },
 ];
-
+const getStatusClass = (status) => {
+    switch (status) {
+        case 'PENDING':
+            return 'statusPending';
+        case 'CONFIRMED':
+            return 'statusConfirmed';
+        case 'PAID_WAITING_PICKUP':
+            return 'statusPaidWaitingPickup';
+        case 'SHIPPING':
+            return 'statusShipping';
+        case 'DELIVERED':
+            return 'statusDelivered';
+        case 'SETTLING':
+            return 'statusSettling';
+        case 'COMPLETED':
+            return 'statusCompleted';
+        case 'CANCELLED':
+        case 'CANCELLED_AUTO':
+            return 'statusCancelled';
+        case 'RETURNED':
+            return 'statusReturned';
+        default:
+            return '';
+    }
+};
 const formatCurrency = (amount) =>
     new Intl.NumberFormat('vi-VN', {
         style: 'currency',
@@ -295,8 +319,9 @@ const OrderAdminPage = () => {
                                         <CTableHeaderCell>Người bán</CTableHeaderCell>
                                         <CTableHeaderCell>TT đơn</CTableHeaderCell>
                                         <CTableHeaderCell>Phương thức</CTableHeaderCell>
-                                        <CTableHeaderCell>TT thanh toán</CTableHeaderCell>
-                                        <CTableHeaderCell>Tổng tiền</CTableHeaderCell>
+                                        <CTableHeaderCell className={cx('amountHeader')}>
+                                            Tổng tiền
+                                        </CTableHeaderCell>
                                         <CTableHeaderCell>Ngày tạo</CTableHeaderCell>
                                         <CTableHeaderCell className="text-center">Thao tác</CTableHeaderCell>
                                     </CTableRow>
@@ -321,19 +346,23 @@ const OrderAdminPage = () => {
                                                     />
                                                 </CTableDataCell>
                                                 <CTableDataCell>
-                                                    {order.status?.displayName || order.status?.name || '---'}
+                                                    <span
+                                                        className={cx(
+                                                            'statusBadge',
+                                                            getStatusClass(order.status?.name)
+                                                        )}
+                                                    >
+                                                        {order.status?.displayName || order.status?.name || '---'}
+                                                    </span>
                                                 </CTableDataCell>
                                                 <CTableDataCell>
                                                     {order.paymentMethod?.description ||
                                                         order.paymentMethod?.name ||
                                                         '---'}
                                                 </CTableDataCell>
-                                                <CTableDataCell>
-                                                    {order.paymentStatus?.displayName ||
-                                                        order.paymentStatus?.name ||
-                                                        '---'}
+                                                <CTableDataCell className={cx('amountCell')}>
+                                                    {formatCurrency(order.totalAmount)}
                                                 </CTableDataCell>
-                                                <CTableDataCell>{formatCurrency(order.totalAmount)}</CTableDataCell>
                                                 <CTableDataCell>{formatDateTime(order.createdAt)}</CTableDataCell>
                                                 <CTableDataCell className="text-center">
                                                     <div className="d-flex flex-wrap gap-1 justify-content-center">

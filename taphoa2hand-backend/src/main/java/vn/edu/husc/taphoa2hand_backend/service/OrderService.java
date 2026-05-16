@@ -702,11 +702,6 @@ public class OrderService {
         }
 
         if (newStatus == OrderStatusEnum.COMPLETED) {
-            order.setPaymentStatus(PaymentStatusEnum.PAID);
-        }
-
-        if (newStatus == OrderStatusEnum.COMPLETED) {
-            order.setPaymentStatus(PaymentStatusEnum.PAID);
 
             String orderLink = "/order/myOrder/" + saved.getId();
 
@@ -936,7 +931,6 @@ public class OrderService {
             // if(hasActiveReport(order)) continue;
 
             order.setStatus(OrderStatusEnum.COMPLETED);
-            order.setPaymentStatus(PaymentStatusEnum.PAID);
 
             orderRepository.save(order);
 

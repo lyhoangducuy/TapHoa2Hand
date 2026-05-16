@@ -68,8 +68,6 @@ public class Order extends BaseEntity{
    
     OrderStatusEnum status;
 
-    @Enumerated(EnumType.STRING)
-    PaymentStatusEnum paymentStatus;
 
     BigDecimal totalAmount;
     BigDecimal platformFee;
