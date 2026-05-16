@@ -18,6 +18,7 @@ public enum OrderStatusEnum {
     CANCELLED_AUTO("CANCELLED", "Đã hủy tự động"),
     SETTLING("SETTLING", "Đang xử lý giải ngân tiền cho người bán"),
     COMPLETED("COMPLETED", "Hoàn tất, đã chuyển tiền cho người bán"),
+    REPORTED("REPORTED", "Đang có tranh chấp, chờ xử lý"),
     RETURNED("RETURNED", "Trả hàng/Hoàn tiền");
 
     private final String name;

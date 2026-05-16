@@ -4,10 +4,6 @@ import { toast } from 'react-toastify';
 import classNames from 'classnames/bind';
 import styles from './OrderDetailPage.module.scss';
 import orderService from '../../../services/orderService';
-import AdminSettlementModal, {
-    canAdminOpenSettlementModal,
-    isMiddlemanDeliveredHoldPassed,
-} from '../../Admin/Orders/AdminSettlementModal';
 import { getUserById } from '../../../services/userService';
 import * as feedbackService from '../../../services/feedbackService';
 import { FeedbackForm, FeedbackList } from '../../../components/Feedback';
@@ -128,27 +124,7 @@ const OrderDetailPage = () => {
         ]);
     };
 
-    const handleOpenAdminSettlement = async () => {
-        if (!order) return;
-        setSettlementBegin(true);
-        try {
-            if (order.status?.name === 'DELIVERED' && isMiddlemanDeliveredHoldPassed(order)) {
-                const res = await orderService.updateOrderStatus(orderId, 'SETTLING');
-                const body = res?.data ?? res;
-                if (body?.code !== 1000) {
-                    toast.error(body?.message || 'Không chuyển được sang bước giải ngân');
-                    return;
-                }
-                await refreshOrder();
-            }
-            setSettlementOpen(true);
-        } catch (err) {
-            toast.error(err?.response?.data?.message || 'Lỗi');
-        } finally {
-            setSettlementBegin(false);
-        }
-    };
-
+   
     const handleConfirmAdminSettlement = async () => {
         try {
             setSettlementConfirm(true);
@@ -468,23 +444,6 @@ const OrderDetailPage = () => {
                                 )}
                         </dl>
 
-                        {isAdminOrderRoute && canAdminOpenSettlementModal(order) && (
-                            <div className={cx('adminEscrow')}>
-                                <p className={cx('adminEscrowText')}>
-                                    Đơn trung gian: mở bước giải ngân để xem QR demo và số tiền chuyển cho người bán
-                                    (đã trừ phí sàn). Sau khi chuyển khoản thủ công, xác nhận để chuyển đơn sang hoàn
-                                    tất.
-                                </p>
-                                <button
-                                    type="button"
-                                    className={cx('btn', 'primary')}
-                                    onClick={handleOpenAdminSettlement}
-                                    disabled={settlementBegin}
-                                >
-                                    {settlementBegin ? 'Đang xử lý…' : 'Giải ngân (QR demo)'}
-                                </button>
-                            </div>
-                        )}
 
                         {order.paymentMethod?.name === 'MIDDLEMAN' && (
                             <>
@@ -595,14 +554,6 @@ const OrderDetailPage = () => {
                     </aside>
                 ) : null}
                 </div>
-
-                <AdminSettlementModal
-                    visible={settlementOpen}
-                    order={order}
-                    onClose={() => setSettlementOpen(false)}
-                    confirmLoading={settlementConfirm}
-                    onConfirmTransfer={handleConfirmAdminSettlement}
-                />
 
                 {isBuyer &&
                     (orderStatus === 'DELIVERED' ||

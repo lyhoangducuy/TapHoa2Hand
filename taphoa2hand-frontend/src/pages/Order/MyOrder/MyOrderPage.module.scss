@@ -364,6 +364,7 @@
         }
 
         .order-card {
+            
             background: #fff;
             border-radius: 16px;
             border: 1px solid #f1f2f6;
@@ -483,6 +484,7 @@
                 }
 
                 .btn-report {
+                     overflow: visible !important;
                     background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
                     border: 1px solid #0369a1;
                     color: #0c4a6e;

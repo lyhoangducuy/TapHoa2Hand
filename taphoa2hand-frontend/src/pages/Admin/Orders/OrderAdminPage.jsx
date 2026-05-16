@@ -21,7 +21,6 @@ import {
 } from '@coreui/react';
 import styles from './OrderAdminPage.module.scss';
 import orderService from '../../../services/orderService';
-import AdminSettlementModal, { canAdminOpenSettlementModal, isMiddlemanDeliveredHoldPassed } from './AdminSettlementModal';
 
 const cx = classNames.bind(styles);
 
@@ -119,10 +118,6 @@ const OrderAdminPage = () => {
     const [filterOrderStatus, setFilterOrderStatus] = useState('');
     const [filterPaymentMethod, setFilterPaymentMethod] = useState('');
     const [filterPaymentStatus, setFilterPaymentStatus] = useState('');
-    const [payoutLoadingId, setPayoutLoadingId] = useState(null);
-    const [settlementOpen, setSettlementOpen] = useState(false);
-    const [settlementOrder, setSettlementOrder] = useState(null);
-    const [settlementBeginId, setSettlementBeginId] = useState(null);
 
     const fetchOrders = useCallback(async (page) => {
         try {
@@ -167,52 +162,6 @@ const OrderAdminPage = () => {
         setCurrentPage(0);
     };
 
-    const handleOpenSettlement = async (e, order) => {
-        e.stopPropagation();
-        setSettlementBeginId(order.id);
-        try {
-            let next = order;
-            if (order.status?.name === 'DELIVERED' && isMiddlemanDeliveredHoldPassed(order)) {
-                const res = await orderService.updateOrderStatus(order.id, 'SETTLING');
-                const body = res?.data ?? res;
-                if (body?.code !== 1000) {
-                    toast.error(body?.message || 'Không chuyển được sang bước giải ngân');
-                    return;
-                }
-                await fetchOrders(currentPage);
-                const detail = await orderService.getOrderDetail(order.id);
-                const dbody = detail?.data ?? detail;
-                next = dbody?.result ?? dbody ?? order;
-            }
-            setSettlementOrder(next);
-            setSettlementOpen(true);
-        } catch (err) {
-            toast.error(err?.response?.data?.message || 'Không mở được bước giải ngân');
-        } finally {
-            setSettlementBeginId(null);
-        }
-    };
-
-    const handleConfirmSettlementTransfer = async () => {
-        if (!settlementOrder?.id) return;
-        try {
-            setPayoutLoadingId(settlementOrder.id);
-            const res = await orderService.adminEscrowPayout(settlementOrder.id);
-            const body = res?.data ?? res;
-            if (body?.code === 1000) {
-                toast.success('Đã xác nhận hoàn tất chuyển tiền cho người bán');
-                setSettlementOpen(false);
-                setSettlementOrder(null);
-                await fetchOrders(currentPage);
-            } else {
-                toast.error(body?.message || 'Thao tác thất bại');
-            }
-        } catch (err) {
-            toast.error(err?.response?.data?.message || 'Thao tác thất bại');
-        } finally {
-            setPayoutLoadingId(null);
-        }
-    };
 
     const filteredOrders = orders.filter((order) => {
         const value = searchText.trim().toLowerCase();
@@ -374,18 +323,7 @@ const OrderAdminPage = () => {
                                                         >
                                                             Chi tiết
                                                         </CButton>
-                                                        {canAdminOpenSettlementModal(order) && (
-                                                            <CButton
-                                                                color="warning"
-                                                                size="sm"
-                                                                disabled={settlementBeginId === order.id}
-                                                                onClick={(e) => handleOpenSettlement(e, order)}
-                                                            >
-                                                                {settlementBeginId === order.id
-                                                                    ? '…'
-                                                                    : 'Giải ngân'}
-                                                            </CButton>
-                                                        )}
+                                                        
                                                     </div>
                                                 </CTableDataCell>
                                             </CTableRow>
@@ -429,16 +367,7 @@ const OrderAdminPage = () => {
                     )}
                 </CCardBody>
             </CCard>
-            <AdminSettlementModal
-                visible={settlementOpen}
-                order={settlementOrder}
-                onClose={() => {
-                    setSettlementOpen(false);
-                    setSettlementOrder(null);
-                }}
-                confirmLoading={Boolean(settlementOrder?.id && payoutLoadingId === settlementOrder.id)}
-                onConfirmTransfer={handleConfirmSettlementTransfer}
-            />
+           
         </div>
     );
 };

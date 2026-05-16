@@ -15,6 +15,7 @@ import vn.edu.husc.taphoa2hand_backend.dto.request.ReportDTO.ReportUserSubmitReq
 import vn.edu.husc.taphoa2hand_backend.dto.response.FilesResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Report.ReportResponse;
 import vn.edu.husc.taphoa2hand_backend.entity.Order;
+import vn.edu.husc.taphoa2hand_backend.entity.OrderStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.Posts;
 import vn.edu.husc.taphoa2hand_backend.entity.Report;
 import vn.edu.husc.taphoa2hand_backend.entity.ReportEvidence;
@@ -124,6 +125,8 @@ public class ReportService {
         Users reporter = currentReporter();
         Order order = orderRepository.findById(body.getOrderId())
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+        order.setStatus(OrderStatusEnum.REPORTED);
+        orderRepository.save(order);
         boolean participant = order.getBuyer().getId().equals(reporter.getId())
                 || order.getSeller().getId().equals(reporter.getId());
         if (!participant) {
