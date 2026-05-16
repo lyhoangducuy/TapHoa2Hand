@@ -57,7 +57,8 @@ const PostOrderGroup = ({
     onPaymentConfirmed,
     onShipping,
     onDelivered,
-    actionLoading
+    actionLoading,
+    onConfirmDelivery
 }) => {
     const [sortMode, setSortMode] = useState(SORT_CREATED);
     const [phoneQuery, setPhoneQuery] = useState('');
@@ -171,6 +172,7 @@ const PostOrderGroup = ({
                         onShipping={onShipping}
                         onDelivered={onDelivered}
                         actionLoading={actionLoading}
+                        onConfirmDelivery={onConfirmDelivery}
                     />
                 ))}
                 {hasMoreOrders && !ordersExpanded ? (

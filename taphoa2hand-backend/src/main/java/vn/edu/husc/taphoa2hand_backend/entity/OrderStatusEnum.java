@@ -13,8 +13,9 @@ public enum OrderStatusEnum {
     CONFIRMED("CONFIRMED", "Đã xác nhận, chờ thanh toán"),
     PAID_WAITING_PICKUP("PAID_WAITING_PICKUP", "Đã thanh toán, chờ lấy hàng"),
     SHIPPING("SHIPPING", "Đang giao hàng"),
-    DELIVERED("DELIVERED", "Đã giao thành công"),
+    DELIVERED("DELIVERED", "Đã giao thành công, cho người mua xác nhận"),
     CANCELLED("CANCELLED", "Đã hủy"),
+    CANCELLED_AUTO("CANCELLED", "Đã hủy tự động"),
     SETTLING("SETTLING", "Đang xử lý giải ngân tiền cho người bán"),
     COMPLETED("COMPLETED", "Hoàn tất, đã chuyển tiền cho người bán"),
     RETURNED("RETURNED", "Trả hàng/Hoàn tiền");

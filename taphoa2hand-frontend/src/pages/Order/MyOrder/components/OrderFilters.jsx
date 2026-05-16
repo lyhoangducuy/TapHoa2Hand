@@ -32,6 +32,7 @@ const OrderFilters = ({
                 <option value={'COMPLETED'}>Hoàn tất</option>
                 <option value={'CANCELLED'}>Đã hủy</option>
                 <option value={'RETURNED'}>Trả hàng</option>
+                <option value={'CANCELLED_AUTO'}>Đã hủy tự động</option>
             </select>
 
             <label className={cx('filter-label')} style={{ marginLeft: '20px' }}>Thanh toán:</label>

@@ -26,7 +26,8 @@ const OrderCard = ({
     onApprove,
     onShipping,
     onDelivered,
-    actionLoading
+    actionLoading,
+    onConfirmDelivery,
 }) => {
     const navigate = useNavigate();
     const [reportOpen, setReportOpen] = useState(false);
@@ -168,7 +169,7 @@ const OrderCard = ({
                         </div>
                     )}
 
-            
+
 
                 {activeTab === 'sales' && order.status?.name === 'PAID_WAITING_PICKUP' && (
                     <button
@@ -182,6 +183,7 @@ const OrderCard = ({
                 )}
 
                 {activeTab === 'sales' && order.status?.name === 'SHIPPING' && (
+
                     <button
                         className={cx('btn-deliver')}
                         onClick={() => onDelivered(order.id)}
@@ -189,6 +191,16 @@ const OrderCard = ({
                     >
                         <FiCheckCircle size={18} />
                         Giao hàng thành công
+                    </button>
+                )}
+                {activeTab === 'purchases' && order.status?.name === 'DELIVERED' && (
+                    <button
+                        className={cx('btn-confirm-delivery')}
+                        onClick={() => onConfirmDelivery(order.id)}
+                        disabled={actionLoading}
+                    >
+                        <FiCheckCircle size={18} />
+                        Xác nhận đã nhận hàng
                     </button>
                 )}
             </div>

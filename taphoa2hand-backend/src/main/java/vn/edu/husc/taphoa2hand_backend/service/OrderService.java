@@ -262,7 +262,7 @@ public class OrderService {
             return;
         }
         if (newStatus == OrderStatusEnum.PAID_WAITING_PICKUP) {
-            if (!isBuyer && !isAdmin) {
+            if (!isBuyer) {
                 throw new AppException(ErrorCode.UNAUTHORIZED);
             }
             if (order.getStatus() != OrderStatusEnum.CONFIRMED) {
@@ -276,10 +276,7 @@ public class OrderService {
             }
             return;
         }
-        if (newStatus == OrderStatusEnum.SHIPPING || newStatus == OrderStatusEnum.DELIVERED) {
-            if (!isSeller && !isAdmin) {
-                throw new AppException(ErrorCode.UNAUTHORIZED);
-            }
+        if (newStatus == OrderStatusEnum.SHIPPING || newStatus == OrderStatusEnum.DELIVERED || newStatus == OrderStatusEnum.SETTLING) {
             // Cho phép chuyển từ CONFIRMED hoặc PAID_WAITING_PICKUP sang SHIPPING
             if (newStatus == OrderStatusEnum.SHIPPING) {
                 if (order.getStatus() != OrderStatusEnum.CONFIRMED
@@ -290,6 +287,11 @@ public class OrderService {
             // Cho phép chuyển từ SHIPPING sang DELIVERED
             if (newStatus == OrderStatusEnum.DELIVERED) {
                 if (order.getStatus() != OrderStatusEnum.SHIPPING) {
+                    throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+                }
+            }
+            if (newStatus == OrderStatusEnum.SETTLING) {
+                if (order.getStatus() != OrderStatusEnum.DELIVERED) {
                     throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
                 }
             }
@@ -337,7 +339,7 @@ public class OrderService {
         List<Order> others = orderRepository.findByPostIdAndStatusExcludingOrderId(
                 post.getId(), OrderStatusEnum.PENDING, winningOrder.getId());
         for (Order other : others) {
-            other.setStatus(OrderStatusEnum.CANCELLED);
+            other.setStatus(OrderStatusEnum.CANCELLED_AUTO);
             orderRepository.save(other);
             Users buyer = other.getBuyer();
             if (buyer != null) {
@@ -607,10 +609,19 @@ public class OrderService {
                     .link(orderLink)
                     .build());
         }
+        if (newStatus == OrderStatusEnum.DELIVERED) {
+            String orderLink = "/order/myOrder/" + order.getId();
+            notificationService.createNotification(NotificationRequest.builder()
+                    .content("Vui long xac nhan " + order.getId() +" da duoc giao thanh cong boi nguoi ban " 
+                            + order.getSeller().getUsername())
+                    .userIds(List.of(order.getBuyer().getId()))
+                    .link(orderLink)
+                    .build());
+        }
 
         // Trung gian: sau giao thành công, thiết lập mốc hết hạn giữ tiền theo thời
         // gian đã chọn khi tạo đơn
-        if (newStatus == OrderStatusEnum.DELIVERED &&
+        if (newStatus == OrderStatusEnum.SETTLING &&
                 order.getPaymentMethod() == PaymentMethodEnum.MIDDLEMAN) {
             LocalDateTime now = LocalDateTime.now();
             if (order.getHoldDurationUnit() != null && order.getHoldDurationAmount() != null) {
@@ -629,7 +640,7 @@ public class OrderService {
         }
 
         // Logic: Khi người bán xác nhận đơn -> Cập nhật bài viết thành SOLD
-        if (newStatus == OrderStatusEnum.CONFIRMED) {
+        if (newStatus == OrderStatusEnum.SETTLING) {
             if (order.getItems() != null && !order.getItems().isEmpty()) {
                 OrderItem firstItem = order.getItems().get(0);
                 Posts post = firstItem.getPost();
@@ -693,16 +704,7 @@ public class OrderService {
             order.setPaymentStatus(PaymentStatusEnum.PAID);
         }
 
-        if (newStatus == OrderStatusEnum.SETTLING) {
-            String orderLink = "/order/myOrder/" + saved.getId();
-            order.setStatus(OrderStatusEnum.COMPLETED);
-            Order saved3 = orderRepository.save(order);
-            notificationService.createNotification(NotificationRequest.builder()
-                    .content("Đơn hàng #" + saved.getId() + " đang ở bước giải ngân tiền cho người bán (trung gian).")
-                    .userIds(List.of(saved.getBuyer().getId(), saved.getSeller().getId()))
-                    .link(orderLink)
-                    .build());
-        }
+
         if (newStatus == OrderStatusEnum.COMPLETED) {
             order.setStatus(OrderStatusEnum.SETTLING);
             Order saved2 = orderRepository.save(order);
@@ -747,7 +749,7 @@ public class OrderService {
                             .build());
                     return p != null && p.getId().equals(post.getId());
                 })
-                .filter(o -> o.getStatus() == OrderStatusEnum.CANCELLED)
+                .filter(o -> o.getStatus() == OrderStatusEnum.CANCELLED_AUTO)
                 .toList();
 
         for (Order o : ordersToRestore) {
