@@ -41,10 +41,6 @@ const OrderDetailPage = () => {
     const [buyerInfo, setBuyerInfo] = useState(null);
     const [sellerInfo, setSellerInfo] = useState(null);
     const [sellerBankForm, setSellerBankForm] = useState({ bankName: '', accountName: '', accountNumber: '' });
-    const [settlementOpen, setSettlementOpen] = useState(false);
-    const [settlementBegin, setSettlementBegin] = useState(false);
-    const [settlementConfirm, setSettlementConfirm] = useState(false);
-
     const meUsername = getMeUsername();
 
     const getUserIdFromOrder = (orderData, userIdField) => {
@@ -125,24 +121,6 @@ const OrderDetailPage = () => {
     };
 
    
-    const handleConfirmAdminSettlement = async () => {
-        try {
-            setSettlementConfirm(true);
-            const res = await orderService.adminEscrowPayout(orderId);
-            const body = res?.data ?? res;
-            if (body?.code === 1000) {
-                toast.success('Đã xác nhận hoàn tất chuyển tiền cho người bán');
-                setSettlementOpen(false);
-                await refreshOrder();
-            } else {
-                toast.error(body?.message || 'Thao tác thất bại');
-            }
-        } catch (err) {
-            toast.error(err?.response?.data?.message || 'Thao tác thất bại');
-        } finally {
-            setSettlementConfirm(false);
-        }
-    };
 
     const handleConfirm = async () => {
         if (order.paymentMethod?.name === 'MIDDLEMAN') {

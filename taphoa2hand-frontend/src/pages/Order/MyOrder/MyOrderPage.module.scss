@@ -364,18 +364,17 @@
         }
 
         .order-card {
-            
-            background: #fff;
-            border-radius: 16px;
-            border: 1px solid #f1f2f6;
-            padding: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-            transition: transform 0.2s;
+             background: #fff;
+    border-radius: 16px;
+    border: 1px solid #f1f2f6;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    transition: border-color 0.2s, box-shadow 0.2s;
 
-            &:hover {
-                transform: translateY(-2px);
-                border-color: #e1e2e6;
-            }
+    &:hover {
+        border-color: #e1e2e6;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+    }
 
             &.highlighted {
                 border-color: #3b82f6;
@@ -484,7 +483,6 @@
                 }
 
                 .btn-report {
-                     overflow: visible !important;
                     background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
                     border: 1px solid #0369a1;
                     color: #0c4a6e;
@@ -578,46 +576,65 @@
 // Feedback Modal Styles
 .feedback-modal-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
-    animation: fadeIn 0.3s ease;
+
+    padding: 24px;
+    z-index: 99999;
+
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+
+    animation: fadeIn 0.25s ease;
 }
 
 .feedback-modal {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    max-width: 500px;
-    width: 90%;
-    max-height: 90vh;
+    position: relative;
+
+    width: min(520px, 100%);
+    max-height: calc(100vh - 48px);
+
+    background: #fff;
+    border-radius: 20px;
+    padding: 24px;
+
     overflow-y: auto;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    animation: slideUp 0.3s ease;
+    overflow-x: hidden;
+
+    box-shadow:
+        0 24px 48px rgba(0, 0, 0, 0.18),
+        0 8px 16px rgba(0, 0, 0, 0.08);
+
+    animation: modalPop 0.25s ease;
+
+    scrollbar-width: thin;
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideUp {
     from {
         opacity: 0;
-        transform: translateY(20px);
     }
+
     to {
         opacity: 1;
-        transform: translateY(0);
     }
 }
 
+@keyframes modalPop {
+    from {
+        opacity: 0;
+        transform: scale(0.92) translateY(18px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
 // Seller Bank Modal Styles
 .form-section {
     margin: 20px 0;

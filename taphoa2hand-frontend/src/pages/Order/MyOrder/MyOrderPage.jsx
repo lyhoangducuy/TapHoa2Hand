@@ -211,20 +211,7 @@ const MyOrderPage = () => {
         setShowPaymentModal(true);
     };
 
-    const handleConfirmPayment = async () => {
-        try {
-            setActionLoading(true);
-            await orderService.confirmPayment(paymentOrderId);
-            toast.success('Xác nhận thanh toán thành công! Chờ người bán lấy hàng.');
-            setShowPaymentModal(false);
-            setPaymentOrderId(null);
-            fetchOrders();
-        } catch (error) {
-            toast.error('Có lỗi xảy ra khi xác nhận thanh toán');
-        } finally {
-            setActionLoading(false);
-        }
-    };
+
 
     const handlePaymentCancel = () => {
         setShowPaymentModal(false);
