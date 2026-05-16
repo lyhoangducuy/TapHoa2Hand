@@ -118,6 +118,7 @@ const ReportAdminPage = () => {
                         >
                             <option value="ALL">Tất cả</option>
                             <option value="PENDING">Chờ xử lý</option>
+                            <option value="APPROVED">Đã duyệt, đang xử lý</option>
                             <option value="RESOLVED">Đã xử lý</option>
                             <option value="REJECTED">Bị từ chối</option>
                         </select>

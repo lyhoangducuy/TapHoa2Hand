@@ -40,6 +40,7 @@ import vn.edu.husc.taphoa2hand_backend.entity.PaymentStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.PostStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.PostTypeEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.Posts;
+import vn.edu.husc.taphoa2hand_backend.entity.ReportStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.Users;
 import vn.edu.husc.taphoa2hand_backend.exception.AppException;
 import vn.edu.husc.taphoa2hand_backend.exception.ErrorCode;
@@ -47,6 +48,7 @@ import vn.edu.husc.taphoa2hand_backend.mapper.OrderMapper;
 import vn.edu.husc.taphoa2hand_backend.repository.ConversationRepository;
 import vn.edu.husc.taphoa2hand_backend.repository.OrderRepository;
 import vn.edu.husc.taphoa2hand_backend.repository.PostsRepository;
+import vn.edu.husc.taphoa2hand_backend.repository.ReportRepository;
 import vn.edu.husc.taphoa2hand_backend.repository.UsersRepository;
 
 @Service
@@ -68,6 +70,7 @@ public class OrderService {
     OrderMapper orderMapper; // Inject Mapper vào đây\
     ConversationRepository conversationRepository;
     NotificationService notificationService;
+    ReportRepository reportRepository;
 
     private static LocalDateTime addEscrowHold(LocalDateTime from, int amount, HoldDurationUnit unit) {
         if (unit == HoldDurationUnit.DAYS) {
@@ -921,8 +924,9 @@ public class OrderService {
             }
 
             boolean isExpired = !now.isBefore(order.getHoldUntil());
-
-            if (!isExpired) {
+            boolean isNotDisputed = reportRepository.findByOrderAndStatus(order, ReportStatusEnum.PENDING).isEmpty();
+            boolean isNotDisputed2 = reportRepository.findByOrderAndStatus(order, ReportStatusEnum.PROCESSED).isEmpty();
+            if (!isExpired || !isNotDisputed || !isNotDisputed2) {
                 continue;
             }
 

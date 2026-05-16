@@ -7,6 +7,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum ReportStatusEnum {
     PENDING("PENDING", "Đang chờ xử lý"),
+    APPROVED("APPROVED", "Đã duyệt, đang xử lý"),
     PROCESSED("PROCESSED", "Đã xử lý"),
     REJECTED("REJECTED", "Bị từ chối");
     private String name;

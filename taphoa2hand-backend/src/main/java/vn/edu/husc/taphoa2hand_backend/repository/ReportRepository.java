@@ -1,7 +1,10 @@
 package vn.edu.husc.taphoa2hand_backend.repository;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import vn.edu.husc.taphoa2hand_backend.entity.Order;
 import vn.edu.husc.taphoa2hand_backend.entity.Report;
 import vn.edu.husc.taphoa2hand_backend.entity.ReportStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.Users;
@@ -20,4 +23,6 @@ public interface ReportRepository extends JpaRepository<Report, String> {
     List<Report> findByReporterAndStatus(Users reporter, ReportStatusEnum status);
 
     List<Report> findByReportedUserAndStatus(Users reportedUser, ReportStatusEnum status);
+
+    List<Report> findByOrderAndStatus(Order order, ReportStatusEnum pending);
 }
