@@ -23,6 +23,4 @@ public class FeedbackDTO {
     int rating;
     
     String comment;
-    
-    String imageUrl;
 }

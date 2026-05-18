@@ -8,15 +8,19 @@ import vn.edu.husc.taphoa2hand_backend.entity.Feedback;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring", uses = {UserMapper.class})
+@Mapper(componentModel = "spring", uses = {UserMapper.class, FeedbackMediaMapper.class})
 public interface FeedbackMapper {
 
-    @Mapping(source = "reviewer.id", target = "reviewerId")
-    @Mapping(source = "reviewer.fullName", target = "reviewerName")
-    @Mapping(source = "targetUser.id", target = "targetUserId")
-    @Mapping(source = "targetUser.fullName", target = "targetUserName")
     @Mapping(source = "order.id", target = "orderId")
+
+    @Mapping(source = "reviewer.id", target = "reviewerId")
+    @Mapping(source = "reviewer.username", target = "reviewerName")
+
+    @Mapping(source = "targetUser.id", target = "targetUserId")
+    @Mapping(source = "targetUser.username", target = "targetUserName")
+
+    @Mapping(source = "mediaList", target = "mediaList")
     FeedbackResponse toResponse(Feedback feedback);
-    
+
     List<FeedbackResponse> toResponseList(List<Feedback> feedbacks);
 }

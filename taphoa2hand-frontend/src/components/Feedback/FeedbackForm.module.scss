@@ -1,38 +1,34 @@
 .feedback-form {
-    background: white;
-    border-radius: 8px;
+    background: #fff;
+    border-radius: 10px;
     padding: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    max-width: 500px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    max-width: 520px;
+    width: 100%;
 
     .form-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
+        margin-bottom: 18px;
 
         h3 {
-            margin: 0;
             font-size: 18px;
             font-weight: 600;
-            color: #333;
+            color: #222;
+            margin: 0;
         }
 
         .close-btn {
-            background: none;
             border: none;
-            font-size: 28px;
-            color: #999;
+            background: transparent;
+            font-size: 26px;
             cursor: pointer;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            color: #888;
+            line-height: 1;
 
             &:hover {
-                color: #333;
+                color: #000;
             }
         }
     }
@@ -46,108 +42,110 @@
     .form-group {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 6px;
 
         label {
+            font-size: 14px;
             font-weight: 500;
             color: #333;
-            font-size: 14px;
         }
     }
 
+    /* STAR RATING */
     .rating-stars {
         display: flex;
-        gap: 8px;
-        font-size: 32px;
+        gap: 6px;
 
         .star {
+            font-size: 30px;
             background: none;
             border: none;
             cursor: pointer;
             color: #ddd;
-            padding: 0;
-            transition: all 0.2s ease;
-            font-size: 32px;
+            transition: transform 0.15s ease, color 0.15s ease;
 
             &:hover {
-                transform: scale(1.1);
+                transform: scale(1.15);
             }
 
             &.active {
-                color: #ffc107;
+                color: #f5b301;
             }
         }
     }
 
     .rating-text {
-        margin: 0;
-        font-size: 14px;
+        font-size: 13px;
         color: #666;
-        font-weight: 500;
+        margin: 0;
     }
 
+    /* TEXTAREA */
     .textarea {
+        width: 100%;
+        min-height: 110px;
         padding: 10px 12px;
+        border-radius: 6px;
         border: 1px solid #ddd;
-        border-radius: 4px;
-        font-family: inherit;
         font-size: 14px;
         resize: vertical;
-        min-height: 100px;
+        transition: all 0.2s;
 
         &:focus {
             outline: none;
             border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         }
     }
 
+    /* INPUT */
     .input {
+        width: 100%;
         padding: 10px 12px;
+        border-radius: 6px;
         border: 1px solid #ddd;
-        border-radius: 4px;
         font-size: 14px;
 
         &:focus {
             outline: none;
             border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         }
     }
 
     .char-count {
-        margin: 0;
         font-size: 12px;
         color: #999;
         text-align: right;
+        margin: 0;
     }
 
+    /* IMAGE PREVIEW */
     .image-preview {
-        max-width: 100%;
-        max-height: 200px;
-        border-radius: 4px;
-        overflow: hidden;
+        margin-top: 8px;
 
         img {
             width: 100%;
-            height: 100%;
-            object-fit: contain;
+            max-height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #eee;
         }
     }
 
+    /* ACTIONS */
     .form-actions {
         display: flex;
-        gap: 12px;
-        margin-top: 20px;
+        gap: 10px;
+        margin-top: 10px;
 
-        .btn {
+        button {
             flex: 1;
-            padding: 10px 16px;
+            padding: 10px 14px;
+            border-radius: 6px;
             border: none;
-            border-radius: 4px;
             font-weight: 500;
             cursor: pointer;
-            font-size: 14px;
             transition: all 0.2s ease;
 
             &:disabled {
@@ -156,18 +154,18 @@
             }
         }
 
-        .btn-cancel {
-            background: #f0f0f0;
+        button[type="button"] {
+            background: #f2f2f2;
             color: #333;
 
             &:hover:not(:disabled) {
-                background: #e0e0e0;
+                background: #e5e5e5;
             }
         }
 
-        .btn-submit {
+        button[type="submit"] {
             background: #3b82f6;
-            color: white;
+            color: #fff;
 
             &:hover:not(:disabled) {
                 background: #2563eb;

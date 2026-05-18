@@ -1,5 +1,8 @@
 package vn.edu.husc.taphoa2hand_backend.entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -37,5 +40,6 @@ public class Feedback extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     String comment;
 
-    String imageUrl; // Hình ảnh thực tế khách chụp
+     @OneToMany(mappedBy = "feedback", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<FeedbackMedia> mediaList = new ArrayList<>();// Hình ảnh thực tế khách chụp
 }

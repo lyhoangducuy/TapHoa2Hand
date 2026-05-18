@@ -7,22 +7,27 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-@FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class FeedbackResponse {
     String id;
     String orderId;
+
     String reviewerId;
     String reviewerName;
+
     String targetUserId;
     String targetUserName;
+
     int rating;
     String comment;
-    String imageUrl;
+
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
+
+    List<FeedbackMediaResponse> mediaList;
 }

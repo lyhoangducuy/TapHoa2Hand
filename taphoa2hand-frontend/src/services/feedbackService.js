@@ -2,27 +2,38 @@ import { API, CONFIG } from "../configurations/configuration";
 import { getToken } from "./localStorageService";
 
 
-// Tạo đánh giá mới
-export const createFeedback = async (feedbackData) => {
+export const createFeedback = async (feedbackData, images = []) => {
     try {
-        console.log('Gọi API createFeedback với data:', feedbackData);
+        const formData = new FormData();
+
+        // Part "data"
+        formData.append(
+            "data",
+            new Blob([JSON.stringify(feedbackData)], {
+                type: "application/json"
+            })
+        );
+
+        // Part "images"
+        if (images && images.length > 0) {
+            images.forEach((file) => {
+                formData.append("images", file);
+            });
+        }
+
         const response = await fetch(`${CONFIG.API_GATEWAY}${API.CREATE_FEEDBACK}`, {
-            method: 'POST',
+            method: "POST",
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getToken()}`
+                Authorization: `Bearer ${getToken()}`
+                // ❌ KHÔNG set Content-Type (browser tự set boundary)
             },
-            body: JSON.stringify(feedbackData)
+            body: formData
         });
 
-        console.log('Response status:', response.status);
         const data = await response.json();
-        console.log('Response data:', data);
 
         if (!response.ok) {
-            // Lấy message từ ApiResponse
-            const errorMessage = data?.message || data?.error || 'Lỗi khi tạo đánh giá';
-            throw new Error(errorMessage);
+            throw new Error(data?.message || "Lỗi khi tạo đánh giá");
         }
 
         return data;
@@ -31,7 +42,6 @@ export const createFeedback = async (feedbackData) => {
         throw error;
     }
 };
-
 // Lấy đánh giá theo Order ID
 export const getFeedbackByOrderId = async (orderId) => {
     try {

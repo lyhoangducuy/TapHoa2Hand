@@ -8,38 +8,38 @@ const cx = classNames.bind(styles);
 
 const FeedbackForm = ({ orderId, onSuccess, onCancel, targetUserName }) => {
     const [rating, setRating] = useState(5);
-    const [comment, setComment] = useState('');
-    const [imageUrl, setImageUrl] = useState('');
-    const [loading, setLoading] = useState(false);
     const [hoverRating, setHoverRating] = useState(0);
+    const [comment, setComment] = useState('');
+    const [images, setImages] = useState([]);
+    const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (rating < 1 || rating > 5) {
             toast.error('Vui lòng chọn số sao hợp lệ (1-5)');
             return;
         }
 
         setLoading(true);
+
         try {
             const feedbackData = {
                 orderId,
                 rating,
-                comment: comment.trim(),
-                imageUrl: imageUrl.trim()
+                comment: comment.trim()
             };
 
-            console.log('Gửi feedback data:', feedbackData);
-            const response = await feedbackService.createFeedback(feedbackData);
-            console.log('Response từ API:', response);
-            
-            // Nếu không throw error, nghĩa là thành công
+            const response = await feedbackService.createFeedback(
+                feedbackData,
+                images
+            );
+
             toast.success('Tạo đánh giá thành công!');
             onSuccess?.(response.result);
+
         } catch (error) {
             console.error('Lỗi khi tạo feedback:', error);
-            console.error('Error message:', error.message);
             toast.error(error.message || 'Không thể tạo đánh giá');
         } finally {
             setLoading(false);
@@ -50,11 +50,14 @@ const FeedbackForm = ({ orderId, onSuccess, onCancel, targetUserName }) => {
         <div className={cx('feedback-form')}>
             <div className={cx('form-header')}>
                 <h3>Đánh giá {targetUserName}</h3>
-                <button className={cx('close-btn')} onClick={onCancel}>×</button>
+                <button className={cx('close-btn')} onClick={onCancel}>
+                    ×
+                </button>
             </div>
 
             <form onSubmit={handleSubmit}>
-                {/* Rating Stars */}
+
+                {/* STAR */}
                 <div className={cx('form-group')}>
                     <label>Số sao</label>
                     <div className={cx('rating-stars')}>
@@ -73,64 +76,51 @@ const FeedbackForm = ({ orderId, onSuccess, onCancel, targetUserName }) => {
                             </button>
                         ))}
                     </div>
-                    <p className={cx('rating-text')}>
-                        {rating} / 5 sao
-                    </p>
+                    <div>{rating}/5</div>
                 </div>
 
-                {/* Comment */}
+                {/* COMMENT */}
                 <div className={cx('form-group')}>
-                    <label htmlFor="comment">Bình luận (không bắt buộc)</label>
+                    <label>Bình luận</label>
                     <textarea
-                        id="comment"
-                        className={cx('textarea')}
                         value={comment}
                         onChange={(e) => setComment(e.target.value)}
-                        placeholder="Chia sẻ trải nghiệm của bạn..."
                         maxLength={500}
                         rows={4}
+                        placeholder="Chia sẻ trải nghiệm..."
                     />
-                    <p className={cx('char-count')}>
-                        {comment.length}/500
-                    </p>
+                    <div>{comment.length}/500</div>
                 </div>
 
-                {/* Image URL */}
+                {/* IMAGES */}
                 <div className={cx('form-group')}>
-                    <label htmlFor="imageUrl">Link hình ảnh (không bắt buộc)</label>
+                    <label>Hình ảnh (optional)</label>
                     <input
-                        id="imageUrl"
-                        type="url"
-                        className={cx('input')}
-                        value={imageUrl}
-                        onChange={(e) => setImageUrl(e.target.value)}
-                        placeholder="https://example.com/image.jpg"
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={(e) => setImages([...e.target.files])}
                     />
-                    {imageUrl && (
-                        <div className={cx('image-preview')}>
-                            <img src={imageUrl} alt="Preview" onError={() => setImageUrl('')} />
-                        </div>
-                    )}
                 </div>
 
-                {/* Buttons */}
+                {/* ACTIONS */}
                 <div className={cx('form-actions')}>
                     <button
                         type="button"
-                        className={cx('btn', 'btn-cancel')}
                         onClick={onCancel}
                         disabled={loading}
                     >
                         Hủy
                     </button>
+
                     <button
                         type="submit"
-                        className={cx('btn', 'btn-submit')}
                         disabled={loading}
                     >
                         {loading ? 'Đang gửi...' : 'Gửi đánh giá'}
                     </button>
                 </div>
+
             </form>
         </div>
     );
