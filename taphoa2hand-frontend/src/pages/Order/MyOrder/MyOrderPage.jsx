@@ -323,6 +323,7 @@ const MyOrderPage = () => {
                                         onDelivered={(orderId) => handleUpdateStatus(orderId, 'DELIVERED')}
                                         actionLoading={actionLoading}
                                         onConfirmDelivery={(orderId) => handleUpdateStatus(orderId, 'SETTLING')}
+                                        onReportSuccess={fetchOrders}
                                     />
                                 ))}
                             </>

@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import vn.edu.husc.taphoa2hand_backend.entity.ReportReasonEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.ReportTypeEnum;
 
 import java.util.List;
@@ -21,10 +22,12 @@ import org.springframework.web.multipart.MultipartFile;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ReportCreateRequest {
 
-    @NotBlank(message = "Nội dung báo cáo không được để trống")
-    @Size(min = 10, max = 1000, message = "Nội dung phải từ 10 đến 1000 ký tự")
-    String reason;
+    @NotNull(message = "Lý do báo cáo là bắt buộc")
+    ReportReasonEnum reason;
 
+    @NotBlank(message = "Mô tả chi tiết là bắt buộc")
+    @Size(min = 20, max = 2000, message = "Mô tả chi tiết phải từ 20 đến 2000 ký tự")
+    String detail;
     @NotNull(message = "Loại báo cáo là bắt buộc")
     ReportTypeEnum type;
 

@@ -11,6 +11,7 @@ import vn.edu.husc.taphoa2hand_backend.dto.request.ReportDTO.ReportPostSubmitReq
 import vn.edu.husc.taphoa2hand_backend.dto.request.ReportDTO.ReportUpdateStatusRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.ReportDTO.ReportUserSubmitRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.response.ApiResponse;
+import vn.edu.husc.taphoa2hand_backend.dto.response.ReportReasonResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Report.ReportResponse;
 import vn.edu.husc.taphoa2hand_backend.entity.ReportStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.service.ReportService;
@@ -97,6 +98,13 @@ public class ReportController {
             @Valid @RequestBody ReportUpdateStatusRequest request) {
         return ApiResponse.<ReportResponse>builder()
                 .result(reportService.updateReportStatus(id, request))
+                .build();
+    }
+    @GetMapping("/reasons")
+    public ApiResponse<List<ReportReasonResponse>> getReportReasons() {
+        List<ReportReasonResponse> reasons = reportService.getReportReasons();
+        return ApiResponse.<List<ReportReasonResponse>>builder()
+                .result(reasons)
                 .build();
     }
 }

@@ -17,4 +17,5 @@ public class AuthenticationRequest {
     String username;
     @NotBlank(message = "PASSWORD_BLANK")
     String password;
+    String captchaToken;
 }

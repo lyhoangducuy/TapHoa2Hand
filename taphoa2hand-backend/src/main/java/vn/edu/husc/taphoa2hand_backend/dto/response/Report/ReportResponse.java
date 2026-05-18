@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import vn.edu.husc.taphoa2hand_backend.entity.ReportReasonEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.ReportStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.ReportTypeEnum;
 
@@ -20,9 +21,10 @@ import java.util.List;
 public class ReportResponse {
 
     String id;
-    String reason;
-    ReportTypeEnum type;
-    ReportStatusEnum status;
+    ReportReasonEnumResponse reason;
+    String detail;
+    ReportTypeEnumResponse type;
+    ReportStatusEnumResponse status;
 
     String reporterId;
     String reporterName;

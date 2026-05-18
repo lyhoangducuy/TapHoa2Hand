@@ -1,23 +1,57 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './ReportDetailModal.module.scss';
 import { updateReportStatus } from '../../../../services/reportAdminService';
 
-const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate }) => {
+const ReportDetailModal = ({
+    report,
+    isOpen,
+    onClose,
+    onStatusUpdate
+}) => {
     const [isLoading, setIsLoading] = useState(false);
-    const [newStatus, setNewStatus] = useState(report?.status || 'PENDING');
+    const [newStatus, setNewStatus] = useState('PENDING');
+
+    useEffect(() => {
+        if (report?.status?.name) {
+            setNewStatus(report.status.name);
+        }
+    }, [report]);
 
     if (!isOpen || !report) return null;
+
+    const getValue = (value) => {
+        if (value === null || value === undefined) {
+            return '---';
+        }
+
+        if (typeof value === 'object') {
+            return (
+                value.displayName ||
+                value.name ||
+                JSON.stringify(value)
+            );
+        }
+
+        return value;
+    };
 
     const handleStatusUpdate = async () => {
         try {
             setIsLoading(true);
-            await updateReportStatus(report.id, newStatus);
-            setNewStatus(newStatus);
+
+            await updateReportStatus(
+                report.id,
+                newStatus
+            );
+
+            alert('Cập nhật trạng thái thành công');
+
             onStatusUpdate && onStatusUpdate();
-            alert('Cập nhật trạng thái báo cáo thành công');
+
+            onClose();
         } catch (error) {
-            console.error('Error updating status:', error);
-            alert('Lỗi khi cập nhật trạng thái');
+            console.error(error);
+            alert('Lỗi cập nhật trạng thái');
         } finally {
             setIsLoading(false);
         }
@@ -25,154 +59,283 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate }) => {
 
     const getReportTypeLabel = (type) => {
         const types = {
-            USER: 'Báo cáo Người dùng',
-            POST: 'Báo cáo Bài đăng',
-            ORDER: 'Báo cáo Đơn hàng'
+            USER: 'Báo cáo người dùng',
+            POST: 'Báo cáo bài đăng',
+            ORDER: 'Báo cáo đơn hàng'
         };
-        return types[type] || type;
-    };
 
-    const getStatusColor = (status) => {
-        const colors = {
-            PENDING: '#ffc107',
-            RESOLVED: '#28a745',
-            REJECTED: '#dc3545'
-        };
-        return colors[status] || '#6c757d';
+        return types[type] || type;
     };
 
     const getStatusLabel = (status) => {
         const labels = {
             PENDING: 'Chờ xử lý',
             RESOLVED: 'Đã xử lý',
-            REJECTED: 'Bị từ chối'
+            REJECTED: 'Bị từ chối',
+            APPROVED: 'Đã duyệt'
         };
+
         return labels[status] || status;
     };
 
+    const getStatusColor = (status) => {
+        const colors = {
+            PENDING: '#ffc107',
+            APPROVED: '#0d6efd',
+            RESOLVED: '#28a745',
+            REJECTED: '#dc3545'
+        };
+
+        return colors[status] || '#6c757d';
+    };
+
     return (
-        <div className={styles.modal} onClick={onClose}>
-            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+        <div
+            className={styles.modal}
+            onClick={onClose}
+        >
+            <div
+                className={styles.modalContent}
+                onClick={(e) => e.stopPropagation()}
+            >
                 <div className={styles.header}>
                     <h2>Chi tiết báo cáo</h2>
-                    <button className={styles.closeBtn} onClick={onClose}>✕</button>
+
+                    <button
+                        className={styles.closeBtn}
+                        onClick={onClose}
+                    >
+                        ✕
+                    </button>
                 </div>
 
                 <div className={styles.body}>
-                    {/* ID và loại báo cáo */}
+                    {/* ID + TYPE */}
                     <div className={styles.section}>
                         <div className={styles.row}>
                             <div className={styles.col}>
                                 <label>ID báo cáo:</label>
+
                                 <p>{report.id}</p>
                             </div>
+
                             <div className={styles.col}>
                                 <label>Loại báo cáo:</label>
-                                <p className={styles.badge}>{getReportTypeLabel(report.type)}</p>
+
+                                <p className={styles.badge}>
+                                    {getReportTypeLabel(
+                                        report.type?.name
+                                    )}
+                                </p>
                             </div>
                         </div>
                     </div>
 
-                    {/* Nội dung báo cáo */}
+                    {/* REASON */}
                     <div className={styles.section}>
-                        <label>Nội dung báo cáo:</label>
-                        <div className={styles.reason}>{report.reason}</div>
-                    </div>
+                        <label>Lý do báo cáo:</label>
 
-                    {/* Người báo cáo */}
-                    <div className={styles.section}>
-                        <div className={styles.row}>
-                            <div className={styles.col}>
-                                <label>Người báo cáo:</label>
-                                <p>{report.reporterName} (ID: {report.reporterId})</p>
-                            </div>
+                        <div className={styles.reason}>
+                            {getValue(report.reason)}
                         </div>
                     </div>
 
-                    {/* Đối tượng bị báo cáo */}
+                    {/* DETAIL */}
+                    <div className={styles.section}>
+                        <label>Mô tả chi tiết:</label>
+
+                        <div className={styles.reason}>
+                            {getValue(report.detail)}
+                        </div>
+                    </div>
+
+                    {/* REPORTER */}
+                    <div className={styles.section}>
+                        <label>Người báo cáo:</label>
+
+                        <p>
+                            {getValue(report.reporterName)}
+                        </p>
+                    </div>
+
+                    {/* REPORTED USER */}
                     {report.reportedUserName && (
                         <div className={styles.section}>
                             <label>Người bị báo cáo:</label>
-                            <p>{report.reportedUserName} (ID: {report.reportedUserId})</p>
+
+                            <p>
+                                {getValue(
+                                    report.reportedUserName
+                                )}
+                            </p>
                         </div>
                     )}
 
-                    {/* Bài đăng bị báo cáo */}
+                    {/* POST */}
                     {report.postTitle && (
                         <div className={styles.section}>
                             <label>Bài đăng:</label>
-                            <p>{report.postTitle} (ID: {report.postId})</p>
+
+                            <p>
+                                {getValue(report.postTitle)}
+                            </p>
                         </div>
                     )}
 
-                    {/* Đơn hàng bị báo cáo */}
+                    {/* ORDER */}
                     {report.orderId && (
                         <div className={styles.section}>
                             <label>Đơn hàng:</label>
-                            <p>ID: {report.orderId}</p>
+
+                            <p>{getValue(report.orderId)}</p>
                         </div>
                     )}
 
-                    {/* Hình ảnh minh chứng */}
-                    {report.evidences && report.evidences.length > 0 && (
+                    {/* EVIDENCE */}
+                    {report.evidences?.length > 0 && (
                         <div className={styles.section}>
-                            <label>Hình ảnh minh chứng:</label>
-                            <div className={styles.evidenceGrid}>
-                                {report.evidences.map((evidence, idx) => (
-                                    <a key={idx} href={evidence.imageUrl} target="_blank" rel="noopener noreferrer">
-                                        <img src={evidence.imageUrl} alt={`Evidence ${idx + 1}`} />
-                                    </a>
-                                ))}
+                            <label>Hình minh chứng:</label>
+
+                            <div
+                                className={
+                                    styles.evidenceGrid
+                                }
+                            >
+                                {report.evidences.map(
+                                    (evidence, idx) => {
+                                        const imageUrl =
+                                            evidence?.imageUrl ||
+                                            evidence?.url;
+
+                                        return (
+                                            <a
+                                                key={idx}
+                                                href={imageUrl}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                            >
+                                                <img
+                                                    src={imageUrl}
+                                                    alt={`Evidence ${idx}`}
+                                                />
+                                            </a>
+                                        );
+                                    }
+                                )}
                             </div>
                         </div>
                     )}
 
-                    {/* Thời gian */}
+                    {/* TIME */}
                     <div className={styles.section}>
                         <div className={styles.row}>
                             <div className={styles.col}>
                                 <label>Ngày tạo:</label>
-                                <p>{new Date(report.createdAt).toLocaleString('vi-VN')}</p>
+
+                                <p>
+                                    {report.createdAt
+                                        ? new Date(
+                                              report.createdAt
+                                          ).toLocaleString(
+                                              'vi-VN'
+                                          )
+                                        : '---'}
+                                </p>
                             </div>
+
                             <div className={styles.col}>
-                                <label>Cập nhật lần cuối:</label>
-                                <p>{new Date(report.updatedAt).toLocaleString('vi-VN')}</p>
+                                <label>
+                                    Cập nhật lần cuối:
+                                </label>
+
+                                <p>
+                                    {report.updatedAt
+                                        ? new Date(
+                                              report.updatedAt
+                                          ).toLocaleString(
+                                              'vi-VN'
+                                          )
+                                        : '---'}
+                                </p>
                             </div>
                         </div>
                     </div>
 
-                    {/* Trạng thái */}
+                    {/* STATUS */}
                     <div className={styles.section}>
                         <label>Trạng thái:</label>
-                        <div className={styles.statusControl}>
-                            <select 
-                                value={newStatus} 
-                                onChange={(e) => setNewStatus(e.target.value)}
-                                className={styles.statusSelect}
+
+                        <div
+                            className={styles.statusControl}
+                        >
+                            <select
+                                value={newStatus}
+                                onChange={(e) =>
+                                    setNewStatus(
+                                        e.target.value
+                                    )
+                                }
+                                className={
+                                    styles.statusSelect
+                                }
                             >
-                                <option value="PENDING">Chờ xử lý</option>
-                                <option value="RESOLVED">Đã xử lý</option>
-                                <option value="REJECTED">Bị từ chối</option>
+                                <option value="PENDING">
+                                    Chờ xử lý
+                                </option>
+
+                                <option value="APPROVED">
+                                    Đã duyệt
+                                </option>
+
+                                <option value="RESOLVED">
+                                    Đã xử lý
+                                </option>
+
+                                <option value="REJECTED">
+                                    Bị từ chối
+                                </option>
                             </select>
-                            <span 
-                                className={styles.statusBadge}
-                                style={{ backgroundColor: getStatusColor(newStatus) }}
+
+                            <span
+                                className={
+                                    styles.statusBadge
+                                }
+                                style={{
+                                    backgroundColor:
+                                        getStatusColor(
+                                            newStatus
+                                        )
+                                }}
                             >
-                                {getStatusLabel(newStatus)}
+                                {getStatusLabel(
+                                    newStatus
+                                )}
                             </span>
                         </div>
                     </div>
                 </div>
 
                 <div className={styles.footer}>
-                    <button 
-                        className={styles.updateBtn} 
+                    <button
+                        className={styles.updateBtn}
                         onClick={handleStatusUpdate}
-                        disabled={isLoading || newStatus === report.status}
+                        disabled={
+                            isLoading ||
+                            newStatus ===
+                                report.status?.name
+                        }
                     >
-                        {isLoading ? 'Đang cập nhật...' : 'Cập nhật trạng thái'}
+                        {isLoading
+                            ? 'Đang cập nhật...'
+                            : 'Cập nhật trạng thái'}
                     </button>
-                    <button className={styles.cancelBtn} onClick={onClose}>Đóng</button>
+
+                    <button
+                        className={styles.cancelBtn}
+                        onClick={onClose}
+                    >
+                        Đóng
+                    </button>
                 </div>
             </div>
         </div>

@@ -65,6 +65,7 @@ public class AuthenticationService {
     EmailService emailService;
     UserRedisCodeRequestRepository userRedisCodeRequestRepository;
     UserValidationHelper userValidationHelper;
+    LoginAttemptService loginAttemptService;
     @NonFinal
     @Value("${jwt.signed-key}")
     protected String SIGNER_KEY;
@@ -74,7 +75,7 @@ public class AuthenticationService {
     @NonFinal
     @Value("${jwt.refresh-token-duration-seconds}")
     protected Integer REFRESH_TOKEN_DURATION_SECONDS;
-     @NonFinal
+    @NonFinal
     @Value("${jwt.code-duration-seconds}")
     protected Long CODE_DURATION_SECONDS;
 
@@ -82,9 +83,9 @@ public class AuthenticationService {
             throws JOSEException, ParseException {
         var token = request.getToken();
         boolean isVerified = true;
-        SignedJWT jwt=null;
+        SignedJWT jwt = null;
         try {
-            jwt=verifyToken(token, request.getTokenType());
+            jwt = verifyToken(token, request.getTokenType());
 
         } catch (Exception e) {
             isVerified = false;
@@ -92,8 +93,8 @@ public class AuthenticationService {
         return IntrospectResponse.builder()
                 .valid(isVerified)
                 .userId(Objects.nonNull(jwt)
-                        ?jwt.getJWTClaimsSet().getSubject()
-                        :null)
+                        ? jwt.getJWTClaimsSet().getSubject()
+                        : null)
                 .build();
     }
 
@@ -101,8 +102,16 @@ public class AuthenticationService {
         var user = usersRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
-        if (!authenticated)
-            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        if (!authenticated) {
+
+            loginAttemptService.loginFailed(
+                    request.getUsername());
+
+            throw new AppException(
+                    ErrorCode.INVALID_PASSWORD);
+        }
+        loginAttemptService.loginSuccess(
+                request.getUsername());
         var token = generateToken(user, "ACCESS_TOKEN", ACCESS_TOKEN_DURATION_SECONDS);
         var refreshToken = generateToken(user, "REFRESH_TOKEN", REFRESH_TOKEN_DURATION_SECONDS);
         return AuthenticationResponse.builder()
@@ -120,9 +129,8 @@ public class AuthenticationService {
         return String.format("%06d", number);
     }
 
-
     public RegisterResponse register(RegisterRequest request) {
-        
+
         userValidationHelper.validateUserNotExists(request.getUsername(), request.getEmail());
         // 1. Kiểm tra điều kiện đầu vào trước (Fail-fast)
         if (!request.getPassword().equals(request.getConfirmPassword()))
@@ -131,13 +139,13 @@ public class AuthenticationService {
         // 2. Tạo OTP
         String otp = generateOTP();
 
-        // 3. Đóng gói TOÀN BỘ thông tin đăng ký vào Redis 
+        // 3. Đóng gói TOÀN BỘ thông tin đăng ký vào Redis
         // Lưu ý: Mã hoá password ngay từ bước này cho an toàn
         UserRedisCodeRequest redisData = UserRedisCodeRequest.builder()
                 .email(request.getEmail())
                 .username(request.getUsername())
                 .fullName(request.getFullName())
-                .password(passwordEncoder.encode(request.getPassword())) 
+                .password(passwordEncoder.encode(request.getPassword()))
                 .phone(request.getPhone())
                 .dob(request.getDob())
                 .code(otp)
@@ -145,15 +153,15 @@ public class AuthenticationService {
                 .timeToLive(CODE_DURATION_SECONDS)
                 .lastSentTime(System.currentTimeMillis())
                 .build();
-                
+
         userRedisCodeRequestRepository.save(redisData); // Lưu vào Redis
 
         // 4. Gửi Email
         emailService.sendEmail(EmailInfo.builder()
                 .toEmail(request.getEmail())
                 .subject("Welcome to TapHoA2Hand - Verify your account")
-                .body("Thank you for registering with us! Your OTP code is: " + otp + 
-                      ". This code will expire in 5 minutes.")
+                .body("Thank you for registering with us! Your OTP code is: " + otp +
+                        ". This code will expire in 5 minutes.")
                 .build());
 
         // 5. Trả về thành công (Lúc này User chưa được lưu vào MySQL)
@@ -165,7 +173,7 @@ public class AuthenticationService {
     public RegisterResponse resendOtp(String email) {
         // 1. Tìm thông tin trong Redis
         UserRedisCodeRequest redisData = userRedisCodeRequestRepository.findById(email)
-                .orElseThrow(() -> new AppException(ErrorCode.REGISTER_SESSION_EXPIRED)); 
+                .orElseThrow(() -> new AppException(ErrorCode.REGISTER_SESSION_EXPIRED));
 
         // 2. KIỂM TRA CHẶN SPAM (RATE LIMITING)
         long currentTime = System.currentTimeMillis();
@@ -174,7 +182,8 @@ public class AuthenticationService {
 
         if (timePassed < cooldownPeriod) {
             // Nếu gửi lại khi chưa đủ 60 giây -> Chặn và báo lỗi
-            throw new AppException(ErrorCode.OTP_RESEND_TOO_FREQUENTLY); // Thông báo: Gửi lại OTP quá nhanh, vui lòng đợi
+            throw new AppException(ErrorCode.OTP_RESEND_TOO_FREQUENTLY); // Thông báo: Gửi lại OTP quá nhanh, vui lòng
+                                                                         // đợi
         }
 
         // 3. Nếu đã qua 60 giây -> Tạo mã mới
@@ -185,26 +194,28 @@ public class AuthenticationService {
         redisData.setLastSentTime(currentTime); // Reset lại mốc thời gian vừa gửi xong
         redisData.setTimeToLive(CODE_DURATION_SECONDS); // Reset lại đếm ngược 5 phút từ đầu
 
-        // 5. Lưu đè lại vào Redis 
+        // 5. Lưu đè lại vào Redis
         userRedisCodeRequestRepository.save(redisData);
 
         // 6. Gửi lại Email cho người dùng
         emailService.sendEmail(EmailInfo.builder()
                 .toEmail(email)
                 .subject("TapHoA2Hand - Your New Verification Code")
-                .body("You requested a new verification code. Your new OTP is: " + newOtp + 
-                      ". This code will expire in 5 minutes.")
+                .body("You requested a new verification code. Your new OTP is: " + newOtp +
+                        ". This code will expire in 5 minutes.")
                 .build());
 
         return RegisterResponse.builder()
                 .success(true)
                 .build();
     }
+
     @Transactional
     public RegisterResponse verifyOtpAndSaveUser(String email, String code) {
         // 1. Tìm thông tin trong Redis bằng email
         UserRedisCodeRequest redisData = userRedisCodeRequestRepository.findById(email.trim().toLowerCase())
-                .orElseThrow(() -> new AppException(ErrorCode.OTP_EXPIRED_OR_NOT_FOUND)); // Thông báo: OTP hết hạn hoặc email chưa đăng ký
+                .orElseThrow(() -> new AppException(ErrorCode.OTP_EXPIRED_OR_NOT_FOUND)); // Thông báo: OTP hết hạn hoặc
+                                                                                          // email chưa đăng ký
 
         // 2. Kiểm tra mã OTP có khớp không
         if (!redisData.getCode().equals(code)) {

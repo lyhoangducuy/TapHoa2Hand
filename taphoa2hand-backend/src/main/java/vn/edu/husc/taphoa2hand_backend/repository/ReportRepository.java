@@ -25,4 +25,6 @@ public interface ReportRepository extends JpaRepository<Report, String> {
     List<Report> findByReportedUserAndStatus(Users reportedUser, ReportStatusEnum status);
 
     List<Report> findByOrderAndStatus(Order order, ReportStatusEnum pending);
+
+    List<Report> findByReporterAndOrder(Users reporter, Order order);
 }

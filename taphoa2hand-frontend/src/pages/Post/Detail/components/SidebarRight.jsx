@@ -15,7 +15,16 @@ import PostOrdersList from '../../../../components/PostOrdersList/PostOrdersList
 
 const cx = classNames.bind(styles);
 
-const SidebarRight = ({ post, seller, address, isFavorite, setIsFavorite, currentUser, postId }) => {
+const SidebarRight = ({
+    post,
+    seller,
+    address,
+    isFavorite,
+    setIsFavorite,
+    currentUser,
+    postId,
+    onReportSuccess
+}) => {
     const navigate = useNavigate();
     const [showProduct, setShowProduct] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
@@ -106,6 +115,12 @@ const SidebarRight = ({ post, seller, address, isFavorite, setIsFavorite, curren
             }
         }
     };
+    const handleReportSuccess = () => {
+        setReportOpen(false); // 2. Tắt popup ngay lập tức
+        if (onReportSuccess) {
+            onReportSuccess(); // 3. Gọi hàm load lại dữ liệu từ trang cha xuống
+        }
+    };
 
     return (
         <div className={cx('right-column')}>
@@ -149,6 +164,7 @@ const SidebarRight = ({ post, seller, address, isFavorite, setIsFavorite, curren
                             }
                             setReportOpen(true);
                         }}
+                        onSuccess={handleReportSuccess} // Truyền hàm callback để xử lý sau khi báo cáo thành công
                     >
                         <FiFlag size={18} />
                         Báo cáo tin đăng
@@ -215,6 +231,7 @@ const SidebarRight = ({ post, seller, address, isFavorite, setIsFavorite, curren
                 variant="post"
                 targetId={postId}
                 subtitle={post?.title}
+                onSuccess={handleReportSuccess}
             />
         </div>
     );

@@ -22,35 +22,40 @@ function PostDetailPage() {
     const token = localStorage.getItem('token');
     const currentUser = token ? JSON.parse(atob(token.split('.')[1])) : null;
 
-    useEffect(() => {
-        const fetchInitialData = async () => {
-            if (!postId || postId === 'undefined') {
-                setLoading(false);
-                return;
-            }
-            try {
-                const [detailRes, favRes] = await Promise.all([
-                    getPostDetail(postId),
-                    token ? isFavoritePost(postId) : Promise.resolve(false)
-                ]);
+    const fetchInitialData = async () => {
+    if (!postId || postId === 'undefined') {
+        setLoading(false);
+        return;
+    }
 
-                if (detailRes.code === 1000) setPost(detailRes.result);
-                
-                if (favRes && typeof favRes === 'object' && favRes.code === 1000) {
-                    setIsFavorite(favRes.result.success);
-                } else if (typeof favRes === 'boolean') {
-                    setIsFavorite(favRes);
-                }
-            } catch (error) {
-                console.error("Lỗi fetch dữ liệu:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
+    try {
+        setLoading(true);
 
-        fetchInitialData();
-        window.scrollTo(0, 0);
-    }, [postId, token]);
+        const [detailRes, favRes] = await Promise.all([
+            getPostDetail(postId),
+            token ? isFavoritePost(postId) : Promise.resolve(false)
+        ]);
+
+        if (detailRes.code === 1000) {
+            setPost(detailRes.result);
+        }
+
+        if (favRes && typeof favRes === 'object' && favRes.code === 1000) {
+            setIsFavorite(favRes.result.success);
+        } else if (typeof favRes === 'boolean') {
+            setIsFavorite(favRes);
+        }
+
+    } catch (error) {
+        console.error("Lỗi fetch dữ liệu:", error);
+    } finally {
+        setLoading(false);
+    }
+};
+useEffect(() => {
+    fetchInitialData();
+    window.scrollTo(0, 0);
+}, [postId, token]);
 
     if (loading) return <div className={cx('loading')}>Đang tải dữ liệu bài đăng...</div>;
     if (!post) return <div className={cx('error')}>Bài viết không tồn tại hoặc đã bị ẩn!</div>;
@@ -110,6 +115,9 @@ function PostDetailPage() {
                     setIsFavorite={setIsFavorite}
                     currentUser={currentUser}
                     postId={postId}
+                    onReportSuccess={() => {
+                        fetchInitialData(); // Tải lại dữ liệu bài đăng để cập nhật số lượng báo cáo
+                }}
                 />
                 
             </div>

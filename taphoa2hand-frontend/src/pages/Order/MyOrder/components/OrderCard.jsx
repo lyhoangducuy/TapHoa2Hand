@@ -28,12 +28,19 @@ const OrderCard = ({
     onDelivered,
     actionLoading,
     onConfirmDelivery,
+    onReportSuccess
 }) => {
     const navigate = useNavigate();
     const [reportOpen, setReportOpen] = useState(false);
     const hasToken = Boolean(getToken());
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    };
+    const handleReportSuccess = () => {
+        setReportOpen(false); // 2. Tắt popup ngay lập tức
+        if (onReportSuccess) {
+            onReportSuccess(); // 3. Gọi hàm load lại dữ liệu từ trang cha xuống
+        }
     };
 
     return (
@@ -103,7 +110,7 @@ const OrderCard = ({
                     Xem chi tiết
                 </button>
 
-                {hasToken ? (
+                {hasToken && order.status?.name != 'REPORTED' ? (
                     <button
                         type="button"
                         className={cx('btn-report')}
@@ -208,6 +215,7 @@ const OrderCard = ({
             <ReportModal
                 open={reportOpen}
                 onClose={() => setReportOpen(false)}
+                onSuccess={handleReportSuccess}
                 variant="order"
                 targetId={order.id}
                 subtitle={`Mã đơn #${order.id?.substring(0, 8).toUpperCase()}`}

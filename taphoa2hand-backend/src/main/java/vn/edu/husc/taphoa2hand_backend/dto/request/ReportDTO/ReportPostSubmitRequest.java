@@ -3,6 +3,7 @@ package vn.edu.husc.taphoa2hand_backend.dto.request.ReportDTO;
 import java.util.List;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -10,6 +11,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import vn.edu.husc.taphoa2hand_backend.entity.ReportReasonEnum;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,9 +22,12 @@ import org.springframework.web.multipart.MultipartFile;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ReportPostSubmitRequest {
 
-    @NotBlank(message = "Nội dung báo cáo không được để trống")
-    @Size(min = 10, max = 1000, message = "Nội dung phải từ 10 đến 1000 ký tự")
-    String reason;
+    @NotNull(message = "Lý do báo cáo là bắt buộc")
+    ReportReasonEnum reason;
+
+    @NotBlank(message = "Nội dung báo cáo là bắt buộc")
+    @Size(min = 20, max = 2000)
+    String detail;
 
     @NotBlank(message = "Bài đăng là bắt buộc")
     String postId;

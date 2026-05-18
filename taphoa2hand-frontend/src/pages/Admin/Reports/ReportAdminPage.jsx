@@ -30,8 +30,12 @@ const ReportAdminPage = () => {
     const fetchReports = async () => {
         try {
             setIsLoading(true);
+
             const data = await getAllReports();
-            setReports(data || []);
+
+            // data đã là array
+            setReports(Array.isArray(data) ? data : []);
+
         } catch (error) {
             console.error('Error fetching reports:', error);
             alert('Lỗi khi tải danh sách báo cáo');
@@ -45,31 +49,60 @@ const ReportAdminPage = () => {
 
         // Filter by status
         if (statusFilter !== 'ALL') {
-            filtered = filtered.filter(r => r.status === statusFilter);
+            filtered = filtered.filter(
+                (r) => r.status?.name === statusFilter
+            );
         }
 
         // Filter by date range
         if (dateFromFilter) {
             const fromDate = new Date(dateFromFilter);
-            filtered = filtered.filter(r => new Date(r.createdAt) >= fromDate);
+
+            filtered = filtered.filter(
+                (r) => new Date(r.createdAt) >= fromDate
+            );
         }
 
         if (dateToFilter) {
             const toDate = new Date(dateToFilter);
             toDate.setHours(23, 59, 59, 999);
-            filtered = filtered.filter(r => new Date(r.createdAt) <= toDate);
+
+            filtered = filtered.filter(
+                (r) => new Date(r.createdAt) <= toDate
+            );
         }
 
-        // Filter by search (reason, reporter name, etc.)
+        // Filter by search
         if (searchFilter.trim()) {
             const search = searchFilter.toLowerCase();
-            filtered = filtered.filter(r => 
-                r.reason.toLowerCase().includes(search) ||
-                r.reporterName.toLowerCase().includes(search) ||
-                r.reportedUserName?.toLowerCase().includes(search) ||
-                r.postTitle?.toLowerCase().includes(search) ||
-                r.id.includes(search)
-            );
+
+            filtered = filtered.filter((r) => {
+                return (
+                    r.reason?.displayName
+                        ?.toLowerCase()
+                        .includes(search) ||
+
+                    r.detail
+                        ?.toLowerCase()
+                        .includes(search) ||
+
+                    r.reporterName
+                        ?.toLowerCase()
+                        .includes(search) ||
+
+                    r.reportedUserName
+                        ?.toLowerCase()
+                        .includes(search) ||
+
+                    r.postTitle
+                        ?.toLowerCase()
+                        .includes(search) ||
+
+                    r.id
+                        ?.toLowerCase()
+                        .includes(search)
+                );
+            });
         }
 
         setFilteredReports(filtered);
@@ -85,9 +118,8 @@ const ReportAdminPage = () => {
         setSelectedReport(null);
     };
 
-    const handleStatusUpdate = () => {
-        // Reload reports after status update
-        fetchReports();
+    const handleStatusUpdate = async () => {
+        await fetchReports();
         handleModalClose();
     };
 
@@ -102,64 +134,93 @@ const ReportAdminPage = () => {
         <div className={styles.container}>
             <div className={styles.header}>
                 <h1>Quản lý báo cáo</h1>
-                <p>Xem, lọc và xử lý các báo cáo từ người dùng</p>
+                <p>
+                    Xem, lọc và xử lý các báo cáo từ người dùng
+                </p>
             </div>
 
             {/* Filter Section */}
             <div className={styles.filterSection}>
                 <div className={styles.filterGroup}>
+
                     {/* Status Filter */}
                     <div className={styles.filterItem}>
                         <label>Trạng thái:</label>
-                        <select 
+
+                        <select
                             value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
+                            onChange={(e) =>
+                                setStatusFilter(e.target.value)
+                            }
                             className={styles.filterInput}
                         >
-                            <option value="ALL">Tất cả</option>
-                            <option value="PENDING">Chờ xử lý</option>
-                            <option value="APPROVED">Đã duyệt, đang xử lý</option>
-                            <option value="RESOLVED">Đã xử lý</option>
-                            <option value="REJECTED">Bị từ chối</option>
+                            <option value="ALL">
+                                Tất cả
+                            </option>
+
+                            <option value="PENDING">
+                                Chờ xử lý
+                            </option>
+
+                            <option value="APPROVED">
+                                Đã duyệt
+                            </option>
+
+                            <option value="RESOLVED">
+                                Đã xử lý
+                            </option>
+
+                            <option value="REJECTED">
+                                Bị từ chối
+                            </option>
                         </select>
                     </div>
 
-                    {/* Date From Filter */}
+                    {/* Date From */}
                     <div className={styles.filterItem}>
                         <label>Từ ngày:</label>
+
                         <input
                             type="date"
                             value={dateFromFilter}
-                            onChange={(e) => setDateFromFilter(e.target.value)}
+                            onChange={(e) =>
+                                setDateFromFilter(e.target.value)
+                            }
                             className={styles.filterInput}
                         />
                     </div>
 
-                    {/* Date To Filter */}
+                    {/* Date To */}
                     <div className={styles.filterItem}>
                         <label>Đến ngày:</label>
+
                         <input
                             type="date"
                             value={dateToFilter}
-                            onChange={(e) => setDateToFilter(e.target.value)}
+                            onChange={(e) =>
+                                setDateToFilter(e.target.value)
+                            }
                             className={styles.filterInput}
                         />
                     </div>
 
-                    {/* Search Filter */}
+                    {/* Search */}
                     <div className={styles.filterItem}>
                         <label>Tìm kiếm:</label>
+
                         <input
                             type="text"
-                            placeholder="Nội dung, tên người dùng, ID..."
+                            placeholder="Lý do, người báo cáo, ID..."
                             value={searchFilter}
-                            onChange={(e) => setSearchFilter(e.target.value)}
+                            onChange={(e) =>
+                                setSearchFilter(e.target.value)
+                            }
                             className={styles.filterInput}
                         />
                     </div>
 
-                    {/* Reset Button */}
-                    <button 
+                    {/* Reset */}
+                    <button
                         className={styles.resetBtn}
                         onClick={handleResetFilters}
                     >
@@ -167,21 +228,27 @@ const ReportAdminPage = () => {
                     </button>
                 </div>
 
-                {/* Results Info */}
+                {/* Results */}
                 <div className={styles.resultsInfo}>
-                    <span>Kết quả: <strong>{filteredReports.length}</strong> báo cáo</span>
+                    <span>
+                        Kết quả:{' '}
+                        <strong>
+                            {filteredReports.length}
+                        </strong>{' '}
+                        báo cáo
+                    </span>
                 </div>
             </div>
 
             {/* Report Table */}
-            <ReportTable 
+            <ReportTable
                 reports={filteredReports}
                 onViewDetail={handleViewDetail}
                 isLoading={isLoading}
             />
 
-            {/* Report Detail Modal */}
-            <ReportDetailModal 
+            {/* Detail Modal */}
+            <ReportDetailModal
                 report={selectedReport}
                 isOpen={isModalOpen}
                 onClose={handleModalClose}

@@ -1,7 +1,7 @@
 import { API } from "../configurations/configuration";
 import httpClient from "../configurations/httpClient";
 
-export const submitReportUser = async ({ reportedUserId, reason, files }) => {
+export const submitReportUser = async ({ reportedUserId, reason, detail, files }) => {
     try {
         const token = localStorage.getItem('token');
         const formData = new FormData();
@@ -9,6 +9,7 @@ export const submitReportUser = async ({ reportedUserId, reason, files }) => {
         // Append các trường form trực tiếp
         formData.append('reportedUserId', reportedUserId);
         formData.append('reason', reason);
+        formData.append('detail', detail);
 
         // Append các ảnh minh chứng
         if (files && files.length > 0) {
@@ -32,7 +33,12 @@ export const submitReportUser = async ({ reportedUserId, reason, files }) => {
     }
 };
 
-export const submitReportPost = async ({ postId, reason, files }) => {
+export const submitReportPost = async ({
+    postId,
+    reason,
+    detail,
+    files,
+}) => {
     try {
         const token = localStorage.getItem('token');
         
@@ -46,6 +52,7 @@ export const submitReportPost = async ({ postId, reason, files }) => {
         // Append các trường form trực tiếp
         formData.append('postId', postId);
         formData.append('reason', reason);
+        formData.append('detail', detail);
 
         // Append các ảnh minh chứng
         if (files && files.length > 0) {
@@ -80,7 +87,7 @@ export const submitReportPost = async ({ postId, reason, files }) => {
     }
 };
 
-export const submitReportOrder = async ({ orderId, reason, files }) => {
+export const submitReportOrder = async ({ orderId, reason, detail, files }) => {
     try {
         const token = localStorage.getItem('token');
         const formData = new FormData();
@@ -88,6 +95,7 @@ export const submitReportOrder = async ({ orderId, reason, files }) => {
         // Append các trường form trực tiếp
         formData.append('orderId', orderId);
         formData.append('reason', reason);
+        formData.append('detail', detail);
 
         // Append các ảnh minh chứng
         if (files && files.length > 0) {
@@ -107,6 +115,20 @@ export const submitReportOrder = async ({ orderId, reason, files }) => {
         return response.data;
     } catch (error) {
         console.error("Error submitting order report:", error);
+        throw error;
+    }
+};
+export const getReportReasons = async () => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await httpClient.get(API.GET_REPORT_REASONS, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data; // Thường Spring trả về ApiResponse, lấy .data để lấy body
+    } catch (error) {
+        console.error("Error fetching report reasons:", error);
         throw error;
     }
 };

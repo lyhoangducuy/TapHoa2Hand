@@ -19,6 +19,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 import io.netty.handler.codec.http.cors.CorsConfig;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -27,6 +28,8 @@ public class SecurityConfig {
 
     @Autowired
     private CustomJwtDecoder jwtDecoder;
+    @Autowired
+    private CaptchaFilter captchaFilter;
 
     private static final String[] POST_PUBLIC_ENDPOINTS = {
             "/user/create",
@@ -52,29 +55,54 @@ public class SecurityConfig {
     };
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity.cors(cors -> cors.configurationSource(corsConfigurationSource()));
+    public SecurityFilterChain filterChain(
+            HttpSecurity httpSecurity) throws Exception {
+
+        httpSecurity.cors(
+                cors -> cors.configurationSource(
+                        corsConfigurationSource()));
+
         httpSecurity
-                .authorizeHttpRequests(request -> request.requestMatchers(HttpMethod.POST, POST_PUBLIC_ENDPOINTS).permitAll())
-                .authorizeHttpRequests(request -> request.requestMatchers(HttpMethod.GET, GET_PUBLIC_ENDPOINTS).permitAll()
-                        .anyRequest().authenticated());
-        httpSecurity.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder)
-                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
-                .authenticationEntryPoint(new JwtAuthenticationEntryPoint()));
-        httpSecurity.csrf(AbstractHttpConfigurer::disable);
+                .authorizeHttpRequests(request -> request.requestMatchers(
+                        HttpMethod.POST,
+                        POST_PUBLIC_ENDPOINTS)
+                        .permitAll())
+                .authorizeHttpRequests(request -> request.requestMatchers(
+                        HttpMethod.GET,
+                        GET_PUBLIC_ENDPOINTS)
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated());
+
+        httpSecurity.oauth2ResourceServer(
+                oauth2 -> oauth2.jwt(
+                        jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder)
+                                .jwtAuthenticationConverter(
+                                        jwtAuthenticationConverter()))
+                        .authenticationEntryPoint(
+                                new JwtAuthenticationEntryPoint()));
+
+        httpSecurity.addFilterBefore(
+                captchaFilter,
+                UsernamePasswordAuthenticationFilter.class);
+
+        httpSecurity.csrf(
+                AbstractHttpConfigurer::disable);
+
         return httpSecurity.build();
-    };
+    }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        
+
         // Cấu hình origin của Frontend
         corsConfiguration.addAllowedOrigin("http://localhost:5173");
         corsConfiguration.addAllowedMethod("*");
         corsConfiguration.addAllowedHeader("*");
-        
+
         // Rất quan trọng khi làm việc với Token/Authentication
-        corsConfiguration.setAllowCredentials(true); 
+        corsConfiguration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);

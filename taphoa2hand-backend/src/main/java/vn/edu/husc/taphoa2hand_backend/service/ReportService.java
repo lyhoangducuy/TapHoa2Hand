@@ -7,20 +7,25 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import vn.edu.husc.taphoa2hand_backend.dto.request.Noti.NotificationRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.ReportDTO.ReportCreateRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.ReportDTO.ReportOrderSubmitRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.ReportDTO.ReportPostSubmitRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.ReportDTO.ReportUpdateStatusRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.ReportDTO.ReportUserSubmitRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.response.FilesResponse;
+import vn.edu.husc.taphoa2hand_backend.dto.response.ReportReasonResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Report.ReportResponse;
 import vn.edu.husc.taphoa2hand_backend.entity.Order;
 import vn.edu.husc.taphoa2hand_backend.entity.OrderStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.Posts;
 import vn.edu.husc.taphoa2hand_backend.entity.Report;
 import vn.edu.husc.taphoa2hand_backend.entity.ReportEvidence;
+import vn.edu.husc.taphoa2hand_backend.entity.ReportReasonEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.ReportStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.ReportTypeEnum;
+import vn.edu.husc.taphoa2hand_backend.entity.Roles;
 import vn.edu.husc.taphoa2hand_backend.entity.Users;
 import vn.edu.husc.taphoa2hand_backend.exception.AppException;
 import vn.edu.husc.taphoa2hand_backend.exception.ErrorCode;
@@ -28,11 +33,17 @@ import vn.edu.husc.taphoa2hand_backend.mapper.ReportMapper;
 import vn.edu.husc.taphoa2hand_backend.repository.OrderRepository;
 import vn.edu.husc.taphoa2hand_backend.repository.PostsRepository;
 import vn.edu.husc.taphoa2hand_backend.repository.ReportRepository;
+import vn.edu.husc.taphoa2hand_backend.repository.RolesRepository;
 import vn.edu.husc.taphoa2hand_backend.repository.UsersRepository;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,6 +57,8 @@ public class ReportService {
     PostsRepository postsRepository;
     ReportMapper reportMapper;
     FileService fileService;
+    NotificationService notificationService;
+    RolesRepository rolesRepository;
 
     private Users currentReporter() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -88,7 +101,8 @@ public class ReportService {
             throw new AppException(ErrorCode.REPORT_CANNOT_SELF);
         }
         Report report = Report.builder()
-                .reason(body.getReason().trim())
+                .reason(body.getReason())
+                .detail(body.getDetail())
                 .type(ReportTypeEnum.USER)
                 .reporter(reporter)
                 .reportedUser(reported)
@@ -96,6 +110,14 @@ public class ReportService {
                 .evidences(new ArrayList<>())
                 .build();
         attachEvidenceImages(report, body.getEvidenceImages());
+          List<Users> adminUsers = usersRepository.findByRoles(Set.of(rolesRepository.findById("ADMIN").
+            orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND))));
+        String postLink = "/admin/users/detail/" + reported.getId();
+        notificationService.createNotification(NotificationRequest.builder()
+                .content("Người dùng " + reported.getId() + " đã bị báo cáo. Vui lòng kiểm tra và xử lý kịp thời.")
+                .userIds(adminUsers.stream().map(Users::getId).collect(Collectors.toList()))
+                .link(postLink)
+                .build());
         return reportMapper.toReportResponse(reportRepository.save(report));
     }
 
@@ -108,8 +130,9 @@ public class ReportService {
             throw new AppException(ErrorCode.REPORT_OWN_POST);
         }
         Report report = Report.builder()
-                .reason(body.getReason().trim())
+                .reason(body.getReason())
                 .type(ReportTypeEnum.POST)
+                .detail(body.getDetail())
                 .reporter(reporter)
                 .reportedPost(post)
                 .reportedUser(post.getUser())
@@ -117,12 +140,26 @@ public class ReportService {
                 .evidences(new ArrayList<>())
                 .build();
         attachEvidenceImages(report, body.getEvidenceImages());
+         List<Users> adminUsers = usersRepository.findByRoles(Set.of(rolesRepository.findById("ADMIN").
+            orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND))));
+        String postLink = "/admin/posts/detail/" + post.getId();
+        notificationService.createNotification(NotificationRequest.builder()
+                .content("Bài đăng " + post.getId() + " đã bị báo cáo. Vui lòng kiểm tra và xử lý kịp thời.")
+                .userIds(adminUsers.stream().map(Users::getId).collect(Collectors.toList()))
+                .link(postLink)
+                .build());
         return reportMapper.toReportResponse(reportRepository.save(report));
     }
 
     @Transactional
     public ReportResponse submitOrderReport(ReportOrderSubmitRequest body) {
         Users reporter = currentReporter();
+        Order orderReport = orderRepository.findById(body.getOrderId())
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+        List<Report> existingReport = reportRepository.findByReporterAndOrder(reporter, orderReport);
+        if (!existingReport.isEmpty()) {
+            throw new AppException(ErrorCode.REPORT_ORDER_EXISTED);
+        }
         Order order = orderRepository.findById(body.getOrderId())
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
         order.setStatus(OrderStatusEnum.REPORTED);
@@ -133,7 +170,8 @@ public class ReportService {
             throw new AppException(ErrorCode.REPORT_ORDER_FORBIDDEN);
         }
         Report report = Report.builder()
-                .reason(body.getReason().trim())
+                .reason(body.getReason())
+                .detail(body.getDetail())
                 .type(ReportTypeEnum.ORDER)
                 .reporter(reporter)
                 .order(order)
@@ -141,11 +179,22 @@ public class ReportService {
                 .evidences(new ArrayList<>())
                 .build();
         attachEvidenceImages(report, body.getEvidenceImages());
-        return reportMapper.toReportResponse(reportRepository.save(report));
+        System.out.println("Submitting order report: " + report);
+        Report savedReport = reportRepository.save(report);
+        List<Users> adminUsers = usersRepository.findByRoles(Set.of(rolesRepository.findById("ADMIN").
+            orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND))));
+        String orderLink = "/admin/orders/" + order.getId();
+        notificationService.createNotification(NotificationRequest.builder()
+                .content("Đơn hàng " + order.getId() + " đã bị báo cáo. Vui lòng kiểm tra và xử lý kịp thời.")
+                .userIds(adminUsers.stream().map(Users::getId).collect(Collectors.toList()))
+                .link(orderLink)
+                .build());
+        return reportMapper.toReportResponse(savedReport);
     }
 
     @Transactional
     public ReportResponse createReport(ReportCreateRequest request) {
+       
         Users reporter = currentReporter();
 
         Report report = reportMapper.toReport(request);
@@ -197,8 +246,19 @@ public class ReportService {
     public ReportResponse updateReportStatus(String reportId, ReportUpdateStatusRequest request) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new AppException(ErrorCode.REPORT_NOT_FOUND));
-
+        if (report.getType()==ReportTypeEnum.ORDER){
+            Order order = report.getOrder();
+            if (order != null && request.getStatus() == ReportStatusEnum.APPROVED) {
+                order.setStatus(OrderStatusEnum.SETTLING);
+                order.setHoldUntil(LocalDateTime.now());
+                orderRepository.save(order);
+                    
+            }
+        }
+        
+        
         report.setStatus(request.getStatus());
+
         Report updatedReport = reportRepository.save(report);
         return reportMapper.toReportResponse(updatedReport);
     }
@@ -208,5 +268,14 @@ public class ReportService {
                 .orElseThrow(() -> new AppException(ErrorCode.REPORT_NOT_FOUND));
 
         return reportMapper.toReportResponse(report);
+    }
+
+    public List<ReportReasonResponse> getReportReasons() {
+        return Arrays.stream(ReportReasonEnum.values())
+                .map(reason -> ReportReasonResponse.builder()
+                        .name(reason.name())
+                        .displayName(reason.getDisplayName())
+                        .build())
+                .collect(Collectors.toList());
     }
 }

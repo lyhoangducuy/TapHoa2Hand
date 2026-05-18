@@ -112,5 +112,8 @@ export const API = {
     DELETE_FEEDBACK:(feedbackId)=>`/api/feedbacks/${feedbackId}`,
     ADMIN_GET_ALL_FEEDBACKS:"/admin/feedbacks",
     ADMIN_DELETE_FEEDBACK:(feedbackId)=>`/admin/feedbacks/${feedbackId}`,
-    ADMIN_GET_FEEDBACKS_BY_USER:(userId)=>`/admin/feedbacks/user/${userId}`
+    ADMIN_GET_FEEDBACKS_BY_USER:(userId)=>`/admin/feedbacks/user/${userId}`,
+
+    //report
+    GET_REPORT_REASONS:"/reports/reasons"
 };

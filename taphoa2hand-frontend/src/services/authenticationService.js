@@ -1,19 +1,36 @@
 // configurations/authService.js (hoặc file chứa hàm login của bạn)
 import { API, CONFIG } from "../configurations/configuration";
 
-export const login = async (username, password) => {
-    // Phải cộng chuỗi API_GATEWAY + PATH
-    const url = `${CONFIG.API_GATEWAY}${API.LOGIN}`; 
-    
+export const login = async (
+    username,
+    password,
+    captchaToken
+) => {
+
+    const url =
+        `${CONFIG.API_GATEWAY}${API.LOGIN}`;
+
     return await fetch(url, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({
+            username,
+            password,
+            captchaToken
+        }),
     });
 };
+export const checkCaptchaRequired = async (username) => {
 
+    const url =
+        `${CONFIG.API_GATEWAY}/auth/captcha-required?username=${username}`;
+
+    return await fetch(url, {
+        method: "POST",
+    });
+};
 export const register = async (userData) => {
     const url = `${CONFIG.API_GATEWAY}${API.REGISTER_USER}`;
     

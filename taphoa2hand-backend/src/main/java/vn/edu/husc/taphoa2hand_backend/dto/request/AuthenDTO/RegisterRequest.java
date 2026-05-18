@@ -34,4 +34,6 @@ public class RegisterRequest {
     String phone;
     @DobConstraint(min = 15, message = "INVALID_DOB")
     LocalDate dob;
+
+    String captchaToken;
 }

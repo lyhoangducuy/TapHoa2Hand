@@ -18,15 +18,20 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "reports")
-public class Report extends BaseEntity{
+public class Report extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
 
     // Không được để trống nội dung báo cáo
-    @NotBlank(message = "Nội dung báo cáo không được để trống")
-    @Size(min = 10, max = 1000, message = "Nội dung phải từ 10 đến 1000 ký tự")
-    String reason;
+    @NotNull(message = "Lý do báo cáo là bắt buộc")
+    @Enumerated(EnumType.STRING)
+    @Column(length = 50, nullable = false)
+    ReportReasonEnum reason;
+
+    @NotBlank(message = "Mô tả chi tiết là bắt buộc")
+    @Size(min = 20, max = 2000, message = "Mô tả chi tiết phải từ 20 đến 2000 ký tự")
+    String detail;
 
     // Phân loại báo cáo để dễ xử lý (ví dụ: SPAM, FRAUD, HARASSMENT)
     @NotNull(message = "Loại báo cáo là bắt buộc")
@@ -56,9 +61,9 @@ public class Report extends BaseEntity{
 
     @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-     List<ReportEvidence> evidences = new ArrayList<>();
+    List<ReportEvidence> evidences = new ArrayList<>();
     // Trạng thái xử lý của Admin
     @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-     ReportStatusEnum status = ReportStatusEnum.PENDING;
+    @Column(length = 50)
+    ReportStatusEnum status = ReportStatusEnum.PENDING;
 }
