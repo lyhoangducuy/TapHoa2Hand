@@ -18,6 +18,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
@@ -31,13 +32,14 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
 @Entity
-@Getter @Setter
+@Getter
+@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "orders")
-public class Order extends BaseEntity{
+public class Order extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
@@ -57,17 +59,16 @@ public class Order extends BaseEntity{
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "seller_bank_info_id")
-    
+
     OrderBankInfo sellerBankInfo; // Dùng để Admin giải ngân tiền bán hàng
 
     @Enumerated(EnumType.STRING)
-   
+
     PaymentMethodEnum paymentMethod;
 
     @Enumerated(EnumType.STRING)
-   
-    OrderStatusEnum status;
 
+    OrderStatusEnum status;
 
     BigDecimal totalAmount;
     BigDecimal platformFee;
@@ -79,7 +80,10 @@ public class Order extends BaseEntity{
     @NotBlank(message = "Dia chi nguoi nhan")
     String shippingAddress;
 
-    /** Thời điểm hết hạn giữ tiền ký quỹ (sau khi giao DELIVERED, phương thức trung gian). */
+    /**
+     * Thời điểm hết hạn giữ tiền ký quỹ (sau khi giao DELIVERED, phương thức trung
+     * gian).
+     */
     LocalDateTime holdUntil;
 
     /** Đơn vị thời gian giữ tiền do người mua chọn lúc tạo đơn (chỉ trung gian). */
@@ -91,4 +95,8 @@ public class Order extends BaseEntity{
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     List<OrderItem> items = new ArrayList<>();
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @OrderBy("createdAt ASC")
+    List<OrderStatusHistory> statusHistories;
 }
