@@ -75,10 +75,32 @@
             }
         }
 
+        .feedback-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+
+            img {
+                width: 80px;
+                height: 80px;
+                object-fit: cover;
+                border-radius: 6px;
+                border: 1px solid #e9ecef;
+                cursor: pointer;
+                transition: transform 0.15s;
+
+                &:hover {
+                    transform: scale(1.05);
+                }
+            }
+        }
+
         .feedback-image {
             border-radius: 4px;
             overflow: hidden;
             max-height: 300px;
+            margin-top: 8px;
 
             img {
                 width: 100%;

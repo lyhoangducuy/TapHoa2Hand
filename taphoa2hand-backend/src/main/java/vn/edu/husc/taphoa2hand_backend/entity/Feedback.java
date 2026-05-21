@@ -18,9 +18,6 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "feedbacks")
 public class Feedback extends BaseEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    String id;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)

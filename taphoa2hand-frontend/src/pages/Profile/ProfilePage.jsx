@@ -3,14 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './ProfilePage.module.scss';
 import { getMyInfo } from '../../services/userService';
-import { getMyPosts } from '../../services/postService'; // Gọi API lấy bài viết
-import { removeToken } from '../../services/localstorageService';
-import UserPosts from './Post/UserPosts'; // Import component con
-
-import {
-    FiMail, FiPhone, FiMapPin, FiCalendar,
-    FiEdit3, FiShield, FiLogOut, FiLoader
-} from 'react-icons/fi';
+import { getMyPosts } from '../../services/postService';
+import { removeToken } from '../../services/localStorageService';
+import UserPosts from './Post/UserPosts';
+import { FiMail, FiPhone, FiMapPin, FiCalendar, FiEdit3, FiShield, FiLogOut, FiLoader, FiStar } from 'react-icons/fi';
+import { getUserAverageRating, getUserFeedbacksWithOrderPost } from '../../services/feedbackService';
+import FeedbackList from '../../components/Feedback/FeedbackList';
 
 const cx = classNames.bind(styles);
 
@@ -18,12 +16,17 @@ function ProfilePage() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
-    
-    // State quản lý bài viết
+
     const [posts, setPosts] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
-    
+
+    const [avgRating, setAvgRating] = useState(0);
+    const [totalReviews, setTotalReviews] = useState(0);
+    const [profileTab, setProfileTab] = useState('posts');
+    const [feedbacks, setFeedbacks] = useState([]);
+    const [feedbackLoading, setFeedbackLoading] = useState(false);
+
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
 
@@ -44,13 +47,51 @@ function ProfilePage() {
                     setTotalPages(postsResponse.result.totalPages || 1);
                 }
             } catch (error) {
-                console.error("Lỗi khi tải dữ liệu:", error);
+                console.error('Lỗi khi tải dữ liệu:', error);
             } finally {
                 setLoading(false);
             }
         };
         fetchData();
     }, []);
+
+    useEffect(() => {
+        const fetchRating = async () => {
+            if (!user?.id) return;
+            const res = await getUserAverageRating(user.id);
+            if (res?.code === 1000) {
+                setAvgRating(res.result || 0);
+                setTotalReviews(res.totalReviews || 0);
+            }
+        };
+        fetchRating();
+    }, [user?.id]);
+
+    const fetchFeedbacks = async () => {
+        if (!user?.id) return;
+        setFeedbackLoading(true);
+        try {
+            const res = await getUserFeedbacksWithOrderPost(user.id);
+            if (res && Array.isArray(res)) {
+                setFeedbacks(res);
+            } else if (res?.code === 1000 && Array.isArray(res.result)) {
+                setFeedbacks(res.result);
+            } else {
+                setFeedbacks([]);
+            }
+        } catch (err) {
+            console.error('Lỗi fetch feedbacks:', err);
+            setFeedbacks([]);
+        } finally {
+            setFeedbackLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (profileTab === 'reviews') {
+            fetchFeedbacks();
+        }
+    }, [profileTab, user?.id]);
 
     const handleLoadMorePosts = async () => {
         const nextPage = currentPage + 1;
@@ -63,7 +104,7 @@ function ProfilePage() {
                 setCurrentPage(nextPage);
             }
         } catch (error) {
-            console.error("Lỗi khi tải thêm bài viết:", error);
+            console.error('Lỗi khi tải thêm bài viết:', error);
         }
     };
 
@@ -103,11 +144,11 @@ function ProfilePage() {
             if (data.code === 1000) {
                 setUser(prev => ({ ...prev, avatar: data.result.avatar }));
             } else {
-                alert("Lỗi cập nhật ảnh: " + data.message);
+                alert('Lỗi cập nhật ảnh: ' + data.message);
             }
         } catch (error) {
-            console.error("Lỗi upload avatar:", error);
-            alert("Đã xảy ra lỗi khi tải ảnh lên máy chủ.");
+            console.error('Lỗi upload avatar:', error);
+            alert('Đã xảy ra lỗi khi tải ảnh lên máy chủ.');
         } finally {
             setUploadingAvatar(false);
             event.target.value = null;
@@ -143,12 +184,16 @@ function ProfilePage() {
 
                         <div className={cx('stats-row')}>
                             <div className={cx('stat-item')}>
-                                <strong>{posts.length}</strong>
+                                <strong>{posts.length}{currentPage < totalPages - 1 ? '+' : ''}</strong>
                                 <span>Bài đăng</span>
                             </div>
                             <div className={cx('stat-item')}>
-                                <strong>{user.rating || '-'}</strong>
+                                <strong>{avgRating > 0 ? avgRating.toFixed(1) : '—'}</strong>
                                 <span>Đánh giá</span>
+                            </div>
+                            <div className={cx('stat-item')}>
+                                <strong>{totalReviews}</strong>
+                                <span>Lượt đánh giá</span>
                             </div>
                         </div>
                     </div>
@@ -192,14 +237,41 @@ function ProfilePage() {
 
                 <hr className={cx('divider')} />
 
-                <div className={cx('my-posts-section')}>
-                    <h3 className={cx('section-title')}>Bài đăng của tôi</h3>
-                    <UserPosts 
-                        posts={posts} 
-                        onLoadMore={handleLoadMorePosts} 
-                        hasMore={currentPage < totalPages - 1} 
-                    />
+                {/* PROFILE TABS */}
+                <div className={cx('profile-tabs')}>
+                    <button
+                        className={cx('profile-tab', { active: profileTab === 'posts' })}
+                        onClick={() => setProfileTab('posts')}
+                    >
+                        Bài đăng ({posts.length})
+                    </button>
+                    <button
+                        className={cx('profile-tab', { active: profileTab === 'reviews' })}
+                        onClick={() => setProfileTab('reviews')}
+                    >
+                        Đánh giá ({totalReviews})
+                    </button>
                 </div>
+
+                {profileTab === 'posts' ? (
+                    <div className={cx('my-posts-section')}>
+                        <UserPosts
+                            posts={posts}
+                            onLoadMore={handleLoadMorePosts}
+                            hasMore={currentPage < totalPages - 1}
+                        />
+                    </div>
+                ) : (
+                    <div className={cx('reviews-section')}>
+                        {feedbackLoading ? (
+                            <div className={cx('loading')}>
+                                <FiLoader className={cx('spin')} /> Đang tải đánh giá...
+                            </div>
+                        ) : (
+                            <FeedbackList feedbacks={feedbacks} />
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

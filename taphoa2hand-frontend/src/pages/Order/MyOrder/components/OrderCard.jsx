@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import classNames from 'classnames/bind';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -11,8 +11,11 @@ import {
     FiCheckCircle,
     FiFlag
 } from 'react-icons/fi';
+
+import * as feedbackService from '../../../../services/feedbackService';
 import { getToken } from '../../../../services/localStorageService';
 import ReportModal from '../../../../components/Report/ReportModal';
+
 import styles from '../MyOrderPage.module.scss';
 
 const cx = classNames.bind(styles);
@@ -30,195 +33,153 @@ const OrderCard = ({
     onConfirmDelivery,
     onReportSuccess
 }) => {
+
     const navigate = useNavigate();
+
     const [reportOpen, setReportOpen] = useState(false);
+    const [hasFeedback, setHasFeedback] = useState(false);
+    const [checkingFeedback, setCheckingFeedback] = useState(false);
+
     const hasToken = Boolean(getToken());
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-    };
-    const handleReportSuccess = () => {
-        setReportOpen(false); // 2. Tắt popup ngay lập tức
-        if (onReportSuccess) {
-            onReportSuccess(); // 3. Gọi hàm load lại dữ liệu từ trang cha xuống
+
+    const formatCurrency = (amount) =>
+        new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).format(amount);
+
+    // CHECK FEEDBACK
+    useEffect(() => {
+        const checkFeedback = async () => {
+            try {
+                setCheckingFeedback(true);
+
+                const res = await feedbackService.checkFeedbackExists(order.id);
+
+                setHasFeedback(res?.result || false);
+            } catch (err) {
+                console.error('check feedback error:', err);
+                setHasFeedback(false);
+            } finally {
+                setCheckingFeedback(false);
+            }
+        };
+
+        if (order?.id) {
+            checkFeedback();
         }
+    }, [order?.id]);
+
+    const handleReportSuccess = () => {
+        setReportOpen(false);
+        onReportSuccess?.();
     };
 
     return (
         <div className={cx('order-card')}>
+
+            {/* HEADER */}
             <div className={cx('order-header')}>
-                <div className={cx('order-info')}>
-                    <span className={cx('label')}>Mã đơn:</span>
-                    <span className={cx('value')}>#{order.id?.substring(0, 8).toUpperCase()}</span>
+                <div>
+                    <span>Mã đơn:</span>
+                    <b>#{order.id?.substring(0, 8).toUpperCase()}</b>
                 </div>
+
                 <div className={cx('order-status-badge', order.status?.name?.toLowerCase())}>
                     {order.status?.displayName}
                 </div>
             </div>
 
-            {activeTab === 'sales' && order.buyerUsername && (
-                <div className={cx('buyer-row')}>
-                    <span className={cx('label')}>Người mua:</span>
-                    <span className={cx('value')}>@{order.buyerUsername}</span>
-                </div>
-            )}
-
+            {/* BODY */}
             <div className={cx('order-body')}>
-                <div className={cx('product-info')}>
-                    <div className={cx('receiver-name')}>{order.receiverName}</div>
-                    <div className={cx('receiver-detail')}>
-                        <p>📞 {order.receiverPhone}</p>
-                        <p>📍 {order.shippingAddress}</p>
-                    </div>
-                </div>
+                <div>{order.receiverName}</div>
+                <div>{order.receiverPhone}</div>
+                <div>{order.shippingAddress}</div>
 
-                <div className={cx('payment-info')}>
-                    <div className={cx('method-tag', order.paymentMethod?.name)}>
-                        {order.paymentMethod?.name === 'MIDDLEMAN' ? '🛡️ Trung gian' : '🤝 Trực tiếp'}
-                    </div>
-                    {order.paymentMethod?.name === 'MIDDLEMAN' &&
-                        order.holdDurationAmount != null &&
-                        order.holdDurationUnit && (
-                            <div className={cx('escrow-hold')}>
-                                Giữ tiền:{' '}
-                                {order.holdDurationUnit === 'HOURS'
-                                    ? `${order.holdDurationAmount} giờ`
-                                    : `${order.holdDurationAmount} ngày`}
-                                {order.status?.name === 'DELIVERED' && order.holdUntil && (
-                                    <span> — đến {new Date(order.holdUntil).toLocaleDateString('vi-VN')}</span>
-                                )}
-                                {(order.status?.name === 'SETTLING' || order.status?.name === 'COMPLETED') &&
-                                    order.holdUntil && (
-                                        <span> — giữ đến {new Date(order.holdUntil).toLocaleDateString('vi-VN')}</span>
-                                    )}
-                            </div>
-                        )}
-                    <div className={cx('total-amount')}>
-                        {formatCurrency(order.totalAmount)}
-                    </div>
-                    {order.platformFee > 0 && (
-                        <div className={cx('fee')}>Phí: {formatCurrency(order.platformFee)}</div>
-                    )}
+                <div>
+                    {formatCurrency(order.totalAmount)}
                 </div>
             </div>
 
+            {/* FOOTER */}
             <div className={cx('order-footer')}>
+
                 <button
-                    className={cx('btn-detail')}
                     onClick={() => navigate(`/order/myOrder/${order.id}`)}
                 >
-                    <FiEye size={18} />
-                    Xem chi tiết
+                    <FiEye /> Xem
                 </button>
 
-                {hasToken && order.status?.name != 'REPORTED' ? (
-                    <button
-                        type="button"
-                        className={cx('btn-report')}
-                        onClick={() => setReportOpen(true)}
-                    >
-                        <FiFlag size={18} />
-                        Báo cáo đơn
-                    </button>
-                ) : null}
-
-                {/* Buyer Actions */}
-                {activeTab === 'purchases' &&
-                    (order.status?.name === 'DELIVERED' ||
-                        order.status?.name === 'SETTLING' ||
-                        order.status?.name === 'COMPLETED') && (
-                        <button
-                            className={cx('btn-feedback')}
-                            onClick={() => onFeedback(order)}
-                        >
-                            <FiStar size={18} />
-                            Đánh giá
-                        </button>
-                    )}
-
-                {activeTab === 'purchases' && order.status?.name === 'CONFIRMED' && (
-                    <button
-                        className={cx('btn-payment')}
-                        onClick={() => onPayment(order.id)}
-                        disabled={actionLoading}
-                    >
-                        <FiCreditCard size={18} />
-                        Xác nhận thanh toán
+                {/* REPORT */}
+                {hasToken && order.status?.name !== 'REPORTED' && (
+                    <button onClick={() => setReportOpen(true)}>
+                        <FiFlag /> Báo cáo
                     </button>
                 )}
 
-                {(order.status?.name === 'PENDING' ||
-                    order.status?.name === 'CONFIRMED') && (
-                        <div className={cx('seller-actions')}>
-                            <button
-                                className={cx('btn-reject')}
-                                onClick={() => onReject(order.id)}
-                                disabled={actionLoading}
-                            >
-                                <FiX size={18} />
-                                {activeTab === 'sales' ? 'Từ chối' : 'Hủy đơn'}
-                            </button>
+                {/* FEEDBACK BUTTON */}
+                {activeTab === 'purchases' &&
+                    ['DELIVERED', 'SETTLING', 'COMPLETED'].includes(order.status?.name) &&
+                    !hasFeedback && (
+                        <button
+                            onClick={() => onFeedback(order)}
+                            disabled={checkingFeedback}
+                        >
+                            <FiStar />
+                            {checkingFeedback ? 'Checking...' : 'Đánh giá'}
+                        </button>
+                    )
+                }
 
-                            {activeTab === 'sales' &&
-                                order.status?.name === 'PENDING' && (
-                                    <button
-                                        className={cx('btn-approve')}
-                                        onClick={() =>
-                                            onApprove(order.id, order.paymentMethod?.name)
-                                        }
-                                        disabled={actionLoading}
-                                    >
-                                        <FiCheck size={18} />
-                                        {order.paymentMethod?.name === 'MIDDLEMAN'
-                                            ? 'Chọn đơn + TK NH'
-                                            : 'Chọn đơn này'}
-                                    </button>
-                                )}
-                        </div>
-                    )}
+                {/* SHOW IF ALREADY FEEDBACK */}
+                {hasFeedback && (
+                    <span style={{ color: 'green' }}>
+                        ✔ Đã đánh giá
+                    </span>
+                )}
 
-
-
-                {activeTab === 'sales' && order.status?.name === 'PAID_WAITING_PICKUP' && (
-                    <button
-                        className={cx('btn-deliver')}
-                        onClick={() => onShipping(order.id)}
-                        disabled={actionLoading}
-                    >
-                        <FiPackage size={18} />
-                        Chuyển sang giao hàng
+                {/* PAYMENT */}
+                {activeTab === 'purchases' && order.status?.name === 'CONFIRMED' && (
+                    <button onClick={() => onPayment(order.id)}>
+                        <FiCreditCard /> Thanh toán
                     </button>
+                )}
+
+                {/* SELLER ACTIONS */}
+                {(order.status?.name === 'PENDING' || order.status?.name === 'CONFIRMED') && (
+                    <>
+                        <button onClick={() => onReject(order.id)}>
+                            <FiX /> Từ chối
+                        </button>
+
+                        {activeTab === 'sales' && order.status?.name === 'PENDING' && (
+                            <button onClick={() => onApprove(order.id)}>
+                                <FiCheck /> Duyệt
+                            </button>
+                        )}
+                    </>
                 )}
 
                 {activeTab === 'sales' && order.status?.name === 'SHIPPING' && (
-
-                    <button
-                        className={cx('btn-deliver')}
-                        onClick={() => onDelivered(order.id)}
-                        disabled={actionLoading}
-                    >
-                        <FiCheckCircle size={18} />
-                        Giao hàng thành công
+                    <button onClick={() => onDelivered(order.id)}>
+                        <FiCheckCircle /> Giao xong
                     </button>
                 )}
+
                 {activeTab === 'purchases' && order.status?.name === 'DELIVERED' && (
-                    <button
-                        className={cx('btn-confirm-delivery')}
-                        onClick={() => onConfirmDelivery(order.id)}
-                        disabled={actionLoading}
-                    >
-                        <FiCheckCircle size={18} />
-                        Xác nhận đã nhận hàng
+                    <button onClick={() => onConfirmDelivery(order.id)}>
+                        <FiCheckCircle /> Xác nhận
                     </button>
                 )}
             </div>
 
+            {/* REPORT MODAL */}
             <ReportModal
                 open={reportOpen}
                 onClose={() => setReportOpen(false)}
                 onSuccess={handleReportSuccess}
                 variant="order"
                 targetId={order.id}
-                subtitle={`Mã đơn #${order.id?.substring(0, 8).toUpperCase()}`}
             />
         </div>
     );

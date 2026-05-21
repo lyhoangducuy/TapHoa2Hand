@@ -569,3 +569,42 @@
         transform: translateY(-1px);
     }
 }
+
+/* =========================================
+   PROFILE TABS (UserProfilePage + ProfilePage)
+   ========================================= */
+.profile-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #eee;
+}
+
+.profile-tab {
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 600;
+    color: #888;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    border-radius: 6px 6px 0 0;
+    transition: color 0.2s, border-color 0.2s;
+
+    &:hover {
+        color: #5b2c6f;
+        background: #f9f4fc;
+    }
+
+    &.active {
+        color: #5b2c6f;
+        border-bottom-color: #5b2c6f;
+        background: #f9f4fc;
+    }
+}
+
+.reviews-section {
+    margin-top: 4px;
+}

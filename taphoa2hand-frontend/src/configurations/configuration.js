@@ -110,9 +110,12 @@ export const API = {
     GET_FEEDBACKS_FOR_PROFILE:(userId)=>`/api/feedbacks/profile/${userId}`,
     UPDATE_FEEDBACK:(feedbackId)=>`/api/feedbacks/${feedbackId}`,
     DELETE_FEEDBACK:(feedbackId)=>`/api/feedbacks/${feedbackId}`,
-    ADMIN_GET_ALL_FEEDBACKS:"/admin/feedbacks",
-    ADMIN_DELETE_FEEDBACK:(feedbackId)=>`/admin/feedbacks/${feedbackId}`,
-    ADMIN_GET_FEEDBACKS_BY_USER:(userId)=>`/admin/feedbacks/user/${userId}`,
+    ADMIN_GET_ALL_FEEDBACKS:"/api/feedbacks/admin",
+    ADMIN_DELETE_FEEDBACK:(feedbackId)=>`/api/feedbacks/admin/${feedbackId}`,
+    ADMIN_UPDATE_FEEDBACK:(feedbackId)=>`/api/feedbacks/admin/${feedbackId}`,
+    ADMIN_GET_FEEDBACKS_BY_USER:(userId)=>`/api/feedbacks/admin/user/${userId}`,
+    FEEDBACK_AVG_RATING: (userId) => `/api/feedbacks/average/${userId}`,
+    FEEDBACK_WITH_ORDER_POST: (userId) => `/api/feedbacks/full/${userId}`,
 
     //report
     GET_REPORT_REASONS:"/reports/reasons"

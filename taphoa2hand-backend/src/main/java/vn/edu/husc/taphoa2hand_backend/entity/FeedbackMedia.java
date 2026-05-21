@@ -19,10 +19,6 @@ import lombok.Setter;
 @Setter
 public class FeedbackMedia extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    String id;
-
     String url;
 
     String contentType;

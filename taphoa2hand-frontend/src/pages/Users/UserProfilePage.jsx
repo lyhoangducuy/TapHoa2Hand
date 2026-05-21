@@ -7,8 +7,11 @@ import { getUserPosts } from '../../services/postService';
 import { getToken } from '../../services/localStorageService';
 import UserPosts from '../Profile/Post/UserPosts';
 import ReportModal from '../../components/Report/ReportModal';
-import { FiMail, FiPhone, FiMapPin, FiCalendar, FiLoader, FiShield, FiFlag } from 'react-icons/fi';
+import { FiMail, FiPhone, FiMapPin, FiCalendar, FiLoader, FiShield, FiFlag, FiStar } from 'react-icons/fi';
 
+import { getUserAverageRating, getUserFeedbacksWithOrderPost } from '../../services/feedbackService';
+import UserRatingCard from '../../components/Feedback/UserRatingCard';
+import FeedbackList from '../../components/Feedback/FeedbackList';
 const cx = classNames.bind(styles);
 
 function UserProfilePage() {
@@ -20,6 +23,25 @@ function UserProfilePage() {
     const [posts, setPosts] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
+
+    const [avgRating, setAvgRating] = useState(0);
+    const [totalReviews, setTotalReviews] = useState(0);
+
+    // Reviews tab
+    const [profileTab, setProfileTab] = useState('posts');
+    const [feedbacks, setFeedbacks] = useState([]);
+    const [feedbackLoading, setFeedbackLoading] = useState(false);
+
+    useEffect(() => {
+        const fetchRating = async () => {
+            const res = await getUserAverageRating(userId);
+            if (res?.code === 1000) {
+                setAvgRating(res.result || 0);
+                setTotalReviews(res.totalReviews || 0);
+            }
+        };
+        fetchRating();
+    }, [userId]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -46,6 +68,31 @@ function UserProfilePage() {
         };
         fetchData();
     }, [userId]);
+
+    const fetchFeedbacks = async () => {
+        setFeedbackLoading(true);
+        try {
+            const res = await getUserFeedbacksWithOrderPost(userId);
+            if (res && res.length !== undefined) {
+                setFeedbacks(Array.isArray(res) ? res : []);
+            } else if (res?.code === 1000) {
+                setFeedbacks(Array.isArray(res.result) ? res.result : []);
+            } else {
+                setFeedbacks([]);
+            }
+        } catch (err) {
+            console.error('Lỗi fetch feedbacks:', err);
+            setFeedbacks([]);
+        } finally {
+            setFeedbackLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (profileTab === 'reviews') {
+            fetchFeedbacks();
+        }
+    }, [profileTab, userId]);
 
     const token = getToken();
     let me = null;
@@ -121,12 +168,16 @@ function UserProfilePage() {
 
                         <div className={cx('stats-row')}>
                             <div className={cx('stat-item')}>
-                                <strong>{posts.length}</strong>
+                                <strong>{posts.length}{currentPage < totalPages - 1 ? '+' : ''}</strong>
                                 <span>Bài đăng</span>
                             </div>
                             <div className={cx('stat-item')}>
-                                <strong>{user.rating || '-'}</strong>
+                                <strong>{avgRating > 0 ? avgRating.toFixed(1) : '—'}</strong>
                                 <span>Đánh giá</span>
+                            </div>
+                            <div className={cx('stat-item')}>
+                                <strong>{totalReviews}</strong>
+                                <span>Lượt đánh giá</span>
                             </div>
                         </div>
 
@@ -172,14 +223,41 @@ function UserProfilePage() {
 
                 <hr className={cx('divider')} />
 
-                <div className={cx('my-posts-section')}>
-                    <h3 className={cx('section-title')}>Bài đăng của {user.fullName || user.username}</h3>
-                    <UserPosts 
-                        posts={posts} 
-                        onLoadMore={handleLoadMorePosts} 
-                        hasMore={currentPage < totalPages - 1} 
-                    />
+                {/* PROFILE TABS */}
+                <div className={cx('profile-tabs')}>
+                    <button
+                        className={cx('profile-tab', { active: profileTab === 'posts' })}
+                        onClick={() => setProfileTab('posts')}
+                    >
+                        Bài đăng ({posts.length})
+                    </button>
+                    <button
+                        className={cx('profile-tab', { active: profileTab === 'reviews' })}
+                        onClick={() => setProfileTab('reviews')}
+                    >
+                        Đánh giá ({totalReviews})
+                    </button>
                 </div>
+
+                {profileTab === 'posts' ? (
+                    <div className={cx('my-posts-section')}>
+                        <UserPosts
+                            posts={posts}
+                            onLoadMore={handleLoadMorePosts}
+                            hasMore={currentPage < totalPages - 1}
+                        />
+                    </div>
+                ) : (
+                    <div className={cx('reviews-section')}>
+                        {feedbackLoading ? (
+                            <div className={cx('loading')}>
+                                <FiLoader className={cx('spin')} /> Đang tải đánh giá...
+                            </div>
+                        ) : (
+                            <FeedbackList feedbacks={feedbacks} />
+                        )}
+                    </div>
+                )}
             </div>
 
             <ReportModal

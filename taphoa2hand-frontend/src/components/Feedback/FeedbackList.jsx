@@ -67,7 +67,20 @@ const FeedbackList = ({ feedbacks = [], loading = false }) => {
                         </div>
                     )}
 
-                    {feedback.imageUrl && (
+                    {feedback.mediaList && feedback.mediaList.length > 0 && (
+                        <div className={cx('feedback-images')}>
+                            {feedback.mediaList.map((media) => (
+                                <img
+                                    key={media.id || media.url}
+                                    src={media.url}
+                                    alt="Feedback"
+                                    loading="lazy"
+                                />
+                            ))}
+                        </div>
+                    )}
+
+                    {feedback.imageUrl && !feedback.mediaList && (
                         <div className={cx('feedback-image')}>
                             <img 
                                 src={feedback.imageUrl} 

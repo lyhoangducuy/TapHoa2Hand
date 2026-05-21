@@ -1,4 +1,5 @@
 import { API, CONFIG } from "../configurations/configuration";
+import httpClient from "../configurations/httpClient";
 import { getToken } from "./localStorageService";
 
 
@@ -41,6 +42,26 @@ export const createFeedback = async (feedbackData, images = []) => {
         console.error("Lỗi khi tạo đánh giá:", error);
         throw error;
     }
+};
+export const checkFeedbackExists = async (orderId) => {
+    const res = await fetch(
+        `${CONFIG.API_GATEWAY}/api/feedbacks/check/${orderId}`,
+        {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            }
+        }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+        throw new Error(data?.message || 'Check feedback failed');
+    }
+
+    return data; // ApiResponse<Boolean>
 };
 // Lấy đánh giá theo Order ID
 export const getFeedbackByOrderId = async (orderId) => {
@@ -245,10 +266,12 @@ export const deleteFeedback = async (feedbackId) => {
     }
 };
 
-// Admin: Lấy tất cả đánh giá
-export const adminGetAllFeedbacks = async (page = 0, size = 20) => {
+// Admin: Lấy tất cả đánh giá (phân trang, tìm kiếm)
+export const adminGetAllFeedbacks = async (page = 0, size = 20, keyword = '') => {
     try {
-        const response = await fetch(`${CONFIG.API_GATEWAY}${API.ADMIN_GET_ALL_FEEDBACKS}?page=${page}&size=${size}&sort=createdAt,desc`, {
+        const params = new URLSearchParams({ page, size, sort: 'createdAt,desc' });
+        if (keyword) params.append('keyword', keyword);
+        const response = await fetch(`${CONFIG.API_GATEWAY}${API.ADMIN_GET_ALL_FEEDBACKS}?${params}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -266,6 +289,32 @@ export const adminGetAllFeedbacks = async (page = 0, size = 20) => {
         return data;
     } catch (error) {
         console.error("Lỗi khi lấy danh sách đánh giá:", error);
+        throw error;
+    }
+};
+
+// Admin: Cập nhật đánh giá (admin sửa)
+export const adminUpdateFeedback = async (feedbackId, feedbackData) => {
+    try {
+        const response = await fetch(`${CONFIG.API_GATEWAY}${API.ADMIN_UPDATE_FEEDBACK(feedbackId)}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            },
+            body: JSON.stringify(feedbackData)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            const errorMessage = data?.message || data?.error || 'Lỗi khi cập nhật đánh giá';
+            throw new Error(errorMessage);
+        }
+
+        return data;
+    } catch (error) {
+        console.error("Lỗi khi cập nhật đánh giá:", error);
         throw error;
     }
 };
@@ -295,7 +344,7 @@ export const adminDeleteFeedback = async (feedbackId) => {
     }
 };
 
-// Admin: Lấy đánh giá của một người dùng
+// Admin: Lấy đánh giá theo userId
 export const adminGetFeedbacksByUser = async (userId, page = 0, size = 20) => {
     try {
         const response = await fetch(`${CONFIG.API_GATEWAY}${API.ADMIN_GET_FEEDBACKS_BY_USER(userId)}?page=${page}&size=${size}&sort=createdAt,desc`, {
@@ -319,4 +368,39 @@ export const adminGetFeedbacksByUser = async (userId, page = 0, size = 20) => {
         throw error;
     }
 };
+export const getUserAverageRating = async (userId) => {
+    try {
+        const res = await httpClient.get(
+            `${CONFIG.API_GATEWAY}${API.FEEDBACK_AVG_RATING(userId)}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${getToken()}`
+                }
+            }
+        );
+        return res.data;
+    } catch (err) {
+        console.error("Lỗi get average rating:", err);
+        return null;
+    }
+};
 
+// ==============================
+// 2. LẤY FEEDBACK + ORDER + POST
+// ==============================
+export const getUserFeedbacksWithOrderPost = async (userId, page = 0, size = 10) => {
+    try {
+        const res = await httpClient.get(
+            `${CONFIG.API_GATEWAY}${API.FEEDBACK_WITH_ORDER_POST(userId)}?page=${page}&size=${size}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${getToken()}`
+                }
+            }
+        );
+        return res.data;
+    } catch (err) {
+        console.error("Lỗi get feedback detail:", err);
+        return null;
+    }
+};

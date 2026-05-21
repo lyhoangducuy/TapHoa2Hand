@@ -66,6 +66,11 @@ const Sidebar = ({ visible, onVisibleChange }) => {
             <CIcon icon={cilPeople} customClassName="nav-icon" /> Thong bao
           </Link>
         </CNavItem>
+        <CNavItem>
+          <Link to="/admin/feedbacks" className={`nav-link ${location.pathname === '/admin/feedbacks' ? 'active' : ''}`}>
+            <CIcon icon={cilPeople} customClassName="nav-icon" /> Phản hồi
+          </Link>
+        </CNavItem>
 
         <CNavTitle>Báo cáo & Cài đặt</CNavTitle>
         <CNavItem>

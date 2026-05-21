@@ -6,7 +6,7 @@ import { FiLoader } from 'react-icons/fi';
 
 import styles from './MyOrderPage.module.scss';
 import * as orderService from '../../../services/orderService';
-import { FeedbackForm } from '../../../components/Feedback';
+import { FeedbackPopup } from '../../../components/Feedback';
 import {
     PaymentModal,
     SellerBankModal,
@@ -355,16 +355,11 @@ const MyOrderPage = () => {
             </div>
 
             {showFeedbackForm && selectedOrder && (
-                <div className={cx('feedback-modal-overlay')} onClick={handleFeedbackCancel}>
-                    <div className={cx('feedback-modal')} onClick={(e) => e.stopPropagation()}>
-                        <FeedbackForm
-                            orderId={selectedOrder.id}
-                            targetUserName={`Đơn hàng #${selectedOrder.id?.substring(0, 8)}`}
-                            onSuccess={handleFeedbackSuccess}
-                            onCancel={handleFeedbackCancel}
-                        />
-                    </div>
-                </div>
+                <FeedbackPopup
+                    order={selectedOrder}
+                    onSuccess={handleFeedbackSuccess}
+                    onCancel={handleFeedbackCancel}
+                />
             )}
 
             <SellerBankModal
