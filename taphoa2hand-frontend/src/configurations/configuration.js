@@ -98,11 +98,12 @@ export const API = {
     UPDATE_ORDER_STATUS: (orderId) => `/order/${orderId}/status`,
     UPDATE_ORDER_STATUS_POST: "/order/update",
     COUNT_ORDER_OF_POST: (postId) => `/order/count/${postId}`,
+    COUNT_COMPLETED_ORDERS: `/order/count-completed`,
     //
     POST_CHAT_AI:"/chat-ai/chat-with-image",
     //Feedback
     CREATE_FEEDBACK:"/api/feedbacks/create",
-    GET_FEEDBACK_BY_ORDER:(orderId)=>`/api/feedbacks/${orderId}`,
+    GET_FEEDBACK_BY_ORDER:(orderId)=>`/api/feedbacks/order/${orderId}`,
     GET_FEEDBACK_BY_USER:(userId)=>`/api/feedbacks/user/${userId}`,
     GET_FEEDBACK_BY_REVIEWER:(userId)=>`/api/feedbacks/reviewer/${userId}`,
     GET_AVERAGE_RATING:(userId)=>`/api/feedbacks/rating/${userId}`,

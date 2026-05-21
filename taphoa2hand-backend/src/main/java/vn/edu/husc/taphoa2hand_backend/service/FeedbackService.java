@@ -119,6 +119,7 @@ public class FeedbackService {
 
         return feedbackMapper.toResponse(feedbackRepository.save(feedback));
     }
+
     @Transactional(readOnly = true)
     public Page<FeedbackResponse> adminGetAllFeedbacks(int page, int size, String keyword) {
         Pageable pageable = PageRequest.of(page, size,
@@ -178,6 +179,7 @@ public class FeedbackService {
         return context.getAuthentication().getName();
     }
 
+    @Transactional(readOnly = true)
     public AverageRatingResponse getAverageRating(String userId) {
         Double avg = feedbackRepository.getAverageRatingByTargetUser(userId);
         Long count = feedbackRepository.countFeedbackByUserId(userId);

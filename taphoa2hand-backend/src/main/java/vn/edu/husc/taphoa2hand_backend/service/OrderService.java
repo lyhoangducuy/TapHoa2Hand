@@ -906,6 +906,14 @@ public class OrderService {
                 .orders(orderResponses)
                 .build();
     }
+    @Transactional(readOnly = true)
+    public long countCompletedOrders(boolean asBuyer, String userId) {
+        if (asBuyer) {
+            return orderRepository.countCompletedByBuyerId(userId);
+        } else {
+            return orderRepository.countCompletedBySellerId(userId);
+        }
+    }
 
     @Scheduled(cron = "0 */5 * * * *")
     @Transactional

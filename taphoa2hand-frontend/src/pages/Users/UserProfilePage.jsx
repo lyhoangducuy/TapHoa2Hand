@@ -7,9 +7,9 @@ import { getUserPosts } from '../../services/postService';
 import { getToken } from '../../services/localStorageService';
 import UserPosts from '../Profile/Post/UserPosts';
 import ReportModal from '../../components/Report/ReportModal';
-import { FiMail, FiPhone, FiMapPin, FiCalendar, FiLoader, FiShield, FiFlag, FiStar } from 'react-icons/fi';
-
+import { FiMail, FiPhone, FiMapPin, FiCalendar, FiLoader, FiShield, FiFlag } from 'react-icons/fi';
 import { getUserAverageRating, getUserFeedbacksWithOrderPost } from '../../services/feedbackService';
+import { getCompletedOrderCount } from '../../services/orderService';
 import UserRatingCard from '../../components/Feedback/UserRatingCard';
 import FeedbackList from '../../components/Feedback/FeedbackList';
 const cx = classNames.bind(styles);
@@ -26,22 +26,13 @@ function UserProfilePage() {
 
     const [avgRating, setAvgRating] = useState(0);
     const [totalReviews, setTotalReviews] = useState(0);
+    const [completedAsBuyer, setCompletedAsBuyer] = useState(0);
+    const [completedAsSeller, setCompletedAsSeller] = useState(0);
 
     // Reviews tab
     const [profileTab, setProfileTab] = useState('posts');
     const [feedbacks, setFeedbacks] = useState([]);
     const [feedbackLoading, setFeedbackLoading] = useState(false);
-
-    useEffect(() => {
-        const fetchRating = async () => {
-            const res = await getUserAverageRating(userId);
-            if (res?.code === 1000) {
-                setAvgRating(res.result || 0);
-                setTotalReviews(res.totalReviews || 0);
-            }
-        };
-        fetchRating();
-    }, [userId]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -67,6 +58,39 @@ function UserProfilePage() {
             }
         };
         fetchData();
+    }, [userId]);
+
+    useEffect(() => {
+        const fetchRating = async () => {
+            const res = await getUserAverageRating(userId);
+            if (res?.code === 1000) {
+                setAvgRating(res.result?.avgRating ?? 0);
+                setTotalReviews(res.result?.totalReviews ?? 0);
+            }
+        };
+
+        const fetchCompleted = async () => {
+            try {
+                const [buyerRes, sellerRes] = await Promise.all([
+                    getCompletedOrderCount(userId, true).catch(() => null),
+                    getCompletedOrderCount(userId, false).catch(() => null),
+                ]);
+
+                if (buyerRes?.data?.code === 1000) {
+                    setCompletedAsBuyer(buyerRes.data.result ?? 0);
+                }
+
+                if (sellerRes?.data?.code === 1000) {
+                    setCompletedAsSeller(sellerRes.data.result ?? 0);
+                }
+
+            } catch (err) {
+                console.error('Lỗi fetch completed orders:', err);
+            }
+        };
+
+        fetchRating();
+        fetchCompleted();
     }, [userId]);
 
     const fetchFeedbacks = async () => {
@@ -176,8 +200,12 @@ function UserProfilePage() {
                                 <span>Đánh giá</span>
                             </div>
                             <div className={cx('stat-item')}>
-                                <strong>{totalReviews}</strong>
-                                <span>Lượt đánh giá</span>
+                                <strong>{completedAsBuyer}</strong>
+                                <span>Đã mua</span>
+                            </div>
+                            <div className={cx('stat-item')}>
+                                <strong>{completedAsSeller}</strong>
+                                <span>Đã bán</span>
                             </div>
                         </div>
 

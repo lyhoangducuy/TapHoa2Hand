@@ -134,4 +134,14 @@ public class OrderController {
                 .message("Đếm đơn hàng thành công")
                 .build();
     }
+
+    @GetMapping("/count-completed")
+    public ApiResponse<Long> countCompletedOrders(
+            @RequestParam boolean asBuyer,
+            @RequestParam String userId) {
+        return ApiResponse.<Long>builder()
+                .result(orderService.countCompletedOrders(asBuyer, userId))
+                .message("Đếm đơn hoàn thành thành công")
+                .build();
+    }
 }

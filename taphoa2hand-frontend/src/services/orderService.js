@@ -71,6 +71,10 @@ export const getOrdersOfPost = async (postId) => {
     return await httpClient.get(API.COUNT_ORDER_OF_POST(postId));
 };
 
+export const getCompletedOrderCount = async (userId, asBuyer = true) => {
+    return await httpClient.get(`${API.COUNT_COMPLETED_ORDERS}?asBuyer=${asBuyer}&userId=${userId}`);
+};
+
 // Thêm cục này vào cuối cùng file orderService.js của bạn
 const orderService = {
     createOrder,
@@ -83,6 +87,7 @@ const orderService = {
     confirmPayment,
     adminEscrowPayout,
     getOrdersOfPost,
+    getCompletedOrderCount,
 };
 
 export default orderService;

@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import vn.edu.husc.taphoa2hand_backend.dto.request.FeedbackDTO;
 import vn.edu.husc.taphoa2hand_backend.dto.response.ApiResponse;
+import vn.edu.husc.taphoa2hand_backend.dto.response.AverageRatingResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.FeedbackFullResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.FeedbackResponse;
 import vn.edu.husc.taphoa2hand_backend.service.FeedbackService;
@@ -44,8 +45,8 @@ public class FeedbackController {
     }
 
     @GetMapping("/average/{userId}")
-    public ApiResponse<vn.edu.husc.taphoa2hand_backend.dto.response.AverageRatingResponse> getAverageRating(@PathVariable String userId) {
-        return ApiResponse.<vn.edu.husc.taphoa2hand_backend.dto.response.AverageRatingResponse>builder()
+    public ApiResponse<AverageRatingResponse> getAverageRating(@PathVariable String userId) {
+        return ApiResponse.<AverageRatingResponse>builder()
                 .message("Lấy trung bình rating thành công")
                 .result(feedbackService.getAverageRating(userId))
                 .build();

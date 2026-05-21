@@ -44,24 +44,33 @@ export const createFeedback = async (feedbackData, images = []) => {
     }
 };
 export const checkFeedbackExists = async (orderId) => {
-    const res = await fetch(
-        `${CONFIG.API_GATEWAY}/api/feedbacks/check/${orderId}`,
-        {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getToken()}`
+    try {
+        const res = await fetch(
+            `${CONFIG.API_GATEWAY}${API.GET_FEEDBACK_BY_ORDER(orderId)}`,
+            {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getToken()}`
+                }
             }
+        );
+
+        if (res.status === 404) {
+            return { result: false };
         }
-    );
 
-    const data = await res.json();
+        const data = await res.json();
 
-    if (!res.ok) {
-        throw new Error(data?.message || 'Check feedback failed');
+        if (!res.ok) {
+            return { result: false };
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Check feedback error:', error);
+        return { result: false };
     }
-
-    return data; // ApiResponse<Boolean>
 };
 // Lấy đánh giá theo Order ID
 export const getFeedbackByOrderId = async (orderId) => {

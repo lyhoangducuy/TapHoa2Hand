@@ -83,4 +83,12 @@ public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecif
             """)
     List<Order> findAllByPostIdOrderByCreatedAtDesc(@Param("postId") String postId);
 
+    // Đếm đơn COMPLETED của buyer
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.buyer.id = :buyerId AND o.status = 'COMPLETED'")
+    long countCompletedByBuyerId(@Param("buyerId") String buyerId);
+
+    // Đếm đơn COMPLETED của seller
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.seller.id = :sellerId AND o.status = 'COMPLETED'")
+    long countCompletedBySellerId(@Param("sellerId") String sellerId);
+
 }
