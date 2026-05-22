@@ -126,9 +126,36 @@ export const getReportReasons = async () => {
                 Authorization: `Bearer ${token}`
             }
         });
-        return response.data; // Thường Spring trả về ApiResponse, lấy .data để lấy body
+        return response.data;
     } catch (error) {
         console.error("Error fetching report reasons:", error);
+        throw error;
+    }
+};
+
+export const getMyReportsPaged = async ({ page = 0, size = 10 } = {}) => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await httpClient.get(
+            `${API.GET_MY_REPORTS_PAGED}?page=${page}&size=${size}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+        return response.data.result;
+    } catch (error) {
+        console.error("Error fetching my reports:", error);
+        throw error;
+    }
+};
+
+export const getMyReports = async () => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await httpClient.get('/reports/my-reports', {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data.result;
+    } catch (error) {
+        console.error("Error fetching my reports:", error);
         throw error;
     }
 };

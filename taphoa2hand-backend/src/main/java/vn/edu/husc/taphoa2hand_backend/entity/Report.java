@@ -62,6 +62,10 @@ public class Report extends BaseEntity {
     @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     List<ReportEvidence> evidences = new ArrayList<>();
+
+    @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    List<ReportPenalty> penalties = new ArrayList<>();
     // Trạng thái xử lý của Admin
     @Enumerated(EnumType.STRING)
     @Column(length = 50)

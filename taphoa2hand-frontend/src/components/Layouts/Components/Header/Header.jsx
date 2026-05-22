@@ -4,7 +4,7 @@ import classNames from "classnames/bind";
 import styles from "./Header.module.scss";
 import { 
     FiSearch, FiBell, FiMessageSquare, FiUser, FiPlusCircle, 
-    FiLogIn, FiChevronDown, FiSettings, FiPackage, FiLogOut, FiHeart 
+    FiLogIn, FiChevronDown, FiSettings, FiPackage, FiLogOut, FiHeart, FiFlag 
 } from 'react-icons/fi';
 
 import Sidebar from "../Sidebar/Sidebar";
@@ -59,6 +59,9 @@ const UserDropdown = ({ user, onLogout, onNavigate }) => {
                     </div>
                     <div className={cx("dropdown-item")} onClick={() => onNavigate('/my-orders')}>
                         <FiPackage className={cx("item-icon")} /> <span>Đơn hàng</span>
+                    </div>
+                    <div className={cx("dropdown-item")} onClick={() => onNavigate('/my-reports')}>
+                        <FiFlag className={cx("item-icon")} /> <span>Báo cáo của tôi</span>
                     </div>
                     <div className={cx("dropdown-item")} onClick={() => onNavigate('/my-favorites')}>
                         <FiHeart className={cx("item-icon")} /> <span>Tin đã lưu</span>

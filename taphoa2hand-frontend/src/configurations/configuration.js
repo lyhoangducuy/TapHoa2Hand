@@ -79,6 +79,10 @@ export const API = {
     ADMIN_GET_REPORT_BY_ID: (reportId) => `/reports/${reportId}`,
     ADMIN_GET_REPORTS_BY_STATUS: (status) => `/reports/status/${status}`,
     ADMIN_UPDATE_REPORT_STATUS: (reportId) => `/reports/${reportId}/status`,
+    ADMIN_REVIEW_REPORT: (reportId) => `/reports/${reportId}/review`,
+    ADMIN_REPORTS_PAGED: `/reports/paged`,
+    ADMIN_REPORTS_STATS: `/reports/stats`,
+    GET_MY_REPORTS_PAGED: `/reports/my-reports/paged`,
 
     // Notification
     GET_NOTIFICATIONS: (userId) => `/notification/user/${userId}`,

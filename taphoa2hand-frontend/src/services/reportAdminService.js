@@ -1,70 +1,71 @@
 import { API } from "../configurations/configuration";
 import httpClient from "../configurations/httpClient";
 
-// Get all reports for admin
+const getToken = () => localStorage.getItem('token');
+const headers = () => ({ Authorization: `Bearer ${getToken()}` });
+
 export const getAllReports = async () => {
-    try {
-        const token = localStorage.getItem('token');
-        const response = await httpClient.get(API.ADMIN_GET_ALL_REPORTS, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            }
-        });
-        return response.data.result;
-    } catch (error) {
-        console.error("Error fetching all reports:", error);
-        throw error;
-    }
+    const response = await httpClient.get(API.ADMIN_GET_ALL_REPORTS, { headers: headers() });
+    return response.data.result;
 };
 
-// Get report by ID
 export const getReportById = async (reportId) => {
-    try {
-        const token = localStorage.getItem('token');
-        const response = await httpClient.get(API.ADMIN_GET_REPORT_BY_ID(reportId), {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            }
-        });
-        return response.data.result;
-    } catch (error) {
-        console.error("Error fetching report:", error);
-        throw error;
-    }
+    const response = await httpClient.get(API.ADMIN_GET_REPORT_BY_ID(reportId), { headers: headers() });
+    return response.data.result;
 };
 
-// Get reports by status
 export const getReportsByStatus = async (status) => {
-    try {
-        const token = localStorage.getItem('token');
-        const response = await httpClient.get(API.ADMIN_GET_REPORTS_BY_STATUS(status), {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            }
-        });
-        return response.data.result;
-    } catch (error) {
-        console.error("Error fetching reports by status:", error);
-        throw error;
-    }
+    const response = await httpClient.get(API.ADMIN_GET_REPORTS_BY_STATUS(status), { headers: headers() });
+    return response.data.result;
 };
 
-// Update report status
+export const getReportsPaged = async ({
+    keyword = '',
+    status = '',
+    type = '',
+    fromDate = '',
+    toDate = '',
+    page = 0,
+    size = 10,
+    sortBy = 'createdAt',
+    sortDir = 'desc',
+} = {}) => {
+    const params = new URLSearchParams();
+    if (keyword) params.append('keyword', keyword);
+    if (status) params.append('status', status);
+    if (type) params.append('type', type);
+    if (fromDate) params.append('fromDate', fromDate);
+    if (toDate) params.append('toDate', toDate);
+    params.append('page', page);
+    params.append('size', size);
+    params.append('sortBy', sortBy);
+    params.append('sortDir', sortDir);
+
+    const response = await httpClient.get(`${API.ADMIN_REPORTS_PAGED}?${params.toString()}`, {
+        headers: headers()
+    });
+    return response.data.result;
+};
+
+export const getReportStats = async () => {
+    const response = await httpClient.get(API.ADMIN_REPORTS_STATS, { headers: headers() });
+    return response.data.result;
+};
+
 export const updateReportStatus = async (reportId, status) => {
-    try {
-        const token = localStorage.getItem('token');
-        const response = await httpClient.put(API.ADMIN_UPDATE_REPORT_STATUS(reportId), 
-            { status },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                }
-            }
-        );
-        return response.data.result;
-    } catch (error) {
-        console.error("Error updating report status:", error);
-        throw error;
-    }
+    const response = await httpClient.put(
+        API.ADMIN_UPDATE_REPORT_STATUS(reportId),
+        { status },
+        { headers: { ...headers(), 'Content-Type': 'application/json' } }
+    );
+    return response.data.result;
+};
+
+export const reviewReport = async (reportId, payload) => {
+    const response = await httpClient.post(
+        API.ADMIN_REVIEW_REPORT(reportId),
+        payload,
+        { headers: { ...headers(), 'Content-Type': 'application/json' } }
+    );
+    return response.data.result;
 };

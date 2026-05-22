@@ -31,6 +31,7 @@ import AdminBannerPage from '../pages/Admin/Banner/AdminBannerPage';
 import AdminFeedbackPage from '../pages/Admin/Feedback/AdminFeedbackPage';
 import OrderAdminPage from '../pages/Admin/Orders/OrderAdminPage';
 import ReportAdminPage from '../pages/Admin/Reports';
+import MyReportsPage from '../pages/Users/MyReportsPage';
 import NoSearchLayout from '../components/Layouts/NoSearchLayout';
 const publicRoutes = [
     { path: '/', component: HomePage },
@@ -54,7 +55,8 @@ const privateRoutes = [
     { path: '/order/myOrder/:orderId', component: OrderDetailPage },
     {path:'/edit-post/:postId',component:PostEditPage, layout: NoSidebarLayout},
     {path:'/chat-box',component: ChatBox},
-    {path:"/banner",component: BannerSlider}
+    {path:"/banner",component: BannerSlider},
+    {path: '/my-reports', component: MyReportsPage },
 ];
 
 // 3. DÀNH RIÊNG CHO ADMIN

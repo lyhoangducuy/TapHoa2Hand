@@ -39,6 +39,11 @@ public class ReportResponse {
 
     List<ReportEvidenceResponse> evidences;
 
+    List<ReportPenaltyResponse> penalties;
+
+    String reviewedById;
+    String reviewedByName;
+
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
 }

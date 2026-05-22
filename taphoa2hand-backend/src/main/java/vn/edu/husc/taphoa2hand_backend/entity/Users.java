@@ -1,6 +1,7 @@
 package vn.edu.husc.taphoa2hand_backend.entity;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -55,6 +56,10 @@ public class Users extends BaseEntity {
 
     @Builder.Default
     private boolean active = true; // Gán mặc định là true
+
+    private LocalDateTime lockedUntil;
+
+    private boolean transactionsStopped = false;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
