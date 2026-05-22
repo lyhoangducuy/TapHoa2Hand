@@ -5,20 +5,7 @@ import { getProvinces, getWardsByProvince } from '../../../../services/locationS
 
 const cx = classNames.bind(styles);
 
-/**
- * @param {object} postAddress — city/ward/street (tên hiển thị gửi API), provinceCode/wardCode (UI)
- * @param {object} fieldErrors
- * @param {(e: React.ChangeEvent<HTMLInputElement>) => void} onAddressChange — cho ô street
- * @param {(patch: object) => void} onPostAddressPatch — cập nhật một phần postAddress
- * @param {boolean} [embedded] — true: không render fieldset/legend (dùng trong card Edit)
- */
-function AddressSection({
-    postAddress,
-    fieldErrors = {},
-    onAddressChange,
-    onPostAddressPatch,
-    embedded = false,
-}) {
+function AddressSection({ postAddress, fieldErrors = {}, onAddressChange, onPostAddressPatch, embedded = false }) {
     const [provinces, setProvinces] = useState([]);
     const [provincesLoading, setProvincesLoading] = useState(true);
     const [provincesError, setProvincesError] = useState(null);
@@ -46,9 +33,7 @@ function AddressSection({
         }
     }, []);
 
-    useEffect(() => {
-        loadProvinces();
-    }, [loadProvinces]);
+    useEffect(() => { loadProvinces(); }, [loadProvinces]);
 
     const provinceCode = postAddress.provinceCode || '';
 
@@ -68,9 +53,7 @@ function AddressSection({
                 if (cancelled) return;
                 if (res?.code === 1000 && Array.isArray(res.result)) {
                     setWards(res.result);
-                    if (res.result.length === 0) {
-                        setWardsError('Không có phường/xã cho tỉnh đã chọn.');
-                    }
+                    if (res.result.length === 0) setWardsError('Không có phường/xã cho tỉnh đã chọn.');
                 } else {
                     setWards([]);
                     setWardsError(res?.message || 'Không tải được phường/xã');
@@ -84,122 +67,88 @@ function AddressSection({
                 if (!cancelled) setWardsLoading(false);
             }
         })();
-        return () => {
-            cancelled = true;
-        };
+        return () => { cancelled = true; };
     }, [provinceCode]);
 
-    // Gán lại mã tỉnh khi mở bài sửa (chỉ có tên city từ API)
     useEffect(() => {
         if (!provinces.length || postAddress.provinceCode) return;
         const c = (postAddress.city || '').trim();
         if (!c) return;
-        const exact = provinces.find((p) => p.name.trim() === c);
-        const hit =
-            exact ||
-            provinces.find(
-                (p) =>
-                    p.name.toLowerCase().includes(c.toLowerCase()) ||
-                    c.toLowerCase().includes(p.name.toLowerCase())
-            );
-        if (hit) {
-            onPostAddressPatch({ provinceCode: String(hit.code), city: hit.name });
-        }
+        const exact = provinces.find(p => p.name.trim() === c);
+        const hit = exact || provinces.find(p =>
+            p.name.toLowerCase().includes(c.toLowerCase()) ||
+            c.toLowerCase().includes(p.name.toLowerCase())
+        );
+        if (hit) onPostAddressPatch({ provinceCode: String(hit.code), city: hit.name });
     }, [provinces, postAddress.city, postAddress.provinceCode, onPostAddressPatch]);
 
-    // Gán lại mã phường khi đã có danh sách wards (bài sửa chỉ có tên ward)
     useEffect(() => {
         if (!wards.length || postAddress.wardCode) return;
         const w = (postAddress.ward || '').trim();
         if (!w) return;
-        const exact = wards.find((x) => x.name.trim() === w);
-        const hit =
-            exact ||
-            wards.find(
-                (x) =>
-                    x.name.toLowerCase().includes(w.toLowerCase()) ||
-                    w.toLowerCase().includes(x.name.toLowerCase())
-            );
-        if (hit) {
-            onPostAddressPatch({ wardCode: String(hit.code), ward: hit.name });
-        }
+        const exact = wards.find(x => x.name.trim() === w);
+        const hit = exact || wards.find(x =>
+            x.name.toLowerCase().includes(w.toLowerCase()) ||
+            w.toLowerCase().includes(x.name.toLowerCase())
+        );
+        if (hit) onPostAddressPatch({ wardCode: String(hit.code), ward: hit.name });
     }, [wards, postAddress.ward, postAddress.wardCode, onPostAddressPatch]);
 
     const inner = (
         <>
             <div className={cx('grid2Cols')}>
                 <div className={cx('formGroup')}>
-                    <label>Tỉnh / Thành phố</label>
+                    <label className={cx('label')}>Tỉnh / Thành phố <span className={cx('required')}>*</span></label>
                     {provincesError && (
                         <p className={cx('errorText')}>
-                            {provincesError}{' '}
-                            <button type="button" className={cx('submitBtn')} style={{ marginLeft: 8, padding: '4px 12px', fontSize: 13 }} onClick={loadProvinces}>
+                            {provincesError}
+                            <button type="button" style={{ marginLeft: 8, padding: '3px 10px', fontSize: 12, cursor: 'pointer', border: '1px solid #e2e8f0', borderRadius: 6, background: '#fff' }} onClick={loadProvinces}>
                                 Thử lại
                             </button>
                         </p>
                     )}
                     <select
-                        className={cx('inputControl', { error: fieldErrors.city })}
+                        className={cx('selectControl', { error: fieldErrors.city })}
                         value={provinceCode}
                         disabled={provincesLoading || provinces.length === 0}
                         onChange={(e) => {
                             const code = e.target.value;
-                            const item = provinces.find((p) => String(p.code) === code);
-                            onPostAddressPatch({
-                                provinceCode: code,
-                                city: item?.name ?? '',
-                                wardCode: '',
-                                ward: '',
-                            });
+                            const item = provinces.find(p => String(p.code) === code);
+                            onPostAddressPatch({ provinceCode: code, city: item?.name ?? '', wardCode: '', ward: '' });
                         }}
                     >
-                        <option value="">
-                            {provincesLoading ? 'Đang tải…' : '— Chọn tỉnh/thành —'}
-                        </option>
-                        {provinces.map((p) => (
-                            <option key={p.code} value={String(p.code)}>
-                                {p.name}
-                            </option>
+                        <option value="">{provincesLoading ? 'Đang tải…' : '— Chọn tỉnh/thành —'}</option>
+                        {provinces.map(p => (
+                            <option key={p.code} value={String(p.code)}>{p.name}</option>
                         ))}
                     </select>
                     {fieldErrors.city && <span className={cx('errorText')}>{fieldErrors.city}</span>}
                 </div>
                 <div className={cx('formGroup')}>
-                    <label>Phường / Xã</label>
+                    <label className={cx('label')}>Phường / Xã <span className={cx('required')}>*</span></label>
                     {wardsError && provinceCode && <span className={cx('errorText')}>{wardsError}</span>}
                     <select
-                        className={cx('inputControl', { error: fieldErrors.ward })}
+                        className={cx('selectControl', { error: fieldErrors.ward })}
                         value={postAddress.wardCode || ''}
                         disabled={!provinceCode || wardsLoading || wards.length === 0}
                         onChange={(e) => {
                             const wcode = e.target.value;
-                            const item = wards.find((w) => String(w.code) === wcode);
-                            onPostAddressPatch({
-                                wardCode: wcode,
-                                ward: item?.name ?? '',
-                            });
+                            const item = wards.find(w => String(w.code) === wcode);
+                            onPostAddressPatch({ wardCode: wcode, ward: item?.name ?? '' });
                         }}
                     >
                         <option value="">
-                            {!provinceCode
-                                ? 'Chọn tỉnh trước'
-                                : wardsLoading
-                                  ? 'Đang tải…'
-                                  : wards.length === 0
-                                    ? 'Không có dữ liệu'
-                                    : '— Chọn phường/xã —'}
+                            {!provinceCode ? 'Chọn tỉnh trước' : wardsLoading ? 'Đang tải…' : wards.length === 0 ? 'Không có dữ liệu' : '— Chọn phường/xã —'}
                         </option>
-                        {wards.map((w) => (
-                            <option key={`${w.code}-${w.name}`} value={String(w.code)}>
-                                {w.name}
-                            </option>
+                        {wards.map(w => (
+                            <option key={`${w.code}-${w.name}`} value={String(w.code)}>{w.name}</option>
                         ))}
                     </select>
                     {fieldErrors.ward && <span className={cx('errorText')}>{fieldErrors.ward}</span>}
                 </div>
             </div>
             <div className={cx('formGroup')}>
-                <label>Số nhà / Tên đường</label>
+                <label className={cx('label')}>Số nhà / Tên đường <span className={cx('required')}>*</span></label>
                 <input
                     className={cx('inputControl', { error: fieldErrors.street })}
                     name="street"
@@ -212,16 +161,32 @@ function AddressSection({
         </>
     );
 
+    const cardContent = (
+        <section className={cx('card')}>
+            <div className={cx('card-header')}>
+                <div className={cx('card-icon', 'icon-address')}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <div>
+                    <h2 className={cx('card-title')}>Địa chỉ người bán</h2>
+                    <p className={cx('card-desc')}>Địa chỉ nhận hàng / giao hàng</p>
+                </div>
+            </div>
+            <div className={cx('card-body')}>
+                {inner}
+            </div>
+        </section>
+    );
+
     if (embedded) {
-        return <div className={cx('fieldset')}>{inner}</div>;
+        return (
+            <div className={cx('card')}>
+                <div className={cx('card-body')}>{inner}</div>
+            </div>
+        );
     }
 
-    return (
-        <fieldset className={cx('fieldset')}>
-            <legend className={cx('legend')}>Địa chỉ người bán</legend>
-            {inner}
-        </fieldset>
-    );
+    return cardContent;
 }
 
 export default AddressSection;

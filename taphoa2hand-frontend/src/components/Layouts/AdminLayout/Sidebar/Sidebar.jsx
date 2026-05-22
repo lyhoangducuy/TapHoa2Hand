@@ -63,7 +63,7 @@ const Sidebar = ({ visible, onVisibleChange }) => {
         </CNavItem>
         <CNavItem>
           <Link to="/admin/notifications" className={`nav-link ${location.pathname === '/admin/notifications' ? 'active' : ''}`}>
-            <CIcon icon={cilPeople} customClassName="nav-icon" /> Thong bao
+            <CIcon icon={cilPeople} customClassName="nav-icon" /> Thông báo
           </Link>
         </CNavItem>
         <CNavItem>
@@ -71,13 +71,13 @@ const Sidebar = ({ visible, onVisibleChange }) => {
             <CIcon icon={cilPeople} customClassName="nav-icon" /> Phản hồi
           </Link>
         </CNavItem>
-
-        <CNavTitle>Báo cáo & Cài đặt</CNavTitle>
         <CNavItem>
           <Link to="/admin/reports" className={`nav-link ${location.pathname === '/admin/reports' ? 'active' : ''}`}>
-            <CIcon icon={cilWarning} customClassName="nav-icon" /> Quản lý báo cáo
+            <CIcon icon={cilWarning} customClassName="nav-icon" /> Báo cáo
           </Link>
         </CNavItem>
+        <CNavTitle>Cài đặt</CNavTitle>
+
         <CNavItem>
           <Link to="/admin/analytics" className={`nav-link ${location.pathname === '/admin/analytics' ? 'active' : ''}`}>
             <CIcon icon={cilChartLine} customClassName="nav-icon" /> Thống kê doanh thu
