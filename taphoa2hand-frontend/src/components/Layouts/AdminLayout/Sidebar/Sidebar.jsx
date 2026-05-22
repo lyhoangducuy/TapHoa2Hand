@@ -68,7 +68,7 @@ const Sidebar = ({ visible, onVisibleChange }) => {
         </CNavItem>
         <CNavItem>
           <Link to="/admin/feedbacks" className={`nav-link ${location.pathname === '/admin/feedbacks' ? 'active' : ''}`}>
-            <CIcon icon={cilPeople} customClassName="nav-icon" /> Phản hồi
+            <CIcon icon={cilPeople} customClassName="nav-icon" /> Đánh giá
           </Link>
         </CNavItem>
         <CNavItem>

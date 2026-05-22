@@ -927,7 +927,7 @@ public class OrderService {
         }
     }
 
-    @Scheduled(cron = "0 */5 * * * *")
+    @Scheduled(cron = "0 */1 * * * *")
     @Transactional
     public void autoReleaseEscrowOrders() {
 
