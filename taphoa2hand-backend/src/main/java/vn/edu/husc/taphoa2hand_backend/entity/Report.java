@@ -66,4 +66,10 @@ public class Report extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(length = 50)
     ReportStatusEnum status = ReportStatusEnum.PENDING;
+    @Column(columnDefinition = "TEXT")
+    String resolutionNote;
+
+    // Người xử lý
+    @ManyToOne
+    Users reviewedBy;
 }
