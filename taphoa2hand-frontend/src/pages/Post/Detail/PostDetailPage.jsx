@@ -98,10 +98,10 @@ useEffect(() => {
                         <h3><FiBox /> Thông số chi tiết</h3>
                         <div className={cx('spec-list')}>
                             <div className={cx('spec-row')}><span>Thương hiệu</span><strong>{detail.brand || 'Đang cập nhật'}</strong></div>
-                            <div className={cx('spec-row')}><span>Dòng máy</span><strong>{detail.model || 'Đang cập nhật'}</strong></div>
+                            <div className={cx('spec-row')}><span>Dòng sản phẩm</span><strong>{detail.model || 'Đang cập nhật'}</strong></div>
                             <div className={cx('spec-row')}><span>Tình trạng</span><strong>{detail.itemCondition || 'Đang cập nhật'}</strong></div>
                             <div className={cx('spec-row')}><span>Thời gian sử dụng</span><strong>{detail.usedDuration || 'Không rõ'}</strong></div>
-                            <div className={cx('spec-row')}><span>Lý do bán</span><strong>{detail.reasonForSelling || 'Không rõ'}</strong></div>
+                            <div className={cx('spec-row')}><span>Lý do </span><strong>{detail.reasonForSelling || 'Không rõ'}</strong></div>
                         </div>
                     </div>
                 </div>

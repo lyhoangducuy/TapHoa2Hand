@@ -29,6 +29,7 @@ import vn.edu.husc.taphoa2hand_backend.dto.response.Order.OrderOfPostResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Order.OrderPostResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Order.OrderResponse;
 import vn.edu.husc.taphoa2hand_backend.entity.Conversation;
+import vn.edu.husc.taphoa2hand_backend.entity.EmailInfo;
 import vn.edu.husc.taphoa2hand_backend.entity.HoldDurationUnit;
 import vn.edu.husc.taphoa2hand_backend.entity.Order;
 import vn.edu.husc.taphoa2hand_backend.entity.OrderBankInfo;
@@ -71,6 +72,7 @@ public class OrderService {
     ConversationRepository conversationRepository;
     NotificationService notificationService;
     ReportRepository reportRepository;
+    EmailService emailService;
 
     private static LocalDateTime addEscrowHold(LocalDateTime from, int amount, HoldDurationUnit unit) {
         if (unit == HoldDurationUnit.DAYS) {
@@ -705,8 +707,8 @@ public class OrderService {
         }
 
         if (newStatus == OrderStatusEnum.COMPLETED) {
-
-            String orderLink = "/order/myOrder/" + saved.getId();
+            String orderIdGet = saved.getId();
+            String orderLink = "/order/myOrder/" + orderIdGet;
 
             notificationService.createNotification(NotificationRequest.builder()
                     .content("Đơn hàng #" + saved.getId()
@@ -716,6 +718,15 @@ public class OrderService {
                             saved.getSeller().getId()))
                     .link(orderLink)
                     .build());
+            for (Users u : List.of(saved.getBuyer(), saved.getSeller())) {
+
+                emailService.sendEmail(EmailInfo.builder()
+                        .toEmail(u.getEmail())
+                        .subject("Đơn hàng #" + orderIdGet + " đã hoàn tất")
+                        .body("Xin chào " + u.getUsername() + ",\n\nĐơn hàng #" + orderIdGet
+                                + " đã hoàn tất. Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!\n\nTrân trọng,\nĐội ngũ TapHoa2Hand")
+                        .build());
+            }
         }
         return orderMapper.toResponse(saved);
     }
@@ -906,6 +917,7 @@ public class OrderService {
                 .orders(orderResponses)
                 .build();
     }
+
     @Transactional(readOnly = true)
     public long countCompletedOrders(boolean asBuyer, String userId) {
         if (asBuyer) {
@@ -950,6 +962,15 @@ public class OrderService {
                     order,
                     "Tiền của đơn hàng #" + order.getId()
                             + " đã được tự động chuyển cho người bán.");
+            for (Users u : List.of(order.getBuyer(), order.getSeller())) {
+
+                emailService.sendEmail(EmailInfo.builder()
+                        .toEmail(u.getEmail())
+                        .subject("Đơn hàng #" + order.getId() + " đã hoàn tất")
+                        .body("Xin chào " + u.getUsername() + ",\n\nĐơn hàng #" + order.getId()
+                                + " đã được chuyển tiền cho ngườ bán hoàn tất. Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!\n\nTrân trọng,\nĐội ngũ TapHoa2Hand")
+                        .build());
+            }
         }
     }
 }

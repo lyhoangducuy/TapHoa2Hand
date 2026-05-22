@@ -232,17 +232,7 @@ function ProfilePage() {
                     </div>
                 </div>
 
-                <hr className={cx('divider')} />
-
-                <div className={cx('profile-actions')}>
-                    <button className={cx('primary-action')} onClick={() => navigate('/edit-profile')}>
-                        Chỉnh sửa hồ sơ
-                    </button>
-                    <button className={cx('secondary-action')} onClick={handleLogout}>
-                        <FiLogOut /> Đăng xuất
-                    </button>
-                </div>
-
+                
                 <hr className={cx('divider')} />
 
                 <div className={cx('details-section')}>
@@ -265,7 +255,14 @@ function ProfilePage() {
                             <span className={cx('detail-label')}>Ngày tham gia</span>
                             <span className={cx('detail-value')}>{user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : 'Mới tham gia'}</span>
                         </div>
+                        
                     </div>
+                    <div className={cx('profile-actions')}>
+                    <button className={cx('primary-action')} onClick={() => navigate('/edit-profile')}>
+                        Chỉnh sửa hồ sơ
+                    </button>
+                </div>
+                    
                 </div>
 
                 <hr className={cx('divider')} />
@@ -304,8 +301,12 @@ function ProfilePage() {
                             <FeedbackList feedbacks={feedbacks} />
                         )}
                     </div>
+                    
                 )}
+                
+
             </div>
+            
         </div>
     );
 }

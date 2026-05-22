@@ -8,14 +8,22 @@ const cx = classNames.bind(styles);
 /** Số đơn hiển thị ban đầu trong mỗi tin; còn lại gấp bằng "Xem thêm". */
 const PREVIEW_ORDER_COUNT = 2;
 
-const SORT_CREATED = 'created';
 const SORT_PRICE_ASC = 'price_asc';
 const SORT_PRICE_DESC = 'price_desc';
 
 const SORT_LABELS = {
-    [SORT_CREATED]: 'thời gian tạo (cũ → mới)',
     [SORT_PRICE_ASC]: 'giá thấp → cao',
     [SORT_PRICE_DESC]: 'giá cao → thấp',
+};
+const STATUS_PRIORITY = {
+    CONFIRMED: 1,
+    PENDING: 2,
+    SHIPPING: 3,
+    DELIVERED: 4,
+    SETTLING: 5,
+    COMPLETED: 6,
+    CANCELLED: 99,
+    REPORTED: 99
 };
 
 /** Lọc SĐT: không cần nhập đúng tuyệt đối — khớp một phần, bỏ qua ký tự không phải số khi so khớp chữ số. */
@@ -31,22 +39,35 @@ function orderMatchesPhoneQuery(order, rawQuery) {
     const phoneDigits = raw.replace(/\D/g, '');
     return phoneDigits.includes(qDigits);
 }
-
 function sortOrdersInGroup(orders, sortMode) {
     const arr = [...orders];
+
     const total = (o) => Number(o.totalAmount ?? 0);
     const created = (o) => (o.createdAt ? new Date(o.createdAt).getTime() : 0);
+    const priority = (o) => STATUS_PRIORITY[o.status?.name] ?? 50;
 
     if (sortMode === SORT_PRICE_ASC) {
-        arr.sort((a, b) => total(a) - total(b) || created(a) - created(b));
+        arr.sort((a, b) =>
+            total(a) - total(b) ||
+            priority(a) - priority(b) ||
+            created(b) - created(a)
+        );
     } else if (sortMode === SORT_PRICE_DESC) {
-        arr.sort((a, b) => total(b) - total(a) || created(a) - created(b));
+        arr.sort((a, b) =>
+            total(b) - total(a) ||
+            priority(a) - priority(b) ||
+            created(b) - created(a)
+        );
     } else {
-        arr.sort((a, b) => created(a) - created(b));
+        // DEFAULT: ưu tiên trạng thái trước
+        arr.sort((a, b) =>
+            priority(a) - priority(b) ||
+            created(b) - created(a)
+        );
     }
+
     return arr;
 }
-
 const PostOrderGroup = ({ 
     group,
     activeTab,
@@ -61,7 +82,7 @@ const PostOrderGroup = ({
     onConfirmDelivery,
     onReportSuccess
 }) => {
-    const [sortMode, setSortMode] = useState(SORT_CREATED);
+    const [sortMode, setSortMode] = useState(null);
     const [phoneQuery, setPhoneQuery] = useState('');
     const [ordersExpanded, setOrdersExpanded] = useState(false);
 
@@ -132,13 +153,6 @@ const PostOrderGroup = ({
                         <span className={cx('post-group-sort-label')}>Sắp xếp:</span>
                         <button
                             type="button"
-                            className={cx('post-group-sort-btn', { active: sortMode === SORT_CREATED })}
-                            onClick={() => setSortMode(SORT_CREATED)}
-                        >
-                            Thời gian tạo
-                        </button>
-                        <button
-                            type="button"
                             className={cx('post-group-sort-btn', { active: sortMode === SORT_PRICE_ASC })}
                             onClick={() => setSortMode(SORT_PRICE_ASC)}
                         >
@@ -168,7 +182,7 @@ const PostOrderGroup = ({
                         onFeedback={onFeedback}
                         onPayment={onPayment}
                         onReject={onReject}
-                        onApprove={onApprove}
+                        onApprove={(orderId, paymentMethod) => onApprove(orderId, paymentMethod)}
                         onPaymentConfirmed={onPaymentConfirmed}
                         onShipping={onShipping}
                         onDelivered={onDelivered}

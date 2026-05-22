@@ -2,6 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import classNames from 'classnames/bind';
+import {
+    FiArrowLeft, FiCheck, FiX, FiUser, FiMapPin, FiPhone, FiMail,
+    FiChevronRight, FiStar, FiCreditCard
+} from 'react-icons/fi';
 import styles from './OrderDetailPage.module.scss';
 import orderService from '../../../services/orderService';
 import { getUserById } from '../../../services/userService';
@@ -12,26 +16,58 @@ import PostOrdersList from '../../../components/PostOrdersList/PostOrdersList';
 const cx = classNames.bind(styles);
 
 const decodeJwt = (token) => {
-    try {
-        return JSON.parse(atob(token.split('.')[1]));
-    } catch {
-        return null;
-    }
+    try { return JSON.parse(atob(token.split('.')[1])); }
+    catch { return null; }
 };
-
 const getMeUsername = () => {
     const token = localStorage.getItem('token');
     if (!token) return null;
     const d = decodeJwt(token);
-    const u = d?.sub ?? d?.username;
-    return typeof u === 'string' && u.trim() ? u.trim() : null;
+    return (d?.sub ?? d?.username) || null;
 };
+
+// ─── Stepper config ───
+const STEPS_ORDER = [
+    'PENDING', 'CONFIRMED', 'PAID_WAITING_PICKUP',
+    'SHIPPING', 'DELIVERED', 'SETTLING', 'COMPLETED'
+];
+const STEP_LABELS = {
+    PENDING: 'Chờ duyệt',
+    CONFIRMED: 'Đã duyệt',
+    PAID_WAITING_PICKUP: 'Đã thanh toán',
+    SHIPPING: 'Đang giao',
+    DELIVERED: 'Đã giao',
+    SETTLING: 'Quyết toán',
+    COMPLETED: 'Hoàn thành',
+};
+
+const STATUS_STYLES = {
+    PENDING: { bg: '#fff9e6', color: '#92400e', border: '#fcd34d' },
+    CONFIRMED: { bg: '#eff6ff', color: '#1e40af', border: '#93c5fd' },
+    PAID_WAITING_PICKUP: { bg: '#f0fdf4', color: '#065f46', border: '#6ee7b7' },
+    SHIPPING: { bg: '#faf5ff', color: '#5b21b6', border: '#c4b5fd' },
+    DELIVERED: { bg: '#ecfdf5', color: '#065f46', border: '#34d399' },
+    SETTLING: { bg: '#fff7ed', color: '#9a3412', border: '#fdba74' },
+    COMPLETED: { bg: '#ecfeff', color: '#155e75', border: '#22d3ee' },
+    CANCELLED: { bg: '#fef2f2', color: '#991b1b', border: '#fca5a5' },
+    REPORTED: { bg: '#fefce8', color: '#854d0e', border: '#facc15' },
+};
+
+function getUserId(order, field) {
+    if (!order) return null;
+    if (order[field]) return order[field];
+    const obj = order[field.replace('Id', '')];
+    if (typeof obj === 'string') return obj;
+    if (obj && typeof obj === 'object') return obj.id;
+    return null;
+}
 
 const OrderDetailPage = () => {
     const { orderId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const isAdminOrderRoute = location.pathname.startsWith('/admin/orders');
+    const isAdminRoute = location.pathname.startsWith('/admin/orders');
+    const meUsername = getMeUsername();
 
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -41,554 +77,410 @@ const OrderDetailPage = () => {
     const [buyerInfo, setBuyerInfo] = useState(null);
     const [sellerInfo, setSellerInfo] = useState(null);
     const [sellerBankForm, setSellerBankForm] = useState({ bankName: '', accountName: '', accountNumber: '' });
-    const meUsername = getMeUsername();
 
-    const getUserIdFromOrder = (orderData, userIdField) => {
-        if (!orderData) return null;
-        if (orderData[userIdField]) return orderData[userIdField];
-        const userObj = orderData[userIdField.replace('Id', '')];
-        if (typeof userObj === 'string') return userObj;
-        if (userObj && typeof userObj === 'object') return userObj.id;
-        return null;
-    };
-
-    const fetchUserInfo = async (userId, setter) => {
-        if (!userId) return;
+    const fetchUser = async (id, setter) => {
+        if (!id) return;
         try {
-            const res = await getUserById(userId);
+            const res = await getUserById(id);
             const root = res?.data;
             if (!root) return;
-            const userObj = root.code === 1000 ? root.result : root.result ?? root;
-            if (userObj && typeof userObj === 'object') setter(userObj);
-        } catch (error) {
-            console.error('Error fetching user info', userId, error);
-        }
+            setter(root.code === 1000 ? root.result : root.result ?? root);
+        } catch (e) { console.error(e); }
     };
-
-    useEffect(() => {
-        const fetchOrder = async () => {
-            try {
-                setLoading(true);
-                const res = await orderService.getOrderDetail(orderId);
-                const responseOrder = res.data?.result || res.data || res;
-                setOrder(responseOrder);
-
-                const buyerId = getUserIdFromOrder(responseOrder, 'buyerId');
-                const sellerId = getUserIdFromOrder(responseOrder, 'sellerId');
-                setBuyerInfo(null);
-                setSellerInfo(null);
-                await Promise.all([
-                    fetchUserInfo(buyerId, setBuyerInfo),
-                    fetchUserInfo(sellerId, setSellerInfo),
-                ]);
-
-                if (responseOrder?.id) {
-                    fetchFeedback(responseOrder.id);
-                }
-            } catch {
-                toast.error('Không tải được đơn hàng');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchOrder();
-    }, [orderId]);
 
     const fetchFeedback = async (oid) => {
         try {
             const res = await feedbackService.getFeedbackByOrderId(oid);
-            if (res.result) setExistingFeedback(res.result);
-            else setExistingFeedback(null);
-        } catch {
-            setExistingFeedback(null);
-        }
-    };
-
-    const refreshOrder = async () => {
-        const res = await orderService.getOrderDetail(orderId);
-        const responseOrder = res.data?.result || res.data || res;
-        setOrder(responseOrder);
-        fetchFeedback(responseOrder?.id);
-        const buyerId = getUserIdFromOrder(responseOrder, 'buyerId');
-        const sellerId = getUserIdFromOrder(responseOrder, 'sellerId');
-        setBuyerInfo(null);
-        setSellerInfo(null);
-        await Promise.all([
-            fetchUserInfo(buyerId, setBuyerInfo),
-            fetchUserInfo(sellerId, setSellerInfo),
-        ]);
-    };
-
-   
-
-    const handleConfirm = async () => {
-        if (order.paymentMethod?.name === 'MIDDLEMAN') {
-            const { bankName, accountName, accountNumber } = sellerBankForm;
-            if (!bankName || !accountName || !accountNumber) {
-                toast.warning('Vui lòng nhập đầy đủ thông tin tài khoản ngân hàng của bạn trước khi xác nhận.');
-                return;
-            }
-        }
-
-        if (!window.confirm('Xác nhận đơn?')) return;
-
-        try {
-            setActionLoading(true);
-            if (order.paymentMethod?.name === 'MIDDLEMAN') {
-                await orderService.updateOrderStatus(orderId, 'CONFIRMED', sellerBankForm);
+            if (res && res.code === 1000) {
+                setExistingFeedback(res.result || null);
             } else {
-                await orderService.updateOrderStatus(orderId, 'CONFIRMED');
+                setExistingFeedback(null);
             }
-            const isSellerActing = meUsername && sellerInfo?.username === meUsername;
-            toast.success(
-                isSellerActing
-                    ? 'Đã chốt đơn. Các yêu cầu khác cùng tin đăng đã được hủy.'
-                    : 'Đã xác nhận'
-            );
-            await refreshOrder();
-        } catch {
-            toast.error('Lỗi xác nhận');
-        } finally {
-            setActionLoading(false);
-        }
+        } catch { setExistingFeedback(null); }
     };
 
-    const handleCancel = async () => {
-        if (!window.confirm('Hủy đơn?')) return;
-
+    const refresh = async () => {
         try {
-            setActionLoading(true);
-            await orderService.updateOrderStatus(orderId, 'CANCELLED');
-            toast.success('Đã hủy');
-            await refreshOrder();
-        } catch {
-            toast.error('Lỗi hủy');
-        } finally {
-            setActionLoading(false);
-        }
+            const res = await orderService.getOrderDetail(orderId);
+            const o = res.data?.result || res.data || res;
+            setOrder(o);
+            const bId = getUserId(o, 'buyerId');
+            const sId = getUserId(o, 'sellerId');
+            setBuyerInfo(null); setSellerInfo(null);
+            await Promise.all([fetchUser(bId, setBuyerInfo), fetchUser(sId, setSellerInfo)]);
+            fetchFeedback(o.id);
+        } catch { toast.error('Không tải được đơn hàng'); }
     };
 
-    const handleSellerBankChange = (e) => {
-        const { name, value } = e.target;
-        setSellerBankForm((prev) => ({ ...prev, [name]: value }));
-    };
+    useEffect(() => {
+        setLoading(true);
+        refresh().finally(() => setLoading(false));
+    }, [orderId]);
 
-    const formatCurrency = (amount) =>
-        new Intl.NumberFormat('vi-VN', {
-            style: 'currency',
-            currency: 'VND',
-        }).format(amount || 0);
-
-    const formatEscrowHoldLabel = (unit, amount) => {
-        if (amount == null || amount === '' || !unit) return null;
-        return unit === 'HOURS' ? `${amount} giờ` : `${amount} ngày`;
-    };
-
+    const formatCurrency = (v) =>
+        new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(v || 0);
     const formatDateTime = (iso) => {
         if (!iso) return '—';
         try {
             return new Date(iso).toLocaleString('vi-VN', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
             });
-        } catch {
-            return iso;
-        }
+        } catch { return iso; }
     };
+    const formatEscrowTime = (unit, amount) =>
+        amount != null && unit ? (unit === 'HOURS' ? `${amount} giờ` : `${amount} ngày`) : null;
 
-    const statusStyles = {
-        PENDING: { bg: '#fffbeb', border: '#fcd34d', color: '#92400e' },
-        CONFIRMED: { bg: '#eff6ff', border: '#93c5fd', color: '#1e40af' },
-        PAID_WAITING_PICKUP: { bg: '#ecfdf5', border: '#6ee7b7', color: '#065f46' },
-        SHIPPING: { bg: '#f5f3ff', border: '#c4b5fd', color: '#5b21b6' },
-        DELIVERED: { bg: '#ecfdf5', border: '#34d399', color: '#065f46' },
-        SETTLING: { bg: '#fff7ed', border: '#fdba74', color: '#9a3412' },
-        COMPLETED: { bg: '#ecfeff', border: '#22d3ee', color: '#155e75' },
-        CANCELLED: { bg: '#fef2f2', border: '#fca5a5', color: '#991b1b' },
-    };
+    const orderStatus = order?.status?.name;
+    const currentStep = STEPS_ORDER.indexOf(orderStatus);
+    const st = STATUS_STYLES[orderStatus] || { bg: '#f3f4f6', color: '#374151', border: '#d1d5db' };
 
-    if (loading) {
-        return (
-            <div className={cx('loading')}>
-                <div className={cx('spinner')} />
-                <p>Đang tải đơn hàng…</p>
-            </div>
-        );
-    }
-
-    if (!order) {
-        return <div className={cx('error')}>Không tìm thấy đơn hàng</div>;
-    }
-
-    const orderStatus = order.status?.name;
-    const st = statusStyles[orderStatus] || { bg: '#f3f4f6', border: '#d1d5db', color: '#374151' };
-    const buyerId = getUserIdFromOrder(order, 'buyerId');
-    const sellerId = getUserIdFromOrder(order, 'sellerId');
-
-    const isBuyer =
-        Boolean(meUsername) &&
-        (order.buyerUsername === meUsername || buyerInfo?.username === meUsername);
+    const buyerId = getUserId(order, 'buyerId');
+    const sellerId = getUserId(order, 'sellerId');
+    const isBuyer = Boolean(meUsername) &&
+        (order?.buyerUsername === meUsername || buyerInfo?.username === meUsername);
     const isSeller = Boolean(meUsername) && sellerInfo?.username === meUsername;
 
-    const paymentMethodLabel =
-        order.paymentMethod?.name === 'MIDDLEMAN' ? 'Trung gian (ký quỹ)' : 'Trực tiếp';
-    const paymentStatusLabel = order.paymentStatus?.displayName || '—';
-
-    const platformFee = Number(order.platformFee) || 0;
-    const totalAmount = Number(order.totalAmount) || 0;
+    const paymentLabel = order?.paymentMethod?.name === 'MIDDLEMAN' ? 'Trung gian (ký quỹ)' : 'Trực tiếp';
+    const platformFee = Number(order?.platformFee) || 0;
+    const totalAmount = Number(order?.totalAmount) || 0;
     const goodsAmount = Math.max(0, totalAmount - platformFee);
-    const lineAmount = platformFee > 0 ? goodsAmount : totalAmount;
 
-    const renderParty = (label, info, id, isYou) => (
-        <div className={cx('party')}>
-            <p className={cx('partyLabel')}>{label}</p>
-            <div className={cx('partyRow')}>
-                <div className={cx('partyAvatar')}>
-                    {info?.avatar ? <img src={info.avatar} alt="" /> : '◆'}
-                </div>
-                <div className={cx('partyText')}>
-                    <p className={cx('partyName')}>{info?.fullName || info?.username || id || '—'}</p>
-                    {info?.username ? <p className={cx('partyUser')}>@{info.username}</p> : null}
-                    {info?.email ? <p className={cx('partyEmail')}>{info.email}</p> : null}
-                    {id ? (
-                        <Link className={cx('profileLink')} to={`/user/${id}`}>
-                            Xem hồ sơ
-                        </Link>
-                    ) : null}
-                    {isYou ? <span className={cx('youTag')}>Bạn</span> : null}
-                </div>
-            </div>
+    const handleSellerBankChange = (e) => {
+        setSellerBankForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    };
+
+    const handleConfirm = async () => {
+        if (order?.paymentMethod?.name === 'MIDDLEMAN') {
+            const { bankName, accountName, accountNumber } = sellerBankForm;
+            if (!bankName || !accountName || !accountNumber) {
+                toast.warning('Vui lòng nhập đầy đủ thông tin tài khoản ngân hàng.');
+                return;
+            }
+        }
+        if (!window.confirm('Xác nhận đơn hàng?')) return;
+        try {
+            setActionLoading(true);
+            if (order?.paymentMethod?.name === 'MIDDLEMAN') {
+                await orderService.updateOrderStatus(orderId, 'CONFIRMED', sellerBankForm);
+            } else {
+                await orderService.updateOrderStatus(orderId, 'CONFIRMED');
+            }
+            toast.success(isSeller ? 'Đã chốt đơn.' : 'Đã xác nhận.');
+            await refresh();
+        } catch { toast.error('Lỗi xác nhận.'); }
+        finally { setActionLoading(false); }
+    };
+
+    const handleCancel = async () => {
+        if (!window.confirm('Hủy đơn?')) return;
+        try {
+            setActionLoading(true);
+            await orderService.updateOrderStatus(orderId, 'CANCELLED');
+            toast.success('Đã hủy.');
+            await refresh();
+        } catch { toast.error('Lỗi hủy.'); }
+        finally { setActionLoading(false); }
+    };
+
+    if (loading) return (
+        <div className={cx('loading-wrap')}>
+            <div className={cx('spinner')} />
+            <p>Đang tải đơn hàng…</p>
         </div>
     );
+    if (!order) return <div className={cx('error-wrap')}>Không tìm thấy đơn hàng</div>;
 
-    const adminOrderPath = (id) => `/admin/orders/${id}`;
+    const orderPath = (id) => isAdminRoute ? `/admin/orders/${id}` : `/order/myOrder/${id}`;
 
     return (
         <div className={cx('page')}>
-            <div className={cx('inner')}>
-                <div className={cx('toolbar')}>
-                    <button type="button" className={cx('backLink')} onClick={() => navigate(-1)}>
-                        ← Quay lại
-                    </button>
-                </div>
+            <div className={cx('container')}>
+
+                {/* ─── Back ─── */}
+                <button className={cx('back-btn')} onClick={() => navigate(-1)}>
+                    <FiArrowLeft /> Quay lại
+                </button>
 
                 <div className={cx('layout')}>
-                <article className={cx('invoice')}>
-                    <header className={cx('invoiceHeader')}>
-                        <div className={cx('brandBlock')}>
-                            <p className={cx('brandName')}>TapHoa2Hand</p>
-                            <h1 className={cx('docTitle')}>Sales order</h1>
-                        </div>
-                        <div className={cx('metaGrid')}>
-                            <div>
-                                <dt>Trạng thái</dt>
-                                <dd>
-                                    <span
-                                        className={cx('statusPill')}
-                                        style={{
-                                            background: st.bg,
-                                            borderColor: st.border,
-                                            color: st.color,
-                                        }}
-                                    >
+
+                    {/* ─── MAIN COLUMN ─── */}
+                    <main className={cx('main')}>
+
+                        {/* STEP STATUS (same style as OrderCard) */}
+                        {orderStatus !== 'CANCELLED' && orderStatus !== 'REPORTED' && (
+                            <div className={cx('stepper')}>
+                                {STEPS_ORDER.map((stepKey, i) => {
+                                    const done = currentStep > i;
+                                    const active = currentStep === i;
+
+                                    return (
+                                        <div key={stepKey} className={cx('step', { done, active })}>
+                                            <div className={cx('step-dot')}>
+                                                {done ? <FiCheck size={10} /> : <span>{i + 1}</span>}
+                                            </div>
+                                            <span className={cx('step-label')}>
+                                                {STEP_LABELS[stepKey]}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {/* CANCEL / REPORT STATE */}
+                        {(orderStatus === 'CANCELLED' || orderStatus === 'REPORTED') && (
+                            <div className={cx('cancelled-banner')}>
+                                <FiX size={14} />
+                                Đơn đã bị {orderStatus === 'CANCELLED' ? 'hủy' : 'báo cáo'}
+                            </div>
+                        )}
+
+                        {/* Order Info Card */}
+                        <section className={cx('card')}>
+                            <div className={cx('card-header')}>
+                                <div>
+                                    <p className={cx('order-label')}>Mã đơn hàng</p>
+                                    <p className={cx('order-id')}>#{order.id?.replace(/-/g, '').slice(0, 12).toUpperCase()}</p>
+                                </div>
+                                <div className={cx('order-meta-right')}>
+                                    <p className={cx('order-date')}>{formatDateTime(order.createdAt)}</p>
+                                    <span className={cx('status-pill')} style={{ background: st.bg, color: st.color, borderColor: st.border }}>
                                         {order.status?.displayName || orderStatus}
                                     </span>
-                                </dd>
-                            </div>
-                            <div>
-                                <dt>Mã đơn hàng</dt>
-                                <dd>#{order.id?.replace(/-/g, '').slice(0, 12).toUpperCase()}</dd>
-                            </div>
-                            <div>
-                                <dt>Ngày lập</dt>
-                                <dd>{formatDateTime(order.createdAt)}</dd>
-                            </div>
-                        </div>
-                    </header>
-
-                    <div className={cx('invoiceBody')}>
-                        <div className={cx('parties')}>
-                            {renderParty('Người bán', sellerInfo, sellerId, isSeller)}
-                            {renderParty('Người mua', buyerInfo, buyerId, isBuyer)}
-                        </div>
-
-                        <h2 className={cx('sectionTitle')}>Chi tiết mặt hàng</h2>
-                        <div className={cx('tableWrap')}>
-                            <table className={cx('lineTable')}>
-                                <thead>
-                                    <tr>
-                                        <th>Mô tả</th>
-                                        <th>SL</th>
-                                        <th>Đơn giá</th>
-                                        <th>Thành tiền</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>
-                                            <div className={cx('lineDesc')}>
-                                                {order.postImageUrl ? (
-                                                    <img
-                                                        className={cx('lineThumb')}
-                                                        src={order.postImageUrl}
-                                                        alt=""
-                                                    />
-                                                ) : null}
-                                                <div>
-                                                    <p className={cx('lineTitle')}>
-                                                        {order.postTitle || 'Tin đăng / sản phẩm'}
-                                                    </p>
-                                                    {order.postId ? (
-                                                        <p className={cx('lineMeta')}>ID tin: {order.postId}</p>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>1</td>
-                                        <td>{formatCurrency(lineAmount)}</td>
-                                        <td>{formatCurrency(lineAmount)}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div className={cx('totals')}>
-                            {platformFee > 0 ? (
-                                <div className={cx('totalRow')}>
-                                    <span>Tạm tính (hàng)</span>
-                                    <span className={cx('amount')}>{formatCurrency(goodsAmount)}</span>
                                 </div>
-                            ) : null}
-                            {platformFee > 0 ? (
-                                <div className={cx('totalRow')}>
-                                    <span>Phí nền tảng</span>
-                                    <span className={cx('amount')}>{formatCurrency(platformFee)}</span>
+                            </div>
+                        </section>
+
+                        {/* Parties */}
+                        <section className={cx('card')}>
+                            <h3 className={cx('card-title')}>Người tham gia</h3>
+                            <div className={cx('parties')}>
+                                <div className={cx('party')}>
+                                    <div className={cx('party-avatar')}>
+                                        {sellerInfo?.avatar ? (
+                                            <img src={sellerInfo.avatar} alt="" />
+                                        ) : <FiUser size={20} />}
+                                    </div>
+                                    <div className={cx('party-info')}>
+                                        <p className={cx('party-role')}>Người bán</p>
+                                        <p className={cx('party-name')}>{sellerInfo?.fullName || sellerInfo?.username || '—'}</p>
+                                        {sellerInfo?.username && <p className={cx('party-username')}>@{sellerInfo.username}</p>}
+                                        {sellerInfo?.email && <p className={cx('party-email')}><FiMail size={12} /> {sellerInfo.email}</p>}
+                                        {sellerId && (
+                                            <Link className={cx('party-link')} to={`/user/${sellerId}`}>
+                                                Xem hồ sơ <FiChevronRight size={13} />
+                                            </Link>
+                                        )}
+                                        {isSeller && <span className={cx('you-tag')}>Bạn</span>}
+                                    </div>
                                 </div>
-                            ) : null}
-                            <div className={cx('totalRow', 'grand')}>
-                                <span>Tổng thanh toán</span>
-                                <span className={cx('amount')}>{formatCurrency(totalAmount)}</span>
-                            </div>
-                        </div>
 
-                        <h2 className={cx('sectionTitle')}>Giao hàng</h2>
-                        <dl className={cx('kvBlock')}>
-                            <div className={cx('kvRow')}>
-                                <dt>Người nhận</dt>
-                                <dd>{order.receiverName || '—'}</dd>
-                            </div>
-                            <div className={cx('kvRow')}>
-                                <dt>Điện thoại</dt>
-                                <dd>{order.receiverPhone || '—'}</dd>
-                            </div>
-                            <div className={cx('kvRow')}>
-                                <dt>Địa chỉ</dt>
-                                <dd>{order.shippingAddress || '—'}</dd>
-                            </div>
-                        </dl>
+                                <div className={cx('party-divider')} />
 
-                        <h2 className={cx('sectionTitle')}>Thanh toán</h2>
-                        <dl className={cx('kvBlock')}>
-                            <div className={cx('kvRow')}>
-                                <dt>Phương thức</dt>
-                                <dd>{paymentMethodLabel}</dd>
+                                <div className={cx('party')}>
+                                    <div className={cx('party-avatar')}>
+                                        {buyerInfo?.avatar ? (
+                                            <img src={buyerInfo.avatar} alt="" />
+                                        ) : <FiUser size={20} />}
+                                    </div>
+                                    <div className={cx('party-info')}>
+                                        <p className={cx('party-role')}>Người mua</p>
+                                        <p className={cx('party-name')}>{buyerInfo?.fullName || buyerInfo?.username || '—'}</p>
+                                        {buyerInfo?.username && <p className={cx('party-username')}>@{buyerInfo.username}</p>}
+                                        {buyerInfo?.email && <p className={cx('party-email')}><FiMail size={12} /> {buyerInfo.email}</p>}
+                                        {buyerId && (
+                                            <Link className={cx('party-link')} to={`/user/${buyerId}`}>
+                                                Xem hồ sơ <FiChevronRight size={13} />
+                                            </Link>
+                                        )}
+                                        {isBuyer && <span className={cx('you-tag')}>Bạn</span>}
+                                    </div>
+                                </div>
                             </div>
-                            <div className={cx('kvRow')}>
-                                <dt>Trạng thái thanh toán</dt>
-                                <dd>{paymentStatusLabel}</dd>
+                        </section>
+
+                        {/* Product Items */}
+                        <section className={cx('card')}>
+                            <h3 className={cx('card-title')}>Sản phẩm</h3>
+                            <div className={cx('product-row')}>
+                                {order.postImageUrl && (
+                                    <img src={order.postImageUrl} alt="" className={cx('product-thumb')} />
+                                )}
+                                <div className={cx('product-info')}>
+                                    <p className={cx('product-title')}>{order.postTitle || 'Sản phẩm'}</p>
+                                    {order.postId && <p className={cx('product-id')}>ID tin: {order.postId}</p>}
+                                </div>
                             </div>
-                            {order.paymentMethod?.name === 'MIDDLEMAN' &&
-                                formatEscrowHoldLabel(order.holdDurationUnit, order.holdDurationAmount) && (
-                                    <div className={cx('kvRow')}>
-                                        <dt>Thời gian giữ tiền</dt>
-                                        <dd>
-                                            {formatEscrowHoldLabel(
-                                                order.holdDurationUnit,
-                                                order.holdDurationAmount
-                                            )}
-                                        </dd>
+                        </section>
+
+                        {/* Delivery */}
+                        <section className={cx('card')}>
+                            <h3 className={cx('card-title')}>Giao hàng</h3>
+                            <div className={cx('kv-list')}>
+                                <div className={cx('kv')}>
+                                    <span className={cx('kv-key')}><FiUser size={14} /> Người nhận</span>
+                                    <span className={cx('kv-val')}>{order.receiverName || '—'}</span>
+                                </div>
+                                <div className={cx('kv')}>
+                                    <span className={cx('kv-key')}><FiPhone size={14} /> Điện thoại</span>
+                                    <span className={cx('kv-val')}>{order.receiverPhone || '—'}</span>
+                                </div>
+                                <div className={cx('kv')}>
+                                    <span className={cx('kv-key')}><FiMapPin size={14} /> Địa chỉ</span>
+                                    <span className={cx('kv-val')}>{order.shippingAddress || '—'}</span>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Payment */}
+                        <section className={cx('card')}>
+                            <h3 className={cx('card-title')}>Thanh toán</h3>
+                            <div className={cx('kv-list')}>
+                                <div className={cx('kv')}>
+                                    <span className={cx('kv-key')}>Phương thức</span>
+                                    <span className={cx('kv-val', 'method')}>{paymentLabel}</span>
+                                </div>
+                                <div className={cx('kv')}>
+                                    <span className={cx('kv-key')}>Trạng thái TT</span>
+                                    <span className={cx('kv-val')}>{order.paymentStatus?.displayName || '—'}</span>
+                                </div>
+                                {order.paymentMethod?.name === 'MIDDLEMAN' && formatEscrowTime(order.holdDurationUnit, order.holdDurationAmount) && (
+                                    <div className={cx('kv')}>
+                                        <span className={cx('kv-key')}>Thời gian giữ tiền</span>
+                                        <span className={cx('kv-val')}>{formatEscrowTime(order.holdDurationUnit, order.holdDurationAmount)}</span>
                                     </div>
                                 )}
-                            {order.paymentMethod?.name === 'MIDDLEMAN' &&
-                                (orderStatus === 'DELIVERED' || orderStatus === 'SETTLING') &&
-                                order.holdUntil && (
-                                    <div className={cx('kvRow')}>
-                                        <dt>Giữ tiền đến</dt>
-                                        <dd>{formatDateTime(order.holdUntil)}</dd>
+                                {order.paymentMethod?.name === 'MIDDLEMAN' && ['DELIVERED', 'SETTLING'].includes(orderStatus) && order.holdUntil && (
+                                    <div className={cx('kv')}>
+                                        <span className={cx('kv-key')}>Giữ tiền đến</span>
+                                        <span className={cx('kv-val')}>{formatDateTime(order.holdUntil)}</span>
                                     </div>
                                 )}
-                        </dl>
+                            </div>
 
+                            {/* Totals */}
+                            <div className={cx('totals')}>
+                                {platformFee > 0 && (
+                                    <>
+                                        <div className={cx('total-row')}>
+                                            <span>Tiền hàng</span>
+                                            <span>{formatCurrency(goodsAmount)}</span>
+                                        </div>
+                                        <div className={cx('total-row')}>
+                                            <span>Phí nền tảng</span>
+                                            <span>{formatCurrency(platformFee)}</span>
+                                        </div>
+                                    </>
+                                )}
+                                <div className={cx('total-row', 'grand')}>
+                                    <span>Tổng thanh toán</span>
+                                    <span className={cx('grand-amount')}>{formatCurrency(totalAmount)}</span>
+                                </div>
+                            </div>
+                        </section>
 
+                        {/* Bank Info */}
                         {order.paymentMethod?.name === 'MIDDLEMAN' && (
-                            <>
-                                <h2 className={cx('sectionTitle')}>Tài khoản ngân hàng</h2>
-                                <div className={cx('bankGrid')}>
+                            <section className={cx('card')}>
+                                <h3 className={cx('card-title')}>Tài khoản ngân hàng</h3>
+                                <div className={cx('bank-grid')}>
                                     {order.buyerBankInfo && (
-                                        <div className={cx('bankBox')}>
-                                            <h4>Người mua</h4>
-                                            <div className={cx('bankMono')}>
-                                                {order.buyerBankInfo.bankName}
-                                                <br />
-                                                {order.buyerBankInfo.accountName}
-                                                <br />
-                                                {order.buyerBankInfo.accountNumber}
-                                            </div>
+                                        <div className={cx('bank-box')}>
+                                            <p className={cx('bank-role')}>Người mua (hoàn tiền)</p>
+                                            <p className={cx('bank-info')}>{order.buyerBankInfo.bankName}</p>
+                                            <p className={cx('bank-info')}>{order.buyerBankInfo.accountName}</p>
+                                            <p className={cx('bank-info', 'mono')}>{order.buyerBankInfo.accountNumber}</p>
                                         </div>
                                     )}
                                     {order.sellerBankInfo && (
-                                        <div className={cx('bankBox')}>
-                                            <h4>Người bán</h4>
-                                            <div className={cx('bankMono')}>
-                                                {order.sellerBankInfo.bankName}
-                                                <br />
-                                                {order.sellerBankInfo.accountName}
-                                                <br />
-                                                {order.sellerBankInfo.accountNumber}
-                                            </div>
+                                        <div className={cx('bank-box')}>
+                                            <p className={cx('bank-role')}>Người bán (nhận tiền)</p>
+                                            <p className={cx('bank-info')}>{order.sellerBankInfo.bankName}</p>
+                                            <p className={cx('bank-info')}>{order.sellerBankInfo.accountName}</p>
+                                            <p className={cx('bank-info', 'mono')}>{order.sellerBankInfo.accountNumber}</p>
                                         </div>
                                     )}
                                 </div>
                                 {isSeller && orderStatus === 'PENDING' && !order.sellerBankInfo && (
-                                    <div className={cx('bankForm')}>
-                                        <p className={cx('partyLabel')} style={{ marginBottom: 8 }}>
+                                    <div className={cx('bank-form')}>
+                                        <p className={cx('bank-form-hint')}>
                                             Nhập STK nhận tiền (bắt buộc khi chấp nhận đơn trung gian)
                                         </p>
-                                        <input
-                                            type="text"
-                                            name="bankName"
-                                            value={sellerBankForm.bankName}
-                                            onChange={handleSellerBankChange}
-                                            placeholder="Tên ngân hàng"
-                                        />
-                                        <input
-                                            type="text"
-                                            name="accountName"
-                                            value={sellerBankForm.accountName}
-                                            onChange={handleSellerBankChange}
-                                            placeholder="Chủ tài khoản"
-                                        />
-                                        <input
-                                            type="text"
-                                            name="accountNumber"
-                                            value={sellerBankForm.accountNumber}
-                                            onChange={handleSellerBankChange}
-                                            placeholder="Số tài khoản"
-                                        />
+                                        <input type="text" name="bankName" placeholder="Tên ngân hàng" value={sellerBankForm.bankName} onChange={handleSellerBankChange} />
+                                        <input type="text" name="accountName" placeholder="Chủ tài khoản" value={sellerBankForm.accountName} onChange={handleSellerBankChange} />
+                                        <input type="text" name="accountNumber" placeholder="Số tài khoản" value={sellerBankForm.accountNumber} onChange={handleSellerBankChange} />
                                     </div>
                                 )}
-                            </>
+                            </section>
                         )}
 
-                        {((isSeller && orderStatus === 'PENDING') || (isBuyer && orderStatus === 'PENDING')) && (
-                            <div className={cx('actions')}>
-                                {isSeller && orderStatus === 'PENDING' && (
+                        {/* Action Buttons */}
+                        {(isSeller || isBuyer) && orderStatus === 'PENDING' && (
+                            <section className={cx('card', 'actions-card')}>
+                                {isSeller && (
                                     <>
-                                        <button
-                                            type="button"
-                                            className={cx('btn', 'danger')}
-                                            onClick={handleCancel}
-                                            disabled={actionLoading}
-                                        >
-                                            {actionLoading ? 'Đang xử lý…' : 'Từ chối đơn'}
+                                        <button className={cx('btn', 'btn-danger')} onClick={handleCancel} disabled={actionLoading}>
+                                            <FiX /> {actionLoading ? '…' : 'Từ chối đơn'}
                                         </button>
-                                        <button
-                                            type="button"
-                                            className={cx('btn', 'primary')}
-                                            onClick={handleConfirm}
-                                            disabled={actionLoading}
-                                        >
-                                            {actionLoading ? 'Đang xử lý…' : 'Chấp nhận đơn'}
+                                        <button className={cx('btn', 'btn-primary')} onClick={handleConfirm} disabled={actionLoading}>
+                                            <FiCheck /> {actionLoading ? '…' : 'Chấp nhận đơn'}
                                         </button>
                                     </>
                                 )}
-                                {isBuyer && orderStatus === 'PENDING' && !isSeller && (
-                                    <button
-                                        type="button"
-                                        className={cx('btn', 'danger')}
-                                        onClick={handleCancel}
-                                        disabled={actionLoading}
-                                    >
-                                        {actionLoading ? 'Đang xử lý…' : 'Hủy đơn'}
+                                {isBuyer && !isSeller && (
+                                    <button className={cx('btn', 'btn-danger')} onClick={handleCancel} disabled={actionLoading}>
+                                        <FiX /> {actionLoading ? '…' : 'Hủy đơn'}
                                     </button>
                                 )}
-                            </div>
+                            </section>
                         )}
-                    </div>
-                </article>
 
-                {order.postId ? (
-                    <aside className={cx('sidebar')}>
-                        <PostOrdersList
-                            postId={order.postId}
-                            currentOrderId={order.id}
-                            orderDetailPath={
-                                isAdminOrderRoute ? adminOrderPath : (id) => `/order/myOrder/${id}`
-                            }
-                        />
-                    </aside>
-                ) : null}
-                </div>
+                        {/* Feedback */}
+                        {isBuyer && ['DELIVERED', 'SETTLING', 'COMPLETED'].includes(orderStatus) && (
+                            <section className={cx('card', 'feedback-section')}>
+                                <h3 className={cx('card-title')}>Đánh giá</h3>
+                                {!existingFeedback && !showFeedbackForm && (
+                                    <button className={cx('btn', 'btn-outline')} onClick={() => setShowFeedbackForm(true)}>
+                                        <FiStar /> Viết đánh giá
+                                    </button>
+                                )}
+                                {showFeedbackForm && !existingFeedback && (
+                                    <div className={cx('feedback-form-wrap')}>
+                                        <FeedbackForm
+                                            order={order}
+                                            mode="create"
+                                            onSuccess={(fb) => { setExistingFeedback(fb); setShowFeedbackForm(false); toast.success('Đánh giá đã được gửi!'); }}
+                                            onCancel={() => setShowFeedbackForm(false)}
+                                        />
+                                    </div>
+                                )}
+                                {existingFeedback && (
+                                    <FeedbackList feedbacks={[existingFeedback]} />
+                                )}
+                            </section>
+                        )}
 
-                {isBuyer &&
-                    (orderStatus === 'DELIVERED' ||
-                        orderStatus === 'SETTLING' ||
-                        orderStatus === 'COMPLETED') && (
-                    <section className={cx('feedbackBlock')}>
-                        <h2>Đánh giá</h2>
-                        <p className={cx('sub')}>Chia sẻ trải nghiệm sau khi nhận hàng</p>
-                        {!existingFeedback && !showFeedbackForm && (
-                            <button
-                                type="button"
-                                className={cx('btnWide')}
-                                onClick={() => setShowFeedbackForm(true)}
-                            >
-                                Viết đánh giá
-                            </button>
-                        )}
-                        {showFeedbackForm && !existingFeedback && (
-                            <div className={cx('feedbackFormBox')}>
-                                <FeedbackForm
-                                    orderId={order.id}
-                                    targetUserName={
-                                        sellerInfo?.fullName || sellerInfo?.username || 'Người bán'
-                                    }
-                                    onSuccess={(feedback) => {
-                                        setExistingFeedback(feedback);
-                                        setShowFeedbackForm(false);
-                                        toast.success('Đánh giá đã được gửi!');
-                                    }}
-                                    onCancel={() => setShowFeedbackForm(false)}
-                                />
-                            </div>
-                        )}
-                        {existingFeedback && (
-                            <div>
-                                <p className={cx('partyLabel')} style={{ marginBottom: 12 }}>
-                                    Đánh giá của bạn
-                                </p>
+                        {isSeller && ['DELIVERED', 'SETTLING', 'COMPLETED'].includes(orderStatus) && existingFeedback && (
+                            <section className={cx('card', 'feedback-section')}>
+                                <h3 className={cx('card-title')}>Đánh giá từ khách</h3>
                                 <FeedbackList feedbacks={[existingFeedback]} />
-                            </div>
+                            </section>
                         )}
-                    </section>
-                )}
 
-                {isSeller &&
-                    (orderStatus === 'DELIVERED' ||
-                        orderStatus === 'SETTLING' ||
-                        orderStatus === 'COMPLETED') && (
-                    <section className={cx('feedbackBlock')}>
-                        <h2>Đánh giá từ khách</h2>
-                        {existingFeedback ? (
-                            <FeedbackList feedbacks={[existingFeedback]} />
-                        ) : (
-                            <p className={cx('sub')}>Chưa có đánh giá cho đơn này.</p>
-                        )}
-                    </section>
-                )}
+                    </main>
+
+                    {/* ─── SIDEBAR ─── */}
+                    {order.postId && (
+                        <aside className={cx('sidebar')}>
+                            <PostOrdersList
+                                postId={order.postId}
+                                currentOrderId={order.id}
+                                orderDetailPath={orderPath}
+                            />
+                        </aside>
+                    )}
+                </div>
             </div>
         </div>
     );

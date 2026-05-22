@@ -84,12 +84,14 @@ export const getFeedbackByOrderId = async (orderId) => {
             }
         });
 
+        if (response.status === 404) {
+            return null;
+        }
+
         const data = await response.json();
 
         if (!response.ok) {
-            // Lấy message từ ApiResponse
-            const errorMessage = data?.message || data?.error || 'Lỗi khi lấy đánh giá';
-            throw new Error(errorMessage);
+            return null;
         }
 
         return data;
