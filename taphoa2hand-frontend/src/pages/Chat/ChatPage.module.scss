@@ -170,6 +170,76 @@
       }
     }
 
+    /* Price input with suffix */
+    .price-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+
+      input {
+        padding-right: 36px !important;
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        color: #5B2C6F;
+        background: #faf5ff;
+        border-color: #d8b4fe;
+      }
+
+      .price-suffix {
+        position: absolute;
+        right: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #94a3b8;
+        pointer-events: none;
+      }
+    }
+
+    /* Price compare bar */
+    .price-compare {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .price-compare-label {
+      color: #64748b;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .price-compare-value {
+      color: #475569;
+      font-weight: 600;
+    }
+
+    .price-compare-diff {
+      margin-left: auto;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+
+      &.higher {
+        color: #b91c1c;
+        background: #fef2f2;
+      }
+      &.lower {
+        color: #166534;
+        background: #f0fdf4;
+      }
+      &.equal {
+        color: #1e40af;
+        background: #eff6ff;
+      }
+    }
+
     .fee-preview {
       .fee-preview-muted {
         font-size: 13px;

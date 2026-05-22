@@ -12,6 +12,14 @@ const formatPrice = (price) => {
     return num.toLocaleString('vi-VN') + ' đ';
 };
 
+const formatPriceInput = (value) => {
+    const raw = (value || '').replace(/[^\d]/g, '');
+    if (!raw) return '';
+    return new Intl.NumberFormat('vi-VN').format(Number(raw));
+};
+
+const unformatPrice = (value) => (value || '').replace(/[^\d]/g, '');
+
 const formatEscrowHold = (unit, amount) => {
     if (amount == null || !unit) return null;
     return unit === 'HOURS' ? `${amount} giờ` : `${amount} ngày`;
@@ -40,6 +48,20 @@ function OrderModal({
     const [wards, setWards] = useState([]);
     const [wardsLoading, setWardsLoading] = useState(false);
     const [wardsError, setWardsError] = useState(null);
+
+    // Price formatting
+    const [priceDisplay, setPriceDisplay] = useState('');
+
+    const postPrice = Number(currentChat?.postPrice);
+    const postPriceFormatted = formatPrice(postPrice);
+
+    const priceDiff = useMemo(() => {
+        if (!priceDisplay) return null;
+        const entered = Number(unformatPrice(priceDisplay));
+        if (!Number.isFinite(entered) || !Number.isFinite(postPrice)) return null;
+        const diff = entered - postPrice;
+        return diff;
+    }, [priceDisplay, postPrice]);
 
     const loadProvinces = useCallback(async () => {
         setProvincesLoading(true);
@@ -106,7 +128,7 @@ function OrderModal({
         if (orderForm.method !== 'MIDDLEMAN') return null;
         let base = null;
         if (isBuyPost) {
-            const raw = orderForm.offeredPrice;
+            const raw = orderForm.price;
             if (raw === '' || raw == null) {
                 base = null;
             } else {
@@ -148,7 +170,7 @@ function OrderModal({
                             </>
                         )}
                     </div>
-                    
+
                     <div className={cx('order-info-section')}>
                         <h3>Thông tin đơn hàng</h3>
                         <div className={cx('info-row')}>
@@ -175,48 +197,48 @@ function OrderModal({
                         </div>
                         {createdOrder.paymentMethod?.name === 'MIDDLEMAN' &&
                             formatEscrowHold(createdOrder.holdDurationUnit, createdOrder.holdDurationAmount) && (
-                            <div className={cx('info-row')}>
-                                <span className={cx('label')}>Giữ tiền ký quỹ:</span>
-                                <span className={cx('value')}>
-                                    {formatEscrowHold(createdOrder.holdDurationUnit, createdOrder.holdDurationAmount)} sau khi giao thành công (tối đa 10 ngày)
-                                </span>
-                            </div>
-                        )}
+                                <div className={cx('info-row')}>
+                                    <span className={cx('label')}>Giữ tiền ký quỹ:</span>
+                                    <span className={cx('value')}>
+                                        {formatEscrowHold(createdOrder.holdDurationUnit, createdOrder.holdDurationAmount)} sau khi giao thành công (tối đa 10 ngày)
+                                    </span>
+                                </div>
+                            )}
                         {createdOrder.paymentMethod?.name === 'MIDDLEMAN' &&
                             createdOrder.platformFee != null &&
                             createdOrder.totalAmount != null && (
-                            <>
-                                <div className={cx('info-row')}>
-                                    <span className={cx('label')}>Giá hàng:</span>
-                                    <span className={cx('value')}>
-                                        {formatPrice(
-                                            Number(createdOrder.totalAmount) - Number(createdOrder.platformFee)
-                                        )}
-                                    </span>
-                                </div>
-                                <div className={cx('info-row')}>
-                                    <span className={cx('label')}>Phí trung gian (2%):</span>
-                                    <span className={cx('value')}>{formatPrice(createdOrder.platformFee)}</span>
-                                </div>
-                                <div className={cx('info-row')}>
-                                    <span className={cx('label')}>Tổng thanh toán:</span>
-                                    <span className={cx('value')}>{formatPrice(createdOrder.totalAmount)}</span>
-                                </div>
-                            </>
-                        )}
+                                <>
+                                    <div className={cx('info-row')}>
+                                        <span className={cx('label')}>Giá hàng:</span>
+                                        <span className={cx('value')}>
+                                            {formatPrice(
+                                                Number(createdOrder.totalAmount) - Number(createdOrder.platformFee)
+                                            )}
+                                        </span>
+                                    </div>
+                                    <div className={cx('info-row')}>
+                                        <span className={cx('label')}>Phí trung gian (2%):</span>
+                                        <span className={cx('value')}>{formatPrice(createdOrder.platformFee)}</span>
+                                    </div>
+                                    <div className={cx('info-row')}>
+                                        <span className={cx('label')}>Tổng thanh toán:</span>
+                                        <span className={cx('value')}>{formatPrice(createdOrder.totalAmount)}</span>
+                                    </div>
+                                </>
+                            )}
                     </div>
 
                     <div className={cx('modal-actions')}>
-                        <button 
-                            type="button" 
-                            onClick={close} 
+                        <button
+                            type="button"
+                            onClick={close}
                             className={cx('btn-cancel')}
                         >
                             Đóng
                         </button>
-                        <button 
-                            type="button" 
-                            onClick={onCheckout} 
+                        <button
+                            type="button"
+                            onClick={onCheckout}
                             className={cx('btn-submit')}
                         >
                             💳 Thanh toán ngay
@@ -246,42 +268,68 @@ function OrderModal({
                     )}
                 </div>
                 <form onSubmit={submitOrderRequest}>
-                    {isBuyPost && (
-                        <div className={cx('form-section')}>
-                            <strong>Giá bạn đề xuất (VNĐ)</strong>
-                            <p className={cx('form-hint')}>
-                                Tin <strong>cần mua</strong>: nhập mức giá bạn muốn bán / thỏa thuận. Giá này ghi vào đơn hàng.
-                            </p>
+                    <div className={cx('form-section')}>
+                        <strong>
+                            {isBuyPost ? 'Giá bạn đề xuất' : 'Giá giao dịch'}
+                        </strong>
+
+                        <p className={cx('form-hint')}>
+                            Mặc định theo giá tin đăng. Nhập lại nếu muốn thay đổi.
+                        </p>
+
+                        <div className={cx('price-input-wrapper')}>
                             <input
                                 required
                                 type="text"
                                 inputMode="numeric"
-                                name="offeredPrice"
-                                value={orderForm.offeredPrice}
-                                onChange={handleOrderFormChange}
-                                placeholder="Ví dụ: 1500000"
+                                name="price"
+                                value={priceDisplay}
+                                onChange={(e) => {
+                                    const raw = unformatPrice(e.target.value);
+                                    setPriceDisplay(formatPriceInput(e.target.value));
+                                    // Update parent form
+                                    handleOrderFormChange({
+                                        target: { name: 'price', value: raw }
+                                    });
+                                }}
+                                placeholder={postPriceFormatted}
                             />
+                            <span className={cx('price-suffix')}>đ</span>
                         </div>
-                    )}
+
+                        {priceDisplay && postPrice > 0 && (
+                            <div className={cx('price-compare')}>
+                                <span className={cx('price-compare-label')}>Giá tin:</span>
+                                <span className={cx('price-compare-value')}>{postPriceFormatted}</span>
+                                <span className={cx('price-compare-diff', priceDiff > 0 ? 'higher' : priceDiff < 0 ? 'lower' : 'equal')}>
+                                    {priceDiff > 0
+                                        ? `+${formatPrice(priceDiff)}`
+                                        : priceDiff < 0
+                                            ? formatPrice(priceDiff)
+                                            : 'Bằng giá tin'}
+                                </span>
+                            </div>
+                        )}
+                    </div>
                     <div className={cx('form-section')}>
                         <strong>1. Thông tin nhận hàng</strong>
-                        <input 
-                            required 
-                            type="text" 
-                            name="receiverName" 
-                            value={orderForm.receiverName} 
-                            onChange={handleOrderFormChange} 
-                            placeholder="Họ tên người nhận (không nhập số)" 
+                        <input
+                            required
+                            type="text"
+                            name="receiverName"
+                            value={orderForm.receiverName}
+                            onChange={handleOrderFormChange}
+                            placeholder="Họ tên người nhận (không nhập số)"
                         />
-                        <input 
-                            required 
-                            type="text" 
+                        <input
+                            required
+                            type="text"
                             inputMode="numeric"
                             pattern="[0-9]*"
-                            name="receiverPhone" 
-                            value={orderForm.receiverPhone} 
-                            onChange={handleOrderFormChange} 
-                            placeholder="Số điện thoại (chỉ số, 8–15 số)" 
+                            name="receiverPhone"
+                            value={orderForm.receiverPhone}
+                            onChange={handleOrderFormChange}
+                            placeholder="Số điện thoại (chỉ số, 8–15 số)"
                         />
                         <label className={cx('form-hint')} style={{ display: 'block', marginTop: 8 }}>
                             Tỉnh / Thành phố
@@ -357,10 +405,10 @@ function OrderModal({
                                 {!orderForm.shippingProvinceCode
                                     ? 'Chọn tỉnh/thành trước'
                                     : wardsLoading
-                                      ? 'Đang tải phường/xã…'
-                                      : wards.length === 0
-                                        ? 'Không có phường/xã'
-                                        : 'Chọn Phường / Xã'}
+                                        ? 'Đang tải phường/xã…'
+                                        : wards.length === 0
+                                            ? 'Không có phường/xã'
+                                            : 'Chọn Phường / Xã'}
                             </option>
                             {wards.map((w) => (
                                 <option key={`${w.code}-${w.name}`} value={String(w.code)}>
@@ -371,12 +419,12 @@ function OrderModal({
                         <label className={cx('form-hint')} style={{ display: 'block', marginTop: 8 }}>
                             Địa chỉ chi tiết (số nhà, tên đường…)
                         </label>
-                        <textarea 
-                            required 
-                            name="shippingAddress" 
-                            value={orderForm.shippingAddress} 
-                            onChange={handleOrderFormChange} 
-                            placeholder="Ví dụ: 12 Nguyễn Huệ (đã chọn phường/xã ở trên)" 
+                        <textarea
+                            required
+                            name="shippingAddress"
+                            value={orderForm.shippingAddress}
+                            onChange={handleOrderFormChange}
+                            placeholder="Ví dụ: 12 Nguyễn Huệ (đã chọn phường/xã ở trên)"
                         />
                     </div>
                     <div className={cx('form-section')}>
@@ -485,16 +533,16 @@ function OrderModal({
                         </div>
                     )}
                     <div className={cx('modal-actions')}>
-                        <button 
-                            type="button" 
-                            onClick={close} 
+                        <button
+                            type="button"
+                            onClick={close}
                             className={cx('btn-cancel')}
                         >
                             Hủy
                         </button>
-                        <button 
-                            type="submit" 
-                            disabled={isSubmittingOrder} 
+                        <button
+                            type="submit"
+                            disabled={isSubmittingOrder}
                             className={cx('btn-submit')}
                         >
                             {isSubmittingOrder ? 'Đang gửi...' : 'Xác nhận tạo đơn'}

@@ -33,15 +33,15 @@ const STEP_LABELS = {
 };
 
 const STATUS_COLORS = {
-    PENDING:            { bg: '#fff9e6', color: '#b45309', dot: '#f59e0b' },
-    CONFIRMED:          { bg: '#eff6ff', color: '#1d4ed8', dot: '#3b82f6' },
+    PENDING: { bg: '#fff9e6', color: '#b45309', dot: '#f59e0b' },
+    CONFIRMED: { bg: '#eff6ff', color: '#1d4ed8', dot: '#3b82f6' },
     PAID_WAITING_PICKUP: { bg: '#f0fdf4', color: '#166534', dot: '#22c55e' },
-    SHIPPING:           { bg: '#faf5ff', color: '#6b21a8', dot: '#a855f7' },
-    DELIVERED:          { bg: '#ecfdf5', color: '#065f46', dot: '#10b981' },
-    SETTLING:           { bg: '#fff7ed', color: '#9a3412', dot: '#f97316' },
-    COMPLETED:          { bg: '#f0fdfa', color: '#134e4a', dot: '#14b8a6' },
-    CANCELLED:          { bg: '#fef2f2', color: '#991b1b', dot: '#ef4444' },
-    REPORTED:           { bg: '#fefce8', color: '#854d0e', dot: '#eab308' },
+    SHIPPING: { bg: '#faf5ff', color: '#6b21a8', dot: '#a855f7' },
+    DELIVERED: { bg: '#ecfdf5', color: '#065f46', dot: '#10b981' },
+    SETTLING: { bg: '#fff7ed', color: '#9a3412', dot: '#f97316' },
+    COMPLETED: { bg: '#f0fdfa', color: '#134e4a', dot: '#14b8a6' },
+    CANCELLED: { bg: '#fef2f2', color: '#991b1b', dot: '#ef4444' },
+    REPORTED: { bg: '#fefce8', color: '#854d0e', dot: '#eab308' },
 };
 
 function getStepIndex(status) {
@@ -158,37 +158,37 @@ const OrderCard = ({
                         <span>{order.shippingAddress || '—'}</span>
                     </div>
                 </div>
-                
+
             </div>
 
-                <div className={cx('body-expanded')}>
-                    <div className={cx('detail-section')}>
-                        <h4 className={cx('detail-title')}>
-                            Người {isBuyer ? 'bán' : 'mua'}
-                        </h4>
-                        <div className={cx('party-row')}>
-                            <span className={cx('party-name')}>
-                                {isBuyer ? order.sellerUsername : order.buyerUsername}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className={cx('detail-section')}>
-                        <h4 className={cx('detail-title')}>Thanh toán</h4>
-                        <div className={cx('payment-row')}>
-                            <span className={cx('payment-method')}>{paymentMethodLabel}</span>
-                            <span className={cx('payment-amount')}>
-                                {formatCurrency(order.totalAmount)}
-                            </span>
-                        </div>
-                        {order.paymentMethod?.name === 'MIDDLEMAN' && order.holdUntil && (
-                            <p className={cx('escrow-note')}>
-                                ⏱ Giữ tiền đến: {new Date(order.holdUntil).toLocaleString('vi-VN')}
-                            </p>
-                        )}
+            <div className={cx('body-expanded')}>
+                <div className={cx('detail-section')}>
+                    <h4 className={cx('detail-title')}>
+                        Người {isBuyer ? 'bán' : 'mua'}
+                    </h4>
+                    <div className={cx('party-row')}>
+                        <span className={cx('party-name')}>
+                            {isBuyer ? order.sellerUsername : order.buyerUsername}
+                        </span>
                     </div>
                 </div>
-        
+
+                <div className={cx('detail-section')}>
+                    <h4 className={cx('detail-title')}>Thanh toán</h4>
+                    <div className={cx('payment-row')}>
+                        <span className={cx('payment-method')}>{paymentMethodLabel}</span>
+                        <span className={cx('payment-amount')}>
+                            {formatCurrency(order.totalAmount)}
+                        </span>
+                    </div>
+                    {order.paymentMethod?.name === 'MIDDLEMAN' && order.holdUntil && (
+                        <p className={cx('escrow-note')}>
+                            ⏱ Giữ tiền đến: {new Date(order.holdUntil).toLocaleString('vi-VN')}
+                        </p>
+                    )}
+                </div>
+            </div>
+
 
             {/* FOOTER */}
             <div className={cx('footer')}>
@@ -233,6 +233,14 @@ const OrderCard = ({
                             </button>
                         )}
                     </>
+                )}
+                {!isBuyer && statusName === 'PAID_WAITING_PICKUP' && (
+                    <button
+                        className={cx('btn-shipping')}
+                        onClick={() => onShipping(order.id)}
+                    >
+                        <FiPackage /> Đang giao
+                    </button>
                 )}
 
                 {!isBuyer && statusName === 'SHIPPING' && (

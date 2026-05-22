@@ -351,7 +351,15 @@
     color: #92400e;
     &:hover { background: #fef3c7; }
 }
+.btn-shipping {
+    background: #0ea5e9;
+    color: #fff;
 
+    &:hover {
+        background: #0284c7;
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
+    }
+}
 .btn-feedback {
     background: #fef3c7;
     border: 1.5px solid #fcd34d !important;
