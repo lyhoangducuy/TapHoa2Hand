@@ -122,6 +122,11 @@ export const API = {
     FEEDBACK_AVG_RATING: (userId) => `/api/feedbacks/average/${userId}`,
     FEEDBACK_WITH_ORDER_POST: (userId) => `/api/feedbacks/full/${userId}`,
 
-    //report
-    GET_REPORT_REASONS:"/reports/reasons"
+    // Reports - by type
+    ADMIN_GET_USER_REPORTS: "/reports/type/user",
+    ADMIN_GET_USER_REPORTS_PAGED: "/reports/type/user/paged",
+    ADMIN_GET_ORDER_REPORTS: "/reports/type/order",
+    ADMIN_GET_ORDER_REPORTS_PAGED: "/reports/type/order/paged",
+    ADMIN_GET_POST_REPORTS: "/reports/type/post",
+    ADMIN_GET_POST_REPORTS_PAGED: "/reports/type/post/paged",
 };

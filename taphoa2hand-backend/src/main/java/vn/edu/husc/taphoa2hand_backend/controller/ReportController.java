@@ -171,4 +171,62 @@ public class ReportController {
                 .result(reportService.reviewReport(id, request))
                 .build();
     }
+
+    // ═══════════════════════════════════════════
+    // REPORTS BY TYPE (USER / ORDER / POST)
+    // ═══════════════════════════════════════════
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/type/user")
+    public ApiResponse<List<ReportResponse>> getUserReports() {
+        return ApiResponse.<List<ReportResponse>>builder()
+                .result(reportService.getReportsByType("USER"))
+                .build();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/type/user/paged")
+    public ApiResponse<PageResponse<ReportResponse>> getUserReportsPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ApiResponse.<PageResponse<ReportResponse>>builder()
+                .result(reportService.getReportsByTypePaged("USER", page, size))
+                .build();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/type/order")
+    public ApiResponse<List<ReportResponse>> getOrderReports() {
+        return ApiResponse.<List<ReportResponse>>builder()
+                .result(reportService.getReportsByType("ORDER"))
+                .build();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/type/order/paged")
+    public ApiResponse<PageResponse<ReportResponse>> getOrderReportsPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ApiResponse.<PageResponse<ReportResponse>>builder()
+                .result(reportService.getReportsByTypePaged("ORDER", page, size))
+                .build();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/type/post")
+    public ApiResponse<List<ReportResponse>> getPostReports() {
+        return ApiResponse.<List<ReportResponse>>builder()
+                .result(reportService.getReportsByType("POST"))
+                .build();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/type/post/paged")
+    public ApiResponse<PageResponse<ReportResponse>> getPostReportsPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ApiResponse.<PageResponse<ReportResponse>>builder()
+                .result(reportService.getReportsByTypePaged("POST", page, size))
+                .build();
+    }
 }

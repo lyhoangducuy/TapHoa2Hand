@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import vn.edu.husc.taphoa2hand_backend.entity.Order;
 import vn.edu.husc.taphoa2hand_backend.entity.Report;
 import vn.edu.husc.taphoa2hand_backend.entity.ReportStatusEnum;
+import vn.edu.husc.taphoa2hand_backend.entity.ReportTypeEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.Users;
 
 import java.util.List;
@@ -37,4 +38,8 @@ public interface ReportRepository extends JpaRepository<Report, String>, JpaSpec
     Page<Report> findByReporterAndStatus(Users reporter, ReportStatusEnum status, Pageable pageable);
 
     long countByStatus(ReportStatusEnum status);
+
+    List<Report> findByType(ReportTypeEnum type);
+
+    Page<Report> findByType(ReportTypeEnum type, Pageable pageable);
 }

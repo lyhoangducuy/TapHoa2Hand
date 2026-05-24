@@ -286,7 +286,7 @@ public class ReportService {
         report.setResolutionNote(request.getResolutionNote());
         report.setReviewedBy(admin);
 
-        // Apply penalties (cho USER/POST report)
+        // Chỉ ghi nhận penalties, không thực thi thật sự
         if (request.getPenalties() != null && !request.getPenalties().isEmpty()) {
             List<ReportPenalty> penalties = request.getPenalties().stream()
                     .map(action -> ReportPenalty.builder()
@@ -297,8 +297,8 @@ public class ReportService {
                     .toList();
             report.setPenalties(penalties);
 
-            // Execute penalty actions
-            executePenalties(report, request.getPenalties());
+            // Chỉ log, không thực thi hành động thật
+            logPenalties(report, request.getPenalties());
         }
 
         Report saved = reportRepository.save(report);
@@ -318,34 +318,25 @@ public class ReportService {
         return reportMapper.toReportResponse(saved);
     }
 
-    private void executePenalties(Report report, List<PenaltyActionEnum> penalties) {
+    /**
+     * Chỉ log penalties, không thực thi hành động thật
+     */
+    private void logPenalties(Report report, List<PenaltyActionEnum> penalties) {
         Users reportedUser = report.getReportedUser();
 
         for (PenaltyActionEnum action : penalties) {
             switch (action) {
-                case WARNING -> log.info("Apply WARNING to user {}", reportedUser);
-                case REMOVE_POST -> {
-                    if (report.getReportedPost() != null) {
-                        Posts post = postsRepository.findById(report.getReportedPost().getId()).orElse(null);
-                        if (post != null) {
-                            post.setActive(false);
-                        }
-                    }
-                }
-                case HIDE_POST -> {
-                    if (report.getReportedPost() != null) {
-                        Posts post = postsRepository.findById(report.getReportedPost().getId()).orElse(null);
-                        if (post != null) {
-                            post.setStatus(PostStatusEnum.HIDDEN);
-                        }
-                    }
-                }
-                case FREEZE_ACCOUNT_24H -> freezeUser(reportedUser, 24);
-                case FREEZE_ACCOUNT_7D -> freezeUser(reportedUser, 168);
-                case FREEZE_ACCOUNT_30D -> freezeUser(reportedUser, 720);
-                case PERMANENT_BAN -> banUser(reportedUser);
-                case STOP_ALL_TRANSACTIONS -> stopTransactions(reportedUser);
-                case REFUND_BUYER, REFUND_REPORTER -> log.info("Apply {} for report {}", action, report.getId());
+                case WARNING -> log.info("[PENALTY] Cảnh cáo người dùng: {}", reportedUser);
+                case REMOVE_POST -> log.info("[PENALTY] Gỡ bài đăng: {} (chỉ ghi nhận, chưa thực thi)", report.getReportedPost());
+                case HIDE_POST -> log.info("[PENALTY] Ẩn bài đăng: {} (chỉ ghi nhận, chưa thực thi)", report.getReportedPost());
+                case FREEZE_ACCOUNT_24H -> log.info("[PENALTY] Khóa tài khoản 24h: {} (chỉ ghi nhận, chưa thực thi)", reportedUser);
+                case FREEZE_ACCOUNT_7D -> log.info("[PENALTY] Khóa tài khoản 7 ngày: {} (chỉ ghi nhận, chưa thực thi)", reportedUser);
+                case FREEZE_ACCOUNT_30D -> log.info("[PENALTY] Khóa tài khoản 30 ngày: {} (chỉ ghi nhận, chưa thực thi)", reportedUser);
+                case PERMANENT_BAN -> log.info("[PENALTY] Khóa vĩnh viễn: {} (chỉ ghi nhận, chưa thực thi)", reportedUser);
+                case STOP_ALL_TRANSACTIONS -> log.info("[PENALTY] Dừng giao dịch: {} (chỉ ghi nhận, chưa thực thi)", reportedUser);
+                case REFUND_BUYER -> log.info("[PENALTY] Hoàn tiền người mua (chỉ ghi nhận, chưa thực thi)");
+                case REFUND_REPORTER -> log.info("[PENALTY] Hoàn tiền người tố cáo (chỉ ghi nhận, chưa thực thi)");
+                case NONE -> { }
                 default -> { }
             }
         }
@@ -391,5 +382,30 @@ public class ReportService {
         stats.put("PROCESSED", reportRepository.countByStatus(ReportStatusEnum.PROCESSED));
         stats.put("REJECTED", reportRepository.countByStatus(ReportStatusEnum.REJECTED));
         return stats;
+    }
+
+    // ═══════════════════════════════════════════
+    // REPORTS BY TYPE (USER / ORDER / POST)
+    // ═══════════════════════════════════════════
+
+    /**
+     * TODO: Viết logic lấy danh sách báo cáo theo loại (USER/ORDER/POST)
+     */
+    public List<ReportResponse> getReportsByType(String type) {
+        // TODO: Implement logic here
+        ReportTypeEnum reportType = ReportTypeEnum.valueOf(type);
+        List<Report> reports = reportRepository.findByType(reportType);
+        return reportMapper.toReportResponseList(reports);
+    }
+
+    /**
+     * TODO: Viết logic lấy danh sách báo cáo theo loại có phân trang
+     */
+    public PageResponse<ReportResponse> getReportsByTypePaged(String type, int page, int size) {
+        // TODO: Implement logic here
+        ReportTypeEnum reportType = ReportTypeEnum.valueOf(type);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Report> reports = reportRepository.findByType(reportType, pageable);
+        return PageResponse.from(reports, reportMapper::toReportResponse);
     }
 }

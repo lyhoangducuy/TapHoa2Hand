@@ -69,3 +69,64 @@ export const reviewReport = async (reportId, payload) => {
     );
     return response.data.result;
 };
+
+// ═══════════════════════════════════════════
+// REPORTS BY TYPE (USER / ORDER / POST)
+// ═══════════════════════════════════════════
+
+/**
+ * TODO: Implement logic to fetch user reports
+ */
+export const getUserReports = async () => {
+    const response = await httpClient.get(API.ADMIN_GET_USER_REPORTS, { headers: headers() });
+    return response.data.result;
+};
+
+/**
+ * TODO: Implement logic to fetch user reports with pagination
+ */
+export const getUserReportsPaged = async (page = 0, size = 10) => {
+    const response = await httpClient.get(API.ADMIN_GET_USER_REPORTS_PAGED, {
+        params: { page, size },
+        headers: headers()
+    });
+    return response.data.result;
+};
+
+/**
+ * TODO: Implement logic to fetch order reports
+ */
+export const getOrderReports = async () => {
+    const response = await httpClient.get(API.ADMIN_GET_ORDER_REPORTS, { headers: headers() });
+    return response.data.result;
+};
+
+/**
+ * TODO: Implement logic to fetch order reports with pagination
+ */
+export const getOrderReportsPaged = async (page = 0, size = 10) => {
+    const response = await httpClient.get(API.ADMIN_GET_ORDER_REPORTS_PAGED, {
+        params: { page, size },
+        headers: headers()
+    });
+    return response.data.result;
+};
+
+/**
+ * TODO: Implement logic to fetch post reports
+ */
+export const getPostReports = async () => {
+    const response = await httpClient.get(API.ADMIN_GET_POST_REPORTS, { headers: headers() });
+    return response.data.result;
+};
+
+/**
+ * TODO: Implement logic to fetch post reports with pagination
+ */
+export const getPostReportsPaged = async (page = 0, size = 10) => {
+    const response = await httpClient.get(API.ADMIN_GET_POST_REPORTS_PAGED, {
+        params: { page, size },
+        headers: headers()
+    });
+    return response.data.result;
+};

@@ -13,6 +13,7 @@ const ReportAdminPage = () => {
 
     // Filter states
     const [statusFilter, setStatusFilter] = useState('ALL');
+    const [typeFilter, setTypeFilter] = useState('ALL');
     const [dateFromFilter, setDateFromFilter] = useState('');
     const [dateToFilter, setDateToFilter] = useState('');
     const [searchFilter, setSearchFilter] = useState('');
@@ -25,7 +26,7 @@ const ReportAdminPage = () => {
     // Apply filters whenever filter values change
     useEffect(() => {
         applyFilters();
-    }, [reports, statusFilter, dateFromFilter, dateToFilter, searchFilter]);
+    }, [reports, statusFilter, typeFilter, dateFromFilter, dateToFilter, searchFilter]);
 
     const fetchReports = async () => {
         try {
@@ -47,6 +48,13 @@ const ReportAdminPage = () => {
 
     const applyFilters = () => {
         let filtered = [...reports];
+
+        // Filter by type
+        if (typeFilter !== 'ALL') {
+            filtered = filtered.filter(
+                (r) => r.type?.name === typeFilter
+            );
+        }
 
         // Filter by status
         if (statusFilter !== 'ALL') {
@@ -126,6 +134,7 @@ const ReportAdminPage = () => {
 
     const handleResetFilters = () => {
         setStatusFilter('ALL');
+        setTypeFilter('ALL');
         setDateFromFilter('');
         setDateToFilter('');
         setSearchFilter('');
@@ -173,6 +182,35 @@ const ReportAdminPage = () => {
 
                             <option value="REJECTED">
                                 Bị từ chối
+                            </option>
+                        </select>
+                    </div>
+
+                    {/* Type Filter */}
+                    <div className={styles.filterItem}>
+                        <label>Loại báo cáo:</label>
+
+                        <select
+                            value={typeFilter}
+                            onChange={(e) =>
+                                setTypeFilter(e.target.value)
+                            }
+                            className={styles.filterInput}
+                        >
+                            <option value="ALL">
+                                Tất cả
+                            </option>
+
+                            <option value="USER">
+                                Người dùng
+                            </option>
+
+                            <option value="POST">
+                                Bài đăng
+                            </option>
+
+                            <option value="ORDER">
+                                Đơn hàng
                             </option>
                         </select>
                     </div>
