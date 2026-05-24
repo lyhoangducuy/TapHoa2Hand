@@ -216,10 +216,18 @@ public class ReportService {
         return reportMapper.toReportResponseList(reports);
     }
 
-    public PageResponse<ReportResponse> getMyReportsPaged(int page, int size) {
+    @Transactional(readOnly = true)
+    public PageResponse<ReportResponse> getMyReportsPaged(int page, int size, String status) {
         Users reporter = currentReporter();
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Report> reports = reportRepository.findByReporter(reporter, pageable);
+
+        Page<Report> reports;
+        if (status != null && !status.isBlank()) {
+            ReportStatusEnum statusEnum = ReportStatusEnum.valueOf(status);
+            reports = reportRepository.findByReporterAndStatus(reporter, statusEnum, pageable);
+        } else {
+            reports = reportRepository.findByReporter(reporter, pageable);
+        }
         return PageResponse.from(reports, reportMapper::toReportResponse);
     }
 

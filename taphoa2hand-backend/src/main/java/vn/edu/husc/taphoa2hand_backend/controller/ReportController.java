@@ -71,9 +71,10 @@ public class ReportController {
     @GetMapping("/my-reports/paged")
     public ApiResponse<PageResponse<ReportResponse>> getMyReportsPaged(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String status) {
         return ApiResponse.<PageResponse<ReportResponse>>builder()
-                .result(reportService.getMyReportsPaged(page, size))
+                .result(reportService.getMyReportsPaged(page, size, status))
                 .build();
     }
 

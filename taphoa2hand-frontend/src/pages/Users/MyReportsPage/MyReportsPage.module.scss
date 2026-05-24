@@ -23,6 +23,7 @@ $radius-lg: 16px;
     min-height: 100vh;
     background: $bg-page;
     padding-bottom: 48px;
+    margin-top: -90px;
 }
 
 .page-header {
@@ -69,6 +70,109 @@ $radius-lg: 16px;
     color: rgba(255, 255, 255, 0.65);
 }
 
+/* ─── Stats Cards ─── */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+
+    @media (max-width: 600px) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: $shadow-sm;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: $shadow-md;
+        border-color: $primary;
+    }
+}
+
+.stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.stat-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: $text-main;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: $text-muted;
+    font-weight: 500;
+}
+
+/* ─── Filter Bar ─── */
+.filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: $shadow-sm;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: $text-muted;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1.5px solid $border;
+    background: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    color: $text-muted;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+        border-color: $primary;
+        color: $primary;
+    }
+
+    &.active {
+        background: $primary;
+        border-color: $primary;
+        color: #fff;
+    }
+}
+
 /* ─── Content ─── */
 .content {
     max-width: 800px;
@@ -84,6 +188,23 @@ $radius-lg: 16px;
     margin-bottom: 12px;
 
     strong { color: $text-main; }
+}
+
+.reset-filter-btn {
+    margin-top: 12px;
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: none;
+    background: $primary;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+        background: $secondary;
+    }
 }
 
 /* ─── Loading / Empty ─── */

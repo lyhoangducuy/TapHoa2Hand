@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import vn.edu.husc.taphoa2hand_backend.entity.Order;
@@ -31,10 +32,12 @@ public interface ReportRepository extends JpaRepository<Report, String>, JpaSpec
 
     List<Report> findByReporterAndOrder(Users reporter, Order order);
 
+    @Query("SELECT r FROM Report r LEFT JOIN FETCH r.reporter LEFT JOIN FETCH r.reportedUser LEFT JOIN FETCH r.reportedPost LEFT JOIN FETCH r.order LEFT JOIN FETCH r.reviewedBy WHERE r.reporter = :reporter")
     Page<Report> findByReporter(Users reporter, Pageable pageable);
 
     Page<Report> findByStatus(ReportStatusEnum status, Pageable pageable);
 
+    @Query("SELECT r FROM Report r LEFT JOIN FETCH r.reporter LEFT JOIN FETCH r.reportedUser LEFT JOIN FETCH r.reportedPost LEFT JOIN FETCH r.order LEFT JOIN FETCH r.reviewedBy WHERE r.reporter = :reporter AND r.status = :status")
     Page<Report> findByReporterAndStatus(Users reporter, ReportStatusEnum status, Pageable pageable);
 
     long countByStatus(ReportStatusEnum status);

@@ -107,7 +107,7 @@ const OrderCard = ({
     };
 
     const canFeedback = isBuyer &&
-        ['DELIVERED', 'SETTLING', 'COMPLETED'].includes(statusName) &&
+        [ 'COMPLETED'].includes(statusName) &&
         !hasFeedback;
 
     return (

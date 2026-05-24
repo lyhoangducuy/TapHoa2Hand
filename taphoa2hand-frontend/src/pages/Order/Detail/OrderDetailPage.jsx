@@ -437,7 +437,7 @@ const OrderDetailPage = () => {
                         )}
 
                         {/* Feedback */}
-                        {isBuyer && ['DELIVERED', 'SETTLING', 'COMPLETED'].includes(orderStatus) && (
+                        {isBuyer && ['COMPLETED'].includes(orderStatus) && (
                             <section className={cx('card', 'feedback-section')}>
                                 <h3 className={cx('card-title')}>Đánh giá</h3>
                                 {!existingFeedback && !showFeedbackForm && (

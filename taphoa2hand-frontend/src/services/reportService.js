@@ -133,13 +133,14 @@ export const getReportReasons = async () => {
     }
 };
 
-export const getMyReportsPaged = async ({ page = 0, size = 10 } = {}) => {
+export const getMyReportsPaged = async ({ page = 0, size = 10, status = '' } = {}) => {
     try {
         const token = localStorage.getItem('token');
-        const response = await httpClient.get(
-            `${API.GET_MY_REPORTS_PAGED}?page=${page}&size=${size}`,
-            { headers: { Authorization: `Bearer ${token}` } }
-        );
+        let url = `${API.GET_MY_REPORTS_PAGED}?page=${page}&size=${size}`;
+        if (status) {
+            url += `&status=${status}`;
+        }
+        const response = await httpClient.get(url, { headers: { Authorization: `Bearer ${token}` } });
         return response.data.result;
     } catch (error) {
         console.error("Error fetching my reports:", error);

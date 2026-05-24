@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
@@ -25,7 +26,7 @@ public class PageResponse<T> {
 
     public static <T, R> PageResponse<R> from(Page<T> pageData, Function<T, R> mapper) {
         return PageResponse.<R>builder()
-                .content(pageData.getContent().stream().map(mapper).toList())
+                .content(pageData.getContent().stream().map(mapper).collect(Collectors.toList()))
                 .page(pageData.getNumber())
                 .size(pageData.getSize())
                 .totalElements(pageData.getTotalElements())
