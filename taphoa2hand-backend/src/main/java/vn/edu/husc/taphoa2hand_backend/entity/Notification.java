@@ -5,6 +5,8 @@ package vn.edu.husc.taphoa2hand_backend.entity;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -38,6 +40,7 @@ public class Notification {
     @Builder.Default
     boolean isRead = false; // Mặc định là chưa đọc
 
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @Builder.Default
     LocalDateTime createdAt = LocalDateTime.now();
 }
