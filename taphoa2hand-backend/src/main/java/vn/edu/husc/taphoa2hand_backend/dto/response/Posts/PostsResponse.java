@@ -1,6 +1,6 @@
 package vn.edu.husc.taphoa2hand_backend.dto.response.Posts;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -30,8 +30,8 @@ public class PostsResponse {
     PostStatusResponse status;
     PostTypeResponse postType;
     Long viewCount;
-    LocalDate createdAt;
-    LocalDate updatedAt;
+    LocalDateTime createdAt;
+    LocalDateTime updatedAt;
     String userId;
     List<PostImageResponse> postImages;
     String postDetailId;

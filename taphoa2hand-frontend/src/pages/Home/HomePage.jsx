@@ -8,19 +8,32 @@ import BannerSlider from '../Banner/BannerSlider';
 
 // Hàm format thời gian
 const formatTimeAgo = (dateString) => {
+    if (!dateString) return '';
+
     const now = new Date();
     const postDate = new Date(dateString);
-    const diffInMs = now - postDate;
-    const diffInHours = diffInMs / (1000 * 60 * 60);
 
-    if (diffInHours < 1) {
-        const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-        return `${diffInMinutes} phút trước`;
+    if (isNaN(postDate.getTime())) return '';
+
+    const diffInMs = now - postDate;
+    const diffInSeconds = diffInMs / 1000;
+    const diffInMinutes = diffInSeconds / 60;
+    const diffInHours = diffInMinutes / 60;
+
+    if (diffInSeconds < 60) {
+        return `${Math.floor(diffInSeconds)} giây trước`;
+    } else if (diffInMinutes < 60) {
+        return `${Math.floor(diffInMinutes)} phút trước`;
     } else if (diffInHours < 24) {
-        const hours = Math.floor(diffInHours);
-        return `${hours} giờ trước`;
+        return `${Math.floor(diffInHours)} giờ trước`;
     } else {
-        return postDate.toLocaleDateString('vi-VN');
+        return postDate.toLocaleString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     }
 };
 
@@ -132,6 +145,7 @@ const HomePage = () => {
                             <p className={cx('price')}>
                                 {post.price?.toLocaleString('vi-VN')} đ
                             </p>
+                            <p className={cx('post-time')}>{formatTimeAgo(post.createdAt)}</p>
 
                                 {/* Payment methods */}
                                 {post.acceptedPaymentMethods && post.acceptedPaymentMethods.length > 0 && (
@@ -194,6 +208,7 @@ const HomePage = () => {
                                 <p className={cx('price')}>
                                     {post.price?.toLocaleString('vi-VN')} đ
                                 </p>
+                                <p className={cx('post-time')}>{formatTimeAgo(post.createdAt)}</p>
 
                                     {/* Payment methods */}
                                     {post.acceptedPaymentMethods && post.acceptedPaymentMethods.length > 0 && (

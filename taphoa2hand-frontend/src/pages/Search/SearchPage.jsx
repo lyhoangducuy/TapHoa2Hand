@@ -10,20 +10,32 @@ import { getAllCategories } from "../../services/categoryService";
 
 // Hàm format thời gian
 const formatTimeAgo = (dateString) => {
+    if (!dateString) return '';
+
     const now = new Date();
     const postDate = new Date(dateString);
-    const diffInMs = now - postDate;
-    const diffInHours = diffInMs / (1000 * 60 * 60);
-    const diffInDays = diffInHours / 24;
 
-    if (diffInHours < 1) {
-        const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-        return `${diffInMinutes} phút trước`;
+    if (isNaN(postDate.getTime())) return '';
+
+    const diffInMs = now - postDate;
+    const diffInSeconds = diffInMs / 1000;
+    const diffInMinutes = diffInSeconds / 60;
+    const diffInHours = diffInMinutes / 60;
+
+    if (diffInSeconds < 60) {
+        return `${Math.floor(diffInSeconds)} giây trước`;
+    } else if (diffInMinutes < 60) {
+        return `${Math.floor(diffInMinutes)} phút trước`;
     } else if (diffInHours < 24) {
-        const hours = Math.floor(diffInHours);
-        return `${hours} giờ trước`;
+        return `${Math.floor(diffInHours)} giờ trước`;
     } else {
-        return postDate.toLocaleDateString('vi-VN');
+        return postDate.toLocaleString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     }
 };
 
@@ -418,21 +430,34 @@ function SearchPage() {
 
                                         <div className={cx('info-wrapper')}>
                                             <div className={cx('badges')}>
-                                                <span className={cx('status-badge', String(post.status?.name || '').toLowerCase())}>
-                                                    {post.status?.displayName || post.status}
-                                                </span>
+                                                {post.postType && (
+                                                    <span className={cx('type-badge', post.postType.name?.toLowerCase() || 'sell')}>
+                                                        {post.postType.displayName || post.postType.name || 'Tin rao bán'}
+                                                    </span>
+                                                )}
+                                                {post.status && (
+                                                    <span className={cx('status-badge', post.status.name?.toLowerCase() || 'available')}>
+                                                        {post.status.displayName || post.status.name || 'Đang bán'}
+                                                    </span>
+                                                )}
                                             </div>
 
                                             <h3 className={cx('post-title')}>{post.title}</h3>
                                             <p className={cx('price')}>
                                                 {post.price?.toLocaleString('vi-VN')} đ
                                             </p>
+                                            <p className={cx('post-time')}>{formatTimeAgo(post.createdAt)}</p>
 
-                                            <div className={cx('meta-info')}>
-                                                <span>{post.viewCount || 0} lượt xem</span>
-                                                <span>•</span>
-                                                <span>{formatTimeAgo(post.createdAt)}</span>
-                                            </div>
+                                            {/* Payment methods */}
+                                            {post.acceptedPaymentMethods && post.acceptedPaymentMethods.length > 0 && (
+                                                <div className={cx('payments')}>
+                                                    {post.acceptedPaymentMethods.map((pm) => (
+                                                        <span key={pm.name} className={cx('payment-badge')}>
+                                                            {pm.description || pm.name}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 ))}

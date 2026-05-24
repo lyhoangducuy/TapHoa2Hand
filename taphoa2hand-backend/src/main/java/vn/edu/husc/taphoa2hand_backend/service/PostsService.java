@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.angus.mail.handlers.handler_base;
 import org.springframework.data.domain.Page;
@@ -175,7 +176,7 @@ public class PostsService {
     }
 
     @Transactional
-    public PostDetailResponse createPost(PostCreateRequest request, List<MultipartFile> images) {
+    public PostDetailResponse createPost(PostCreateRequest request, List<MultipartFile> images) throws IOException {
         System.out.println("enter create post service");
         
         // Validate images
@@ -267,7 +268,11 @@ public class PostsService {
         // Tránh lưu lắt nhắt gây lỗi Update/Delete không đáng có
         Posts savedPost = postsRepository.save(newPost);
 
-        return postsMapper.toPostDetailResponse(savedPost);
+        // Re-fetch to ensure all lazy relationships are loaded within transaction
+        Posts postToReturn = postsRepository.findById(savedPost.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+
+        return postsMapper.toPostDetailResponse(postToReturn);
     }
 
     @Transactional

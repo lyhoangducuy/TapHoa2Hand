@@ -73,7 +73,7 @@ public class AdminPostsController {
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<PostDetailResponse> createPost(
             @RequestPart("request") PostCreateRequest request,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images) {
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
 
         PostDetailResponse newPost = postsService.createPost(request, images);
 

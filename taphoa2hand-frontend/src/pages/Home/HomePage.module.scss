@@ -269,7 +269,13 @@
         font-size: 16px;
         font-weight: 700;
         color: #d0021b; /* Màu đỏ nổi bật cho giá tiền */
-        margin-bottom: 10px;
+        margin-bottom: 4px;
+    }
+
+    .post-time {
+        font-size: 11px;
+        color: #888;
+        margin-bottom: 0;
     }
 
     /* Payment badges under price */

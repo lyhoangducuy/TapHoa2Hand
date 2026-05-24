@@ -490,7 +490,30 @@
         font-size: 16px;
         font-weight: 700;
         color: #d0021b; /* Màu đỏ nổi bật cho giá tiền */
-        margin-bottom: 10px;
+        margin-bottom: 4px;
+    }
+
+    .post-time {
+        font-size: 11px;
+        color: #888;
+        margin-bottom: 0;
+    }
+
+    /* Payment badges under price */
+    .payments {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+    }
+
+    .payment-badge {
+        background: #f0f0f0;
+        color: #333;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
     }
 
     /* Thông tin lượt xem, ngày tháng */
