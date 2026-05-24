@@ -1,8 +1,6 @@
 .wrapper {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    font-family: Arial, sans-serif;
+    padding: 10px 0 20px;
+    margin-top: -60px;
 }
 
 .header {
@@ -76,109 +74,162 @@
     }
 }
 
-/* LƯỚI DANH SÁCH SẢN PHẨM */
-.grid-container {
+/* 1. CHIA LƯỚI SẢN PHẨM */
+.product-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+
+    @media (max-width: 1024px) {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    @media (max-width: 767px) {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
 }
 
-.card {
-    background: white;
-    border-radius: 12px;
-    border: 1px solid #eaeaea;
+/* 2. CARD SẢN PHẨM */
+.product-card {
+    background-color: #ffffff;
+    border-radius: 8px;
     overflow: hidden;
-    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #eee;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    cursor: pointer;
     display: flex;
     flex-direction: column;
 
     &:hover {
         transform: translateY(-4px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border-color: #F1C40F;
     }
+}
 
-    .img-wrapper {
-        display: block;
+/* 3. KHUNG ẢNH */
+.image-wrapper {
+    position: relative;
+    width: 100%;
+    padding-top: 100%;
+    background-color: #f0f0f0;
+
+    img {
+        position: absolute;
+        top: 0;
+        left: 0;
         width: 100%;
-        aspect-ratio: 4/3; /* Giữ tỷ lệ ảnh đẹp */
-        overflow: hidden;
-        background: #f0f0f0;
-
-        img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: 0.3s;
-        }
-
-        &:hover img {
-            transform: scale(1.05);
-        }
+        height: 100%;
+        object-fit: cover;
     }
+}
 
-    .info {
-        padding: 12px;
+/* 4. KHU VỰC THÔNG TIN SẢN PHẨM */
+.info-wrapper {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+
+    .badges {
         display: flex;
-        flex-direction: column;
-        flex-grow: 1;
+        gap: 6px;
+        margin-bottom: 8px;
+    }
 
-        .post-title {
-            font-size: 15px;
-            font-weight: 600;
-            color: #333;
-            text-decoration: none;
-            margin-bottom: 8px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2; /* Cắt chữ nếu tiêu đề quá dài */
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+    .badges .type-badge,
+    .badges .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        font-size: 11px;
+        border-radius: 999px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
 
-            &:hover {
-                color: #ff9800;
-            }
-        }
+    .badges .type-badge {
+        text-transform: none;
+        color: #fff;
+    }
 
-        .price {
-            font-size: 16px;
-            font-weight: bold;
-            color: #d32f2f;
-            margin-bottom: 12px;
-        }
+    .badges .type-badge.sell { background: #2d9cdb; }
+    .badges .type-badge.buy { background: #f39c12; }
 
-        .meta {
-            margin-top: auto; /* Đẩy phần này xuống đáy card */
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-top: 1px solid #f0f0f0;
-            padding-top: 12px;
+    .badges .status-badge { background: rgba(0,0,0,0.08); color: #222; font-weight: 500; }
+    .badges .status-badge.available { background: #dff7e0; color: #227f3a; }
+    .badges .status-badge.sold { background: #ffe6e6; color: #c0392b; }
+    .badges .status-badge.pending { background: #fff7e6; color: #b9770e; }
 
-            .location {
-                font-size: 13px;
-                color: #777;
-                display: flex;
-                align-items: center;
-                gap: 4px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
+    .post-title {
+        font-size: 14px;
+        font-weight: 500;
+        color: #222;
+        line-height: 1.4;
+        margin-bottom: 8px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        height: 40px;
+    }
 
-            .btn-unlike {
-                background: none;
-                border: none;
-                color: #999;
-                font-size: 18px;
-                cursor: pointer;
-                padding: 4px;
-                transition: 0.2s;
-                border-radius: 50%;
+    .price {
+        font-size: 16px;
+        font-weight: 700;
+        color: #d0021b;
+        margin-bottom: 4px;
+    }
 
-                &:hover {
-                    color: #d32f2f;
-                    background: #ffebee;
-                }
-            }
+    .post-time {
+        font-size: 11px;
+        color: #888;
+        margin-bottom: 8px;
+    }
+
+    .payments {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+    }
+
+    .payment-badge {
+        background: #f0f0f0;
+        color: #333;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .btn-unlike {
+        margin-top: auto;
+        background: #fff;
+        border: 1px solid #ddd;
+        color: #666;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+
+        &:hover {
+            background: #ffe6e6;
+            border-color: #c0392b;
+            color: #c0392b;
         }
     }
+}
+
+.status-badge {
+    &.available { background: green; }
+    &.sold { background: red; }
 }

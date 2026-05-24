@@ -167,14 +167,16 @@ const NotificationDropdown = ({ user }) => {
     }, []);
 
     const handleNotificationClick = async (noti) => {
+        // Đánh dấu đã đọc (chỉ khi chưa đọc)
         if (!noti.read) {
             try {
                 await markNotificationAsRead(noti.id);
-                setNotifications(prev => prev.map(n => n.id === noti.id ? { ...n, read: true } : n));
-                setUnreadCount(prev => (prev > 0 ? prev - 1 : 0));
             } catch (error) {
                 console.error("Lỗi đánh dấu đã đọc:", error);
             }
+            // Cập nhật local state - không cần đợi API
+            setNotifications(prev => prev.map(n => n.id === noti.id ? { ...n, read: true } : n));
+            setUnreadCount(prev => (prev > 0 ? prev - 1 : 0));
         }
         setIsOpen(false);
         if (noti.link) navigate(noti.link);

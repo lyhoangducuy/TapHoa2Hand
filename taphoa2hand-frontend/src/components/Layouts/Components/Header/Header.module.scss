@@ -449,15 +449,14 @@ $danger-red: #e74c3c;
 .noti-content {
     flex: 1;
     padding-right: 10px;
+    min-width: 0;
 
     p {
         margin: 0 0 4px 0;
         font-size: 14px;
         color: #444;
-        display: -webkit-box;
-        -webkit-line-clamp: 2; /* Cắt chuỗi nếu quá 2 dòng */
-        -webkit-box-orient: vertical;
-        overflow: hidden;
+        word-wrap: break-word;
+        white-space: normal;
     }
 }
 
