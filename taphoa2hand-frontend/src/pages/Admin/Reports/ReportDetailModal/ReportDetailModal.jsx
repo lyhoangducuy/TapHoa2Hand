@@ -242,29 +242,37 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate }) => {
                         </div>
                     ) : (
                         <div className={cx('review-view')}>
+                            {/* PENDING: chỉ hiện nút Duyệt/Từ chối */}
                             {currentStatus === 'PENDING' && (
-                                <div className={cx('action-buttons')}>
-                                    <button
-                                        className={cx('btn-approve')}
-                                        onClick={() => handleReview('APPROVED')}
-                                        disabled={isLoading}
-                                    >
-                                        <FiCheckCircle size={16} style={{ marginRight: 6 }} />
-                                        Duyệt báo cáo
-                                    </button>
-                                    <button
-                                        className={cx('btn-reject')}
-                                        onClick={() => handleReview('REJECTED')}
-                                        disabled={isLoading}
-                                    >
-                                        <FiX size={16} style={{ marginRight: 6 }} />
-                                        Từ chối
-                                    </button>
-                                </div>
+                                <>
+                                    <div className={cx('action-buttons')}>
+                                        <button
+                                            className={cx('btn-approve')}
+                                            onClick={() => handleReview('APPROVED')}
+                                            disabled={isLoading}
+                                        >
+                                            <FiCheckCircle size={16} style={{ marginRight: 6 }} />
+                                            Duyệt báo cáo
+                                        </button>
+                                        <button
+                                            className={cx('btn-reject')}
+                                            onClick={() => handleReview('REJECTED')}
+                                            disabled={isLoading}
+                                        >
+                                            <FiX size={16} style={{ marginRight: 6 }} />
+                                            Từ chối
+                                        </button>
+                                    </div>
+                                </>
                             )}
 
-                            {(currentStatus === 'APPROVED' || currentStatus === 'PENDING') && (
+                            {/* APPROVED: hiện penalty grid + ghi chú + nút Xử lý xong */}
+                            {currentStatus === 'APPROVED' && (
                                 <>
+                                    <div className={cx('confirm-notice')}>
+                                        Báo cáo đã được duyệt. Vui lòng chọn hình phạt (nếu có) và bấm "Xử lý xong" để hoàn tất.
+                                    </div>
+
                                     <div className={cx('section')}>
                                         <span className={cx('section-label')}>
                                             Chọn hình phạt ({selectedPenalties.length} đã chọn)
@@ -310,22 +318,23 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate }) => {
                                             className={cx('btn-process')}
                                             onClick={() => handleReview('PROCESSED')}
                                             disabled={isLoading}
-                                    >
-                                        <FiCheckCircle size={16} style={{ marginRight: 6 }} />
-                                        Xử lý xong
-                                    </button>
-                                    <button
-                                        className={cx('btn-reject')}
-                                        onClick={() => handleReview('REJECTED')}
-                                        disabled={isLoading}
-                                    >
-                                        <FiX size={16} style={{ marginRight: 6 }} />
-                                        Từ chối
-                                    </button>
-                                </div>
+                                        >
+                                            <FiCheckCircle size={16} style={{ marginRight: 6 }} />
+                                            Xử lý xong
+                                        </button>
+                                        <button
+                                            className={cx('btn-reject')}
+                                            onClick={() => handleReview('REJECTED')}
+                                            disabled={isLoading}
+                                        >
+                                            <FiX size={16} style={{ marginRight: 6 }} />
+                                            Từ chối
+                                        </button>
+                                    </div>
                                 </>
                             )}
 
+                            {/* PROCESSED hoặc REJECTED: hiện thông báo đã xử lý */}
                             {(currentStatus === 'PROCESSED' || currentStatus === 'REJECTED') && (
                                 <div className={cx('already-done')}>
                                     <span>Báo cáo đã được xử lý với trạng thái: </span>

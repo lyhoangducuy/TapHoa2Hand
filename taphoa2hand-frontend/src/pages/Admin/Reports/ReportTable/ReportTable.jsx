@@ -17,7 +17,7 @@ const ReportTable = ({ reports, onViewDetail, isLoading }) => {
         const colors = {
             PENDING: 'pending',
             APPROVED: 'approved',
-            RESOLVED: 'resolved',
+            PROCESSED: 'resolved',
             REJECTED: 'rejected'
         };
 
@@ -97,17 +97,21 @@ const ReportTable = ({ reports, onViewDetail, isLoading }) => {
 
                             {/* Status */}
                             <td>
-                                <span
-                                    className={`${styles.status} ${
-                                        styles[
-                                            getStatusColor(
-                                                report.status?.name
-                                            )
-                                        ]
-                                    }`}
-                                >
-                                    {report.status?.displayName}
-                                </span>
+                                {report.status?.name ? (
+                                    <span
+                                        className={`${styles.status} ${
+                                            styles[
+                                                getStatusColor(
+                                                    report.status?.name
+                                                )
+                                            ]
+                                        }`}
+                                    >
+                                        {report.status?.displayName}
+                                    </span>
+                                ) : (
+                                    <span style={{ color: '#64748b', fontSize: '12px' }}>—</span>
+                                )}
                             </td>
 
                             {/* Created At */}

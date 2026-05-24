@@ -67,8 +67,11 @@ public class Order extends BaseEntity {
     PaymentMethodEnum paymentMethod;
 
     @Enumerated(EnumType.STRING)
-
     OrderStatusEnum status;
+
+    // Lưu trạng thái trước khi bị báo cáo (để phục hồi nếu bị từ chối)
+    @Enumerated(EnumType.STRING)
+    OrderStatusEnum previousStatus;
 
     BigDecimal totalAmount;
     BigDecimal platformFee;

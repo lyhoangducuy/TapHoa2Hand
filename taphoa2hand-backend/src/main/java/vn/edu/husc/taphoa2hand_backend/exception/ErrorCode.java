@@ -86,6 +86,7 @@ public enum ErrorCode {
     REPORT_ORDER_FORBIDDEN(13003, "Chỉ có thể báo cáo đơn hàng mà bạn tham gia (mua hoặc bán)", HttpStatus.FORBIDDEN),
     REPORT_OWN_POST(13004, "Không thể báo cáo bài viết của chính bạn", HttpStatus.BAD_REQUEST),
     REPORT_ORDER_EXISTED(13005, "Đơn hàng đã có báo cáo", HttpStatus.BAD_REQUEST),
+    REPORT_ORDER_INVALID_STATUS(13006, "Không thể báo cáo đơn hàng đã hoàn thành, đã hủy hoặc đang bị báo cáo", HttpStatus.BAD_REQUEST),
     CAPTCHA_REQUIRED(
             2004,
             "Vui lòng xác minh captcha",

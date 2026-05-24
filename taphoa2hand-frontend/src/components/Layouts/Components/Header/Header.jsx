@@ -209,15 +209,19 @@ const NotificationDropdown = ({ user }) => {
 
     const handleNotificationClick = async (noti) => {
         // Đánh dấu đã đọc (chỉ khi chưa đọc)
-        if (noti.read === false || noti.read === undefined) {
+        const isUnread = noti.read === false || noti.read === undefined;
+        if (isUnread) {
             try {
                 await markNotificationAsRead(noti.id);
+                // Re-fetch count từ API để đảm bảo đồng bộ
+                const countRes = await getUnreadNotificationCount(user.id);
+                let countData = countRes.data?.result ?? countRes.result ?? 0;
+                setUnreadCount(Number(countData));
+                // Cập nhật local state
+                setNotifications(prev => prev.map(n => n.id === noti.id ? { ...n, read: true } : n));
             } catch (error) {
                 console.error("Lỗi đánh dấu đã đọc:", error);
             }
-            // Cập nhật local state - không cần đợi API
-            setNotifications(prev => prev.map(n => n.id === noti.id ? { ...n, read: true } : n));
-            setUnreadCount(prev => (prev > 0 ? prev - 1 : 0));
         }
         setIsOpen(false);
         if (noti.link) navigate(noti.link);

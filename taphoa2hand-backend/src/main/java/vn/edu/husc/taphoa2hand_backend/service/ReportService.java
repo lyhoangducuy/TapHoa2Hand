@@ -140,15 +140,33 @@ public class ReportService {
         Users reporter = currentReporter();
         Order order = orderRepository.findById(body.getOrderId())
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        // Kiểm tra đơn chưa bị báo cáo
         List<Report> existing = reportRepository.findByReporterAndOrder(reporter, order);
         if (!existing.isEmpty()) {
             throw new AppException(ErrorCode.REPORT_ORDER_EXISTED);
         }
+
+        // Kiểm tra người báo cáo là buyer hoặc seller
         boolean participant = order.getBuyer().getId().equals(reporter.getId())
                 || order.getSeller().getId().equals(reporter.getId());
         if (!participant) {
             throw new AppException(ErrorCode.REPORT_ORDER_FORBIDDEN);
         }
+
+        // Kiểm tra đơn có thể bị báo cáo (không phải đã hoàn thành, đã hủy, hoặc đang báo cáo)
+        OrderStatusEnum currentStatus = order.getStatus();
+        if (currentStatus == OrderStatusEnum.COMPLETED || currentStatus == OrderStatusEnum.CANCELLED
+                || currentStatus == OrderStatusEnum.REPORTED) {
+            throw new AppException(ErrorCode.REPORT_ORDER_INVALID_STATUS);
+        }
+
+        // Lưu trạng thái cũ để phục hồi nếu bị từ chối
+        order.setPreviousStatus(currentStatus);
+        order.setStatus(OrderStatusEnum.REPORTED);
+        orderRepository.save(order);
+
+        // Tạo report
         Report report = Report.builder()
                 .reason(body.getReason())
                 .detail(body.getDetail())
@@ -159,8 +177,10 @@ public class ReportService {
                 .evidences(new ArrayList<>())
                 .build();
         attachEvidenceImages(report, body.getEvidenceImages());
+
         notifyAdmins("Đơn hàng #" + order.getId() + " đã bị báo cáo. Vui lòng kiểm tra.",
                 "/admin/reports");
+
         return reportMapper.toReportResponse(reportRepository.save(report));
     }
 
@@ -239,11 +259,34 @@ public class ReportService {
                 .orElseThrow(() -> new AppException(ErrorCode.REPORT_NOT_FOUND));
         Users admin = currentAdmin();
 
+        // Xử lý Order report
+        if (report.getType() == ReportTypeEnum.ORDER && report.getOrder() != null) {
+            Order order = report.getOrder();
+            ReportStatusEnum newStatus = ReportStatusEnum.valueOf(request.getStatus());
+
+            if (newStatus == ReportStatusEnum.REJECTED) {
+                // Từ chối → khôi phục trạng thái trước khi bị báo cáo
+                OrderStatusEnum prevStatus = order.getPreviousStatus();
+                if (prevStatus != null) {
+                    order.setStatus(prevStatus);
+                } else {
+                    order.setStatus(OrderStatusEnum.PENDING);
+                }
+                order.setPreviousStatus(null);
+                orderRepository.save(order);
+            } else if (newStatus == ReportStatusEnum.APPROVED || newStatus == ReportStatusEnum.PROCESSED) {
+                // Duyệt/Xử lý → hủy đơn, admin xử lý hoàn tiền thủ công
+                order.setStatus(OrderStatusEnum.CANCELLED);
+                order.setPreviousStatus(null);
+                orderRepository.save(order);
+            }
+        }
+
         report.setStatus(ReportStatusEnum.valueOf(request.getStatus()));
         report.setResolutionNote(request.getResolutionNote());
         report.setReviewedBy(admin);
 
-        // Apply penalties
+        // Apply penalties (cho USER/POST report)
         if (request.getPenalties() != null && !request.getPenalties().isEmpty()) {
             List<ReportPenalty> penalties = request.getPenalties().stream()
                     .map(action -> ReportPenalty.builder()
@@ -264,7 +307,7 @@ public class ReportService {
         if (saved.getReporter() != null) {
             String msg = request.getStatus().equals("REJECTED")
                     ? "Báo cáo của bạn đã bị từ chối."
-                    : "Báo cáo của bạn đã được xử lý. Xem chi tiết.";
+                    : "Báo cáo của bạn đã được xử lý. Đơn hàng đã bị hủy.";
             notificationService.createNotification(NotificationRequest.builder()
                     .content(msg)
                     .userIds(List.of(saved.getReporter().getId()))
@@ -328,14 +371,6 @@ public class ReportService {
     public ReportResponse updateReportStatus(String reportId, ReportUpdateStatusRequest request) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new AppException(ErrorCode.REPORT_NOT_FOUND));
-        if (report.getType() == ReportTypeEnum.ORDER) {
-            Order order = report.getOrder();
-            if (order != null && request.getStatus() == ReportStatusEnum.APPROVED) {
-                order.setStatus(OrderStatusEnum.SETTLING);
-                order.setHoldUntil(LocalDateTime.now());
-                orderRepository.save(order);
-            }
-        }
         report.setStatus(request.getStatus());
         return reportMapper.toReportResponse(reportRepository.save(report));
     }

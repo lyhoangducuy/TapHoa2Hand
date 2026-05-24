@@ -102,6 +102,10 @@ $border-color: #dee2e6;
                             color: #333;
                         }
 
+                        &.approved {
+                            background: #3b82f6;
+                        }
+
                         &.resolved {
                             background: $success-color;
                         }

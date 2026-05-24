@@ -117,7 +117,7 @@ const OrderCard = ({
 
 
             {/* STEPPER */}
-            {statusName !== 'CANCELLED' && statusName !== 'REPORTED' && (
+            {!['CANCELLED', 'CANCELLED_AUTO', 'REPORTED'].includes(statusName) && (
                 <div className={cx('stepper')}>
                     {steps.map((stepKey, i) => {
                         const done = stepIndex > i;
@@ -134,9 +134,15 @@ const OrderCard = ({
                 </div>
             )}
 
-            {(statusName === 'CANCELLED' || statusName === 'REPORTED') && (
+            {(statusName === 'CANCELLED' || statusName === 'CANCELLED_AUTO') && (
                 <div className={cx('cancelled-banner')}>
-                    <FiX size={14} /> Đơn đã bị {statusName === 'CANCELLED' ? 'hủy' : 'báo cáo'}
+                    <FiX size={14} /> Đơn đã bị hủy
+                </div>
+            )}
+
+            {statusName === 'REPORTED' && (
+                <div className={cx('reported-banner')}>
+                    <FiFlag size={14} /> Đơn đang bị báo cáo, chờ xử lý
                 </div>
             )}
 

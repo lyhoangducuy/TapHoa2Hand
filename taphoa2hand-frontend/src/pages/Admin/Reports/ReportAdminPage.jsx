@@ -32,6 +32,7 @@ const ReportAdminPage = () => {
             setIsLoading(true);
 
             const data = await getAllReports();
+            console.log('Reports from API:', data);
 
             // data đã là array
             setReports(Array.isArray(data) ? data : []);
@@ -166,7 +167,7 @@ const ReportAdminPage = () => {
                                 Đã duyệt
                             </option>
 
-                            <option value="RESOLVED">
+                            <option value="PROCESSED">
                                 Đã xử lý
                             </option>
 
