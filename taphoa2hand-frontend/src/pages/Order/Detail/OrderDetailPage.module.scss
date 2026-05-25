@@ -566,6 +566,11 @@
         color: #fff;
         &:hover:not(:disabled) { background: #047857; }
     }
+    &.btn-success {
+        background: #059669;
+        color: #fff;
+        &:hover:not(:disabled) { background: #047857; }
+    }
     &.btn-danger {
         background: #fff;
         border: 1.5px solid #fca5a5;

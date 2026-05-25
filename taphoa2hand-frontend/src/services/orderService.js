@@ -45,10 +45,15 @@ export const getAdminOrders = async (page = 0, size = 10, orderStatus, paymentMe
     return await httpClient.get(`${API.ADMIN_GET_ORDERS}?${params.toString()}`);
 };
 
-export const updateOrderStatus = async (orderId, newStatus, body = {}) => {
+export const updateOrderStatus = async (orderId, newStatus, body) => {
+    if (body && Object.keys(body).length > 0) {
+        return await httpClient.patch(
+            `${API.UPDATE_ORDER_STATUS(orderId)}?newStatus=${newStatus}`,
+            body
+        );
+    }
     return await httpClient.patch(
-        `${API.UPDATE_ORDER_STATUS(orderId)}?newStatus=${newStatus}`,
-        body
+        `${API.UPDATE_ORDER_STATUS(orderId)}?newStatus=${newStatus}`
     );
 };
 

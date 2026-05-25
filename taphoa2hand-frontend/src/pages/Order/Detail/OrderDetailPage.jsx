@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import classNames from 'classnames/bind';
 import {
     FiArrowLeft, FiCheck, FiX, FiUser, FiMapPin, FiPhone, FiMail,
-    FiChevronRight, FiStar, FiCreditCard
+    FiChevronRight, FiStar, FiCreditCard, FiPackage
 } from 'react-icons/fi';
 import styles from './OrderDetailPage.module.scss';
 import orderService from '../../../services/orderService';
@@ -26,18 +26,32 @@ const getMeUsername = () => {
     return (d?.sub ?? d?.username) || null;
 };
 
-// ─── Stepper config ───
-const STEPS_ORDER = [
+// ─── Stepper config cho thanh toán TRUNG GIAN ───
+const STEPS_MIDDLEMAN = [
     'PENDING', 'CONFIRMED', 'PAID_WAITING_PICKUP',
     'SHIPPING', 'DELIVERED', 'SETTLING', 'COMPLETED'
 ];
-const STEP_LABELS = {
+
+// ─── Stepper config cho thanh toán TRỰC TIẾP ───
+const STEPS_DIRECT = [
+    'PENDING', 'CONFIRMED', 'SHIPPING', 'DELIVERED', 'COMPLETED'
+];
+
+const STEP_LABELS_MIDDLEMAN = {
     PENDING: 'Chờ duyệt',
     CONFIRMED: 'Đã duyệt',
     PAID_WAITING_PICKUP: 'Đã thanh toán',
     SHIPPING: 'Đang giao',
     DELIVERED: 'Đã giao',
     SETTLING: 'Quyết toán',
+    COMPLETED: 'Hoàn thành',
+};
+
+const STEP_LABELS_DIRECT = {
+    PENDING: 'Chờ duyệt',
+    CONFIRMED: 'Đã duyệt',
+    SHIPPING: 'Đang giao',
+    DELIVERED: 'Đã giao',
     COMPLETED: 'Hoàn thành',
 };
 
@@ -132,7 +146,13 @@ const OrderDetailPage = () => {
         amount != null && unit ? (unit === 'HOURS' ? `${amount} giờ` : `${amount} ngày`) : null;
 
     const orderStatus = order?.status?.name;
-    const currentStep = STEPS_ORDER.indexOf(orderStatus);
+    const isDirectPayment = order?.paymentMethod?.name === 'DIRECT';
+
+    // Chọn steps và labels dựa trên phương thức thanh toán
+    const steps = isDirectPayment ? STEPS_DIRECT : STEPS_MIDDLEMAN;
+    const stepLabels = isDirectPayment ? STEP_LABELS_DIRECT : STEP_LABELS_MIDDLEMAN;
+    const currentStep = steps.indexOf(orderStatus);
+
     const st = STATUS_STYLES[orderStatus] || { bg: '#f3f4f6', color: '#374151', border: '#d1d5db' };
 
     const buyerId = getUserId(order, 'buyerId');
@@ -207,10 +227,10 @@ const OrderDetailPage = () => {
                     {/* ─── MAIN COLUMN ─── */}
                     <main className={cx('main')}>
 
-                        {/* STEP STATUS (same style as OrderCard) */}
+                        {/* STEP STATUS - Hiển thị khác nhau cho từng phương thức */}
                         {orderStatus !== 'CANCELLED' && orderStatus !== 'REPORTED' && (
                             <div className={cx('stepper')}>
-                                {STEPS_ORDER.map((stepKey, i) => {
+                                {steps.map((stepKey, i) => {
                                     const done = currentStep > i;
                                     const active = currentStep === i;
 
@@ -220,7 +240,7 @@ const OrderDetailPage = () => {
                                                 {done ? <FiCheck size={10} /> : <span>{i + 1}</span>}
                                             </div>
                                             <span className={cx('step-label')}>
-                                                {STEP_LABELS[stepKey]}
+                                                {stepLabels[stepKey]}
                                             </span>
                                         </div>
                                     );
@@ -339,23 +359,34 @@ const OrderDetailPage = () => {
                             <div className={cx('kv-list')}>
                                 <div className={cx('kv')}>
                                     <span className={cx('kv-key')}>Phương thức</span>
-                                    <span className={cx('kv-val', 'method')}>{paymentLabel}</span>
+                                    <span className={cx('kv-val', 'method')}>
+                                        {isDirectPayment ? 'Trực tiếp' : 'Trung gian (ký quỹ)'}
+                                    </span>
                                 </div>
                                 <div className={cx('kv')}>
                                     <span className={cx('kv-key')}>Trạng thái TT</span>
                                     <span className={cx('kv-val')}>{order.paymentStatus?.displayName || '—'}</span>
                                 </div>
-                                {order.paymentMethod?.name === 'MIDDLEMAN' && formatEscrowTime(order.holdDurationUnit, order.holdDurationAmount) && (
+                                {isDirectPayment ? (
                                     <div className={cx('kv')}>
-                                        <span className={cx('kv-key')}>Thời gian giữ tiền</span>
-                                        <span className={cx('kv-val')}>{formatEscrowTime(order.holdDurationUnit, order.holdDurationAmount)}</span>
+                                        <span className={cx('kv-key')}>Ghi chú</span>
+                                        <span className={cx('kv-val')}>💵 Thanh toán trực tiếp - Không qua trung gian</span>
                                     </div>
-                                )}
-                                {order.paymentMethod?.name === 'MIDDLEMAN' && ['DELIVERED', 'SETTLING'].includes(orderStatus) && order.holdUntil && (
-                                    <div className={cx('kv')}>
-                                        <span className={cx('kv-key')}>Giữ tiền đến</span>
-                                        <span className={cx('kv-val')}>{formatDateTime(order.holdUntil)}</span>
-                                    </div>
+                                ) : (
+                                    <>
+                                        {formatEscrowTime(order.holdDurationUnit, order.holdDurationAmount) && (
+                                            <div className={cx('kv')}>
+                                                <span className={cx('kv-key')}>Thời gian giữ tiền</span>
+                                                <span className={cx('kv-val')}>{formatEscrowTime(order.holdDurationUnit, order.holdDurationAmount)}</span>
+                                            </div>
+                                        )}
+                                        {['DELIVERED', 'SETTLING'].includes(orderStatus) && order.holdUntil && (
+                                            <div className={cx('kv')}>
+                                                <span className={cx('kv-key')}>Giữ tiền đến</span>
+                                                <span className={cx('kv-val')}>{formatDateTime(order.holdUntil)}</span>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
 
@@ -416,25 +447,153 @@ const OrderDetailPage = () => {
                         )}
 
                         {/* Action Buttons */}
-                        {(isSeller || isBuyer) && orderStatus === 'PENDING' && (
-                            <section className={cx('card', 'actions-card')}>
-                                {isSeller && (
-                                    <>
-                                        <button className={cx('btn', 'btn-danger')} onClick={handleCancel} disabled={actionLoading}>
-                                            <FiX /> {actionLoading ? '…' : 'Từ chối đơn'}
-                                        </button>
-                                        <button className={cx('btn', 'btn-primary')} onClick={handleConfirm} disabled={actionLoading}>
-                                            <FiCheck /> {actionLoading ? '…' : 'Chấp nhận đơn'}
-                                        </button>
-                                    </>
-                                )}
-                                {isBuyer && !isSeller && (
-                                    <button className={cx('btn', 'btn-danger')} onClick={handleCancel} disabled={actionLoading}>
-                                        <FiX /> {actionLoading ? '…' : 'Hủy đơn'}
-                                    </button>
-                                )}
-                            </section>
-                        )}
+                        {/* Kiểm tra xem có phải thanh toán trực tiếp không */}
+                        {(() => {
+                            const isDirect = order?.paymentMethod?.name === 'DIRECT';
+
+                            // ===== THANH TOÁN TRỰC TIẾP =====
+                            if (isDirect) {
+                                // Người bán: duyệt/từ chối, bắt đầu giao, xác nhận đã giao
+                                if (isSeller) {
+                                    return (
+                                        <section className={cx('card', 'actions-card')}>
+                                            {/* PENDING: duyệt hoặc từ chối */}
+                                            {orderStatus === 'PENDING' && (
+                                                <>
+                                                    <button className={cx('btn', 'btn-danger')} onClick={handleCancel} disabled={actionLoading}>
+                                                        <FiX /> {actionLoading ? '…' : 'Từ chối đơn'}
+                                                    </button>
+                                                    <button className={cx('btn', 'btn-primary')} onClick={handleConfirm} disabled={actionLoading}>
+                                                        <FiCheck /> {actionLoading ? '…' : 'Chấp nhận đơn'}
+                                                    </button>
+                                                </>
+                                            )}
+                                            {/* CONFIRMED: bắt đầu giao */}
+                                            {orderStatus === 'CONFIRMED' && (
+                                                <button className={cx('btn', 'btn-primary')} onClick={async () => {
+                                                    setActionLoading(true);
+                                                    try {
+                                                        await orderService.updateOrderStatus(orderId, 'SHIPPING');
+                                                        toast.success('Đã bắt đầu giao hàng');
+                                                        await refresh();
+                                                    } catch { toast.error('Lỗi cập nhật.'); }
+                                                    finally { setActionLoading(false); }
+                                                }} disabled={actionLoading}>
+                                                    <FiPackage /> {actionLoading ? '…' : 'Bắt đầu giao hàng'}
+                                                </button>
+                                            )}
+                                            {/* SHIPPING: xác nhận đã giao */}
+                                            {orderStatus === 'SHIPPING' && (
+                                                <button className={cx('btn', 'btn-success')} onClick={async () => {
+                                                    if (!window.confirm('Xác nhận đã giao hàng thành công?')) return;
+                                                    setActionLoading(true);
+                                                    try {
+                                                        await orderService.updateOrderStatus(orderId, 'DELIVERED');
+                                                        toast.success('Đã xác nhận giao hàng');
+                                                        await refresh();
+                                                    } catch { toast.error('Lỗi xác nhận.'); }
+                                                    finally { setActionLoading(false); }
+                                                }} disabled={actionLoading}>
+                                                    <FiCheck /> {actionLoading ? '…' : 'Xác nhận đã giao'}
+                                                </button>
+                                            )}
+                                        </section>
+                                    );
+                                }
+
+                                // Người mua: hủy đơn khi PENDING/CONFIRMED, xác nhận hoàn thành khi DELIVERED
+                                if (isBuyer) {
+                                    return (
+                                        <section className={cx('card', 'actions-card')}>
+                                            {(orderStatus === 'PENDING' || orderStatus === 'CONFIRMED') && (
+                                                <button className={cx('btn', 'btn-danger')} onClick={handleCancel} disabled={actionLoading}>
+                                                    <FiX /> {actionLoading ? '…' : 'Hủy đơn'}
+                                                </button>
+                                            )}
+                                            {orderStatus === 'DELIVERED' && (
+                                                <button className={cx('btn', 'btn-success')} onClick={async () => {
+                                                    if (!window.confirm('Xác nhận hoàn thành đơn hàng?')) return;
+                                                    setActionLoading(true);
+                                                    try {
+                                                        await orderService.updateOrderStatus(orderId, 'COMPLETED');
+                                                        toast.success('Đã xác nhận hoàn thành!');
+                                                        await refresh();
+                                                    } catch (e) {
+                                                        console.error('Error:', e);
+                                                        toast.error('Lỗi xác nhận: ' + (e?.message || e));
+                                                    }
+                                                    finally { setActionLoading(false); }
+                                                }} disabled={actionLoading}>
+                                                    <FiCheck /> {actionLoading ? '…' : 'Xác nhận hoàn thành'}
+                                                </button>
+                                            )}
+                                        </section>
+                                    );
+                                }
+                            }
+
+                            // ===== THANH TOÁN TRUNG GIAN =====
+                            // Người bán: duyệt/từ chối, cập nhật trạng thái giao hàng
+                            if (isSeller) {
+                                return (
+                                    <section className={cx('card', 'actions-card')}>
+                                        {/* PENDING: duyệt hoặc từ chối */}
+                                        {orderStatus === 'PENDING' && (
+                                            <>
+                                                <button className={cx('btn', 'btn-danger')} onClick={handleCancel} disabled={actionLoading}>
+                                                    <FiX /> {actionLoading ? '…' : 'Từ chối đơn'}
+                                                </button>
+                                                <button className={cx('btn', 'btn-primary')} onClick={handleConfirm} disabled={actionLoading}>
+                                                    <FiCheck /> {actionLoading ? '…' : 'Chấp nhận đơn'}
+                                                </button>
+                                            </>
+                                        )}
+                                        {/* SHIPPING: đánh dấu đã giao */}
+                                        {orderStatus === 'SHIPPING' && (
+                                            <button className={cx('btn', 'btn-success')} onClick={async () => {
+                                                if (!window.confirm('Xác nhận đã giao hàng thành công?')) return;
+                                                setActionLoading(true);
+                                                try {
+                                                    await orderService.updateOrderStatus(orderId, 'DELIVERED');
+                                                    toast.success('Đã xác nhận giao hàng');
+                                                    await refresh();
+                                                } catch { toast.error('Lỗi xác nhận.'); }
+                                                finally { setActionLoading(false); }
+                                            }} disabled={actionLoading}>
+                                                <FiCheck /> {actionLoading ? '…' : 'Xác nhận đã giao'}
+                                            </button>
+                                        )}
+                                    </section>
+                                );
+                            }
+
+                            // Người mua trung gian: hủy đơn khi PENDING, xác nhận hoàn thành khi SETTLING
+                            if (isBuyer) {
+                                return (
+                                    <section className={cx('card', 'actions-card')}>
+                                        {orderStatus === 'PENDING' && (
+                                            <button className={cx('btn', 'btn-danger')} onClick={handleCancel} disabled={actionLoading}>
+                                                <FiX /> {actionLoading ? '…' : 'Hủy đơn'}
+                                            </button>
+                                        )}
+                                        {orderStatus === 'SETTLING' && (
+                                            <button className={cx('btn', 'btn-success')} onClick={async () => {
+                                                if (!window.confirm('Xác nhận hoàn thành đơn hàng?')) return;
+                                                setActionLoading(true);
+                                                try {
+                                                    await orderService.updateOrderStatus(orderId, 'COMPLETED');
+                                                    toast.success('Đã xác nhận hoàn thành!');
+                                                    await refresh();
+                                                } catch { toast.error('Lỗi xác nhận.'); }
+                                                finally { setActionLoading(false); }
+                                            }} disabled={actionLoading}>
+                                                <FiCheck /> {actionLoading ? '…' : 'Xác nhận hoàn thành'}
+                                            </button>
+                                        )}
+                                    </section>
+                                );
+                            }
+                        })()}
 
                         {/* Feedback */}
                         {isBuyer && ['COMPLETED'].includes(orderStatus) && (

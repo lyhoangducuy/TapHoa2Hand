@@ -15,20 +15,31 @@ import styles from './OrderCard.module.scss';
 
 const cx = classNames.bind(styles);
 
-// ─── Stepper config ───
-const STEPS_BUY = [
+// ─── Stepper config cho thanh toán TRUNG GIAN ───
+const STEPS_MIDDLEMAN = [
     'PENDING', 'CONFIRMED', 'PAID_WAITING_PICKUP', 'SHIPPING', 'DELIVERED', 'SETTLING', 'COMPLETED'
 ];
-const STEPS_SELL = [
-    'PENDING', 'CONFIRMED', 'PAID_WAITING_PICKUP', 'SHIPPING', 'DELIVERED', 'SETTLING', 'COMPLETED'
+
+// ─── Stepper config cho thanh toán TRỰC TIẾP ───
+const STEPS_DIRECT = [
+    'PENDING', 'CONFIRMED', 'SHIPPING', 'DELIVERED', 'COMPLETED'
 ];
-const STEP_LABELS = {
+
+const STEP_LABELS_MIDDLEMAN = {
     PENDING: 'Chờ duyệt',
     CONFIRMED: 'Đã duyệt',
     PAID_WAITING_PICKUP: 'Đã thanh toán',
     SHIPPING: 'Đang giao',
     DELIVERED: 'Đã giao',
     SETTLING: 'Quyết toán',
+    COMPLETED: 'Hoàn thành',
+};
+
+const STEP_LABELS_DIRECT = {
+    PENDING: 'Chờ duyệt',
+    CONFIRMED: 'Đã duyệt',
+    SHIPPING: 'Đang giao',
+    DELIVERED: 'Đã giao',
     COMPLETED: 'Hoàn thành',
 };
 
@@ -44,8 +55,8 @@ const STATUS_COLORS = {
     REPORTED: { bg: '#fefce8', color: '#854d0e', dot: '#eab308' },
 };
 
-function getStepIndex(status) {
-    return STEPS_BUY.indexOf(status);
+function getStepIndex(status, steps) {
+    return steps.indexOf(status);
 }
 
 const OrderCard = ({
@@ -71,8 +82,12 @@ const OrderCard = ({
     const hasToken = Boolean(getToken());
     const statusName = order?.status?.name;
     const isBuyer = activeTab === 'purchases';
-    const steps = isBuyer ? STEPS_BUY : STEPS_SELL;
-    const stepIndex = getStepIndex(statusName);
+    const isDirectPayment = order?.paymentMethod?.name === 'DIRECT';
+
+    // Chọn steps và labels dựa trên phương thức thanh toán
+    const steps = isDirectPayment ? STEPS_DIRECT : STEPS_MIDDLEMAN;
+    const stepLabels = isDirectPayment ? STEP_LABELS_DIRECT : STEP_LABELS_MIDDLEMAN;
+    const stepIndex = getStepIndex(statusName, steps);
 
     const sc = STATUS_COLORS[statusName] || { bg: '#f3f4f6', color: '#374151', dot: '#9ca3af' };
 
@@ -82,8 +97,7 @@ const OrderCard = ({
             currency: 'VND'
         }).format(amount);
 
-    const paymentMethodLabel =
-        order?.paymentMethod?.name === 'MIDDLEMAN' ? 'Trung gian' : 'Trực tiếp';
+    const paymentMethodLabel = isDirectPayment ? 'Trực tiếp' : 'Trung gian';
 
     useEffect(() => {
         if (!order?.id) return;
@@ -107,8 +121,13 @@ const OrderCard = ({
     };
 
     const canFeedback = isBuyer &&
-        [ 'COMPLETED'].includes(statusName) &&
+        statusName === 'COMPLETED' &&
         !hasFeedback;
+
+    // Kiểm tra nút hành động dựa trên phương thức thanh toán
+    const showShippingButtons = !isDirectPayment || statusName === 'SHIPPING' || statusName === 'DELIVERED'; // Hiện nút giao hàng cho trung gian, hoặc trực tiếp ở bước shipping/delivered
+    const showDirectShippingStart = isDirectPayment && isBuyer && statusName === 'CONFIRMED'; // Người mua báo đã giao cho trực tiếp
+    const showDirectShippingConfirm = isDirectPayment && !isBuyer && statusName === 'SHIPPING'; // Người bán xác nhận đã giao cho trực tiếp
 
     return (
         <div className={cx('card')} style={{ '--status-color': sc.color, '--status-dot': sc.dot }}>
@@ -116,7 +135,7 @@ const OrderCard = ({
             {/* HEADER */}
 
 
-            {/* STEPPER */}
+            {/* STEPPER - Hiển thị khác nhau cho từng phương thức */}
             {!['CANCELLED', 'CANCELLED_AUTO', 'REPORTED'].includes(statusName) && (
                 <div className={cx('stepper')}>
                     {steps.map((stepKey, i) => {
@@ -127,7 +146,7 @@ const OrderCard = ({
                                 <div className={cx('step-dot')}>
                                     {done ? <FiCheck size={10} /> : <span>{i + 1}</span>}
                                 </div>
-                                <span className={cx('step-label')}>{STEP_LABELS[stepKey]}</span>
+                                <span className={cx('step-label')}>{stepLabels[stepKey]}</span>
                             </div>
                         );
                     })}
@@ -187,9 +206,14 @@ const OrderCard = ({
                             {formatCurrency(order.totalAmount)}
                         </span>
                     </div>
-                    {order.paymentMethod?.name === 'MIDDLEMAN' && order.holdUntil && (
+                    {!isDirectPayment && order.holdUntil && (
                         <p className={cx('escrow-note')}>
                             ⏱ Giữ tiền đến: {new Date(order.holdUntil).toLocaleString('vi-VN')}
+                        </p>
+                    )}
+                    {isDirectPayment && (
+                        <p className={cx('escrow-note')}>
+                            💵 Thanh toán trực tiếp - Không qua trung gian
                         </p>
                     )}
                 </div>
@@ -222,12 +246,14 @@ const OrderCard = ({
                     <span className={cx('feedback-done')}>✔ Đã đánh giá</span>
                 )}
 
-                {isBuyer && statusName === 'CONFIRMED' && (
+                {/* Nút thanh toán - chỉ cho trung gian khi người mua thấy CONFIRMED */}
+                {isBuyer && statusName === 'CONFIRMED' && !isDirectPayment && (
                     <button className={cx('btn-pay')} onClick={() => onPayment(order.id)}>
                         <FiCreditCard /> Thanh toán
                     </button>
                 )}
 
+                {/* Nút duyệt/từ chối của người bán - cho cả 2 phương thức */}
                 {!isBuyer && (statusName === 'PENDING' || statusName === 'CONFIRMED') && (
                     <>
                         <button className={cx('btn-reject')} onClick={() => onReject(order.id)}>
@@ -240,7 +266,9 @@ const OrderCard = ({
                         )}
                     </>
                 )}
-                {!isBuyer && statusName === 'PAID_WAITING_PICKUP' && (
+
+                {/* Nút giao hàng cho thanh toán trung gian - NGƯỜI BÁN */}
+                {!isBuyer && !isDirectPayment && statusName === 'PAID_WAITING_PICKUP' && (
                     <button
                         className={cx('btn-shipping')}
                         onClick={() => onShipping(order.id)}
@@ -249,15 +277,41 @@ const OrderCard = ({
                     </button>
                 )}
 
-                {!isBuyer && statusName === 'SHIPPING' && (
+                {/* Nút giao hàng cho thanh toán trung gian - Xác nhận đã giao */}
+                {!isBuyer && !isDirectPayment && statusName === 'SHIPPING' && (
                     <button className={cx('btn-deliver')} onClick={() => onDelivered(order.id)}>
                         <FiCheckCircle /> Đã giao
                     </button>
                 )}
 
-                {isBuyer && statusName === 'DELIVERED' && (
-                    <button className={cx('btn-confirm')} onClick={() => onConfirmDelivery(order.id)}>
+                {/* Nút giao hàng cho thanh toán TRỰC TIẾP - Người bán bắt đầu giao */}
+                {!isBuyer && isDirectPayment && statusName === 'CONFIRMED' && (
+                    <button
+                        className={cx('btn-shipping')}
+                        onClick={() => onShipping(order.id)}
+                    >
+                        <FiPackage /> Bắt đầu giao
+                    </button>
+                )}
+
+                {/* Nút giao hàng cho thanh toán TRỰC TIẾP - Xác nhận đã giao */}
+                {!isBuyer && isDirectPayment && statusName === 'SHIPPING' && (
+                    <button className={cx('btn-deliver')} onClick={() => onDelivered(order.id)}>
+                        <FiCheckCircle /> Đã giao
+                    </button>
+                )}
+
+                {/* Nút xác nhận của người mua - KHÁC nhau giữa 2 phương thức */}
+                {!isBuyer && !isDirectPayment && statusName === 'DELIVERED' && (
+                    <button className={cx('btn-confirm')} onClick={() => onConfirmDelivery(order.id, order.paymentMethod?.name)}>
                         <FiCheckCircle /> Xác nhận
+                    </button>
+                )}
+
+                {/* Với thanh toán trực tiếp: người mua xác nhận hoàn thành sau khi đã giao */}
+                {isBuyer && isDirectPayment && statusName === 'DELIVERED' && (
+                    <button className={cx('btn-confirm')} onClick={() => onConfirmDelivery(order.id, order.paymentMethod?.name)}>
+                        <FiCheckCircle /> Xác nhận hoàn thành
                     </button>
                 )}
             </div>

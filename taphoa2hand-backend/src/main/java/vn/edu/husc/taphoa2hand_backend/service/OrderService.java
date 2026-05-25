@@ -303,6 +303,29 @@ public class OrderService {
             }
             return;
         }
+        // COMPLETED: Thanh toán trực tiếp - người mua xác nhận sau khi đã giao
+        if (newStatus == OrderStatusEnum.COMPLETED) {
+            // Thanh toán trực tiếp: DELIVERED -> COMPLETED (người mua xác nhận)
+            if (order.getPaymentMethod() == PaymentMethodEnum.DIRECT) {
+                if (!isBuyer && !isAdmin) {
+                    throw new AppException(ErrorCode.UNAUTHORIZED);
+                }
+                if (order.getStatus() != OrderStatusEnum.DELIVERED) {
+                    throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+                }
+                return;
+            }
+            // Thanh toán trung gian: SETTLING -> COMPLETED (admin xử lý)
+            if (order.getPaymentMethod() == PaymentMethodEnum.MIDDLEMAN) {
+                if (!isAdmin) {
+                    throw new AppException(ErrorCode.UNAUTHORIZED);
+                }
+                if (order.getStatus() != OrderStatusEnum.SETTLING) {
+                    throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+                }
+                return;
+            }
+        }
         if (newStatus == OrderStatusEnum.SETTLING) {
             if (!isAdmin) {
                 throw new AppException(ErrorCode.UNAUTHORIZED);
@@ -315,18 +338,6 @@ public class OrderService {
             }
             if (order.getHoldUntil() == null || LocalDateTime.now().isBefore(order.getHoldUntil())) {
                 throw new AppException(ErrorCode.VALID_EXCEPTION);
-            }
-            return;
-        }
-        if (newStatus == OrderStatusEnum.COMPLETED) {
-            if (!isAdmin) {
-                throw new AppException(ErrorCode.UNAUTHORIZED);
-            }
-            if (order.getPaymentMethod() != PaymentMethodEnum.MIDDLEMAN) {
-                throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
-            }
-            if (order.getStatus() != OrderStatusEnum.SETTLING) {
-                throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
             }
             return;
         }
@@ -664,6 +675,25 @@ public class OrderService {
 
             }
         }
+
+        // COMPLETED cho thanh toán trực tiếp: cập nhật bài viết thành SOLD
+        if (newStatus == OrderStatusEnum.COMPLETED && order.getPaymentMethod() == PaymentMethodEnum.DIRECT) {
+            if (order.getItems() != null && !order.getItems().isEmpty()) {
+                OrderItem firstItem = order.getItems().get(0);
+                Posts post = firstItem.getPost();
+                if (post != null) {
+                    post.setStatus(PostStatusEnum.SOLD);
+                    postsRepository.save(post);
+                }
+            }
+            String orderLink = "/order/myOrder/" + order.getId();
+            notificationService.createNotification(NotificationRequest.builder()
+                    .content("Đơn hàng " + order.getId() + " đã hoàn thành bởi người mua")
+                    .userIds(List.of(order.getSeller().getId()))
+                    .link(orderLink)
+                    .build());
+        }
+
         OrderStatusEnum oldStatus = order.getStatus();
         order.setStatus(newStatus);
 
