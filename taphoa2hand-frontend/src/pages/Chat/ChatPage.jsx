@@ -255,7 +255,7 @@ function ChatPage() {
     };
 
     const handleOrderFormChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value } = e.target ? e.target : e;
         if (name.startsWith('buyerBank.')) {
             const field = name.split('.')[1];
             let next = value;
@@ -319,6 +319,15 @@ function ChatPage() {
         }
 
         if (name === 'offeredPrice') {
+            const cleaned = value.replace(/[^\d]/g, '');
+            setOrderForm((prev) => ({
+                ...prev,
+                offeredPrice: cleaned
+            }));
+            return;
+        }
+
+        if (name === 'price') {
             const cleaned = value.replace(/[^\d]/g, '');
             setOrderForm((prev) => ({
                 ...prev,
