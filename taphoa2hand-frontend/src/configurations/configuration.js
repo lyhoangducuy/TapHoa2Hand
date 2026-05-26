@@ -83,6 +83,7 @@ export const API = {
     ADMIN_REPORTS_PAGED: `/reports/paged`,
     ADMIN_REPORTS_STATS: `/reports/stats`,
     GET_MY_REPORTS_PAGED: `/reports/my-reports/paged`,
+    GET_REPORT_REASONS: `/reports/reasons`,
 
     // Notification
     GET_NOTIFICATIONS: (userId) => `/notification/user/${userId}`,

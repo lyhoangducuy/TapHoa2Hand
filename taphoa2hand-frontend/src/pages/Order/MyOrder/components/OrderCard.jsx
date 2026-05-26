@@ -302,7 +302,7 @@ const OrderCard = ({
                 )}
 
                 {/* Nút xác nhận của người mua - KHÁC nhau giữa 2 phương thức */}
-                {!isBuyer && !isDirectPayment && statusName === 'DELIVERED' && (
+                {isBuyer && !isDirectPayment && statusName === 'DELIVERED' && (
                     <button className={cx('btn-confirm')} onClick={() => onConfirmDelivery(order.id, order.paymentMethod?.name)}>
                         <FiCheckCircle /> Xác nhận
                     </button>
