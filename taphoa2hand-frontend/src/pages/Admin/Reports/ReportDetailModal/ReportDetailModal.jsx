@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ReportDetailModal.module.scss';
-import { reviewReport } from '../../../../services/reportAdminService';
+import { updateReportStatus } from '../../../../services/reportAdminService';
 import { updateOrderStatus } from '../../../../services/orderService';
 import { toast } from 'react-toastify';
 import {
@@ -80,18 +80,13 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate }) => {
         try {
             setIsLoading(true);
 
-            // Nếu có order liên quan và chọn hoàn tiền → update order status trước
+            // Nếu có orderId và chọn REFUND_BUYER → update order sang RETURNED
             if (report.orderId && selectedPenalties.includes('REFUND_BUYER')) {
                 await updateOrderStatus(report.orderId, 'RETURNED');
-                console.log('[Report] Order đã đổi sang RETURNED');
             }
 
-            // Sau đó review report (cập nhật status + penalties)
-            await reviewReport(report.id, {
-                status: confirmModalStatus,
-                resolutionNote: resolutionNote.trim(),
-                penalties: selectedPenalties
-            });
+            // Luôn update report status
+            await updateReportStatus(report.id, confirmModalStatus);
 
             toast.success('Xử lý báo cáo thành công!');
             onStatusUpdate?.();

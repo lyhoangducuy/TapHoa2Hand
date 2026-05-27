@@ -131,4 +131,5 @@ export const API = {
     ADMIN_GET_ORDER_REPORTS_PAGED: "/reports/type/order/paged",
     ADMIN_GET_POST_REPORTS: "/reports/type/post",
     ADMIN_GET_POST_REPORTS_PAGED: "/reports/type/post/paged",
+    ADMIN_UPATE_REPORT_STATUS: (reportId) => `/reports/${reportId}/status`,
 };
