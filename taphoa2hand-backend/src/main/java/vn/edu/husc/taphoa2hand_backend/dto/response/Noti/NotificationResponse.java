@@ -19,7 +19,4 @@ public class NotificationResponse {
     String content;
     boolean isRead;
     String link;
-
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    LocalDateTime createdAt;
 }

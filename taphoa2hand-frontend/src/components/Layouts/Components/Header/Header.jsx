@@ -21,44 +21,6 @@ import { disconnectSocket, subscribeToNotifications, unsubscribeFromNotification
 
 const cx = classNames.bind(styles);
 
-// Hàm format thời gian
-const formatTimeAgo = (dateString) => {
-    if (!dateString) return 'Vừa xong';
-
-    const now = new Date();
-    const postDate = new Date(dateString);
-
-    if (isNaN(postDate.getTime())) {
-        // Thử parse dạng mảng [year, month, day, hour, minute]
-        if (Array.isArray(dateString) && dateString.length >= 5) {
-            const [year, month, day, hour = 0, minute = 0] = dateString;
-            postDate = new Date(year, month - 1, day, hour, minute);
-        }
-        if (isNaN(postDate.getTime())) return 'Vừa xong';
-    }
-
-    const diffInMs = now - postDate;
-    const diffInSeconds = diffInMs / 1000;
-    const diffInMinutes = diffInSeconds / 60;
-    const diffInHours = diffInMinutes / 60;
-
-    if (diffInSeconds < 60) {
-        return `${Math.floor(diffInSeconds)} giây trước`;
-    } else if (diffInMinutes < 60) {
-        return `${Math.floor(diffInMinutes)} phút trước`;
-    } else if (diffInHours < 24) {
-        return `${Math.floor(diffInHours)} giờ trước`;
-    } else {
-        return postDate.toLocaleString('vi-VN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
-};
-
 // --- 1. COMPONENT USER DROPDOWN ---
 const UserDropdown = ({ user, onLogout, onNavigate }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -185,12 +147,9 @@ const NotificationDropdown = ({ user }) => {
                     return; 
                 }
 
-                // Đảm bảo notification mới luôn là chưa đọc
-                const normalizedNoti = { ...newNoti, read: false };
-
                 setNotifications(prev => {
-                    const isExist = prev.some(n => n.id === normalizedNoti.id);
-                    return isExist ? prev : [normalizedNoti, ...prev];
+                    const isExist = prev.some(n => n.id === newNoti.id);
+                    return isExist ? prev : [newNoti, ...prev];
                 });
                 setUnreadCount(prev => prev + 1);
             });
@@ -209,8 +168,7 @@ const NotificationDropdown = ({ user }) => {
 
     const handleNotificationClick = async (noti) => {
         // Đánh dấu đã đọc (chỉ khi chưa đọc)
-        const isUnread = noti.read === false || noti.read === undefined;
-        if (isUnread) {
+        if (!noti.read) {
             try {
                 await markNotificationAsRead(noti.id);
                 // Re-fetch count từ API để đảm bảo đồng bộ
@@ -251,16 +209,16 @@ const NotificationDropdown = ({ user }) => {
                             notifications.map((noti) => (
                                 <div 
                                     key={noti.id} 
-                                    className={cx("noti-item", { "unread": noti.read === false })}
+                                    className={cx("noti-item", { "unread": !noti.read })}
                                     onClick={() => handleNotificationClick(noti)}
                                 >
                                     <div className={cx("noti-content")}>
                                         <p>{noti.content}</p>
                                         <span className={cx("noti-time")}>
-                                            {formatTimeAgo(noti.createdAt)}
+                                            {noti.createdAt ? new Date(noti.createdAt).toLocaleString('vi-VN') : 'Vừa xong'}
                                         </span>
                                     </div>
-                                    {noti.read === false && <div className={cx("unread-dot")}></div>}
+                                    {!noti.read && <div className={cx("unread-dot")}></div>}
                                 </div>
                             ))
                         )}
