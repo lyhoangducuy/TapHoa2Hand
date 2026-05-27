@@ -112,11 +112,15 @@ public class PostsService {
 
         // Determine status list based on postType. BUY posts can be stored as either SEARCHING or AVAILABLE,
         // so include both to avoid hiding valid buying posts.
-        List<PostStatusEnum> statusFilters = null;
+        // Khi không chọn loại tin → chỉ loại SOLD và HIDDEN
+        List<PostStatusEnum> statusFilters;
         if (postTypeEnum == PostTypeEnum.SELL) {
             statusFilters = List.of(PostStatusEnum.AVAILABLE);
         } else if (postTypeEnum == PostTypeEnum.BUY) {
             statusFilters = List.of(PostStatusEnum.SEARCHING, PostStatusEnum.AVAILABLE);
+        } else {
+            // Không chọn loại tin → hiện tất cả trừ SOLD và HIDDEN
+            statusFilters = List.of(PostStatusEnum.AVAILABLE, PostStatusEnum.SEARCHING);
         }
 
         // Cung cấp Enum trực tiếp từ Service
@@ -154,6 +158,17 @@ public class PostsService {
         return postsRepository.findAll().stream()
                 .map(postsMapper::toPostsResponse)
                 .toList();
+    }
+
+    // Lấy cities và price range từ posts có sẵn
+    public record SearchFilters(List<String> cities, Long minPrice, Long maxPrice) {}
+
+    @Transactional(readOnly = true)
+    public SearchFilters getSearchFilters() {
+        List<String> cities = postsRepository.findDistinctCities();
+        Long minPrice = postsRepository.findMinPrice();
+        Long maxPrice = postsRepository.findMaxPrice();
+        return new SearchFilters(cities, minPrice != null ? minPrice : 0L, maxPrice != null ? maxPrice : 10000000L);
     }
 
 

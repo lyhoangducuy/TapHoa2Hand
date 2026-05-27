@@ -148,6 +148,13 @@ public class PostsController {
                 .build();
     }
 
+    @GetMapping("/search-filters")
+    public ApiResponse<PostsService.SearchFilters> getSearchFilters() {
+        return ApiResponse.<PostsService.SearchFilters>builder()
+                .result(postsService.getSearchFilters())
+                .build();
+    }
+
     @GetMapping("/my-post")
     public ApiResponse<Page<PostsResponse>> myPost(
             @RequestParam(defaultValue = "0") int page, // Mặc định trang 0 (trang đầu tiên)

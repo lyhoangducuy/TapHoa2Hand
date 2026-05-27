@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import classNames from "classnames/bind";
 // Bạn có thể import thẳng file scss của HomePage nếu muốn dùng chung CSS
-import styles from "./SearchPage.module.scss"; 
+import styles from "./SearchPage.module.scss";
 import { FiRefreshCcw } from 'react-icons/fi';
 
-import { searchPosts } from "../../services/postService";
+import { searchPosts, getSearchFilters } from "../../services/postService";
 import { getAllCategories } from "../../services/categoryService";
 
 // Hàm format thời gian
@@ -64,9 +64,23 @@ function SearchPage() {
     const [results, setResults] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [hasSearched, setHasSearched] = useState(false); // Cờ kiểm tra đã call API chưa
-    
+    const [cities, setCities] = useState([]);
+
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
+
+    // Load filters (cities, price range) khi mới vào trang
+    useEffect(() => {
+        const fetchFilters = async () => {
+            const data = await getSearchFilters();
+            if (data) {
+                setCities(data.cities || []);
+                setMinPrice(data.minPrice || 0);
+                setMaxPrice(data.maxPrice || 10000000);
+            }
+        };
+        fetchFilters();
+    }, []);
 
     // Load danh mục khi mới vào trang
     useEffect(() => {
@@ -269,10 +283,15 @@ function SearchPage() {
                     </div>
                     <div className={cx('form-group', 'location-group')}>
                         <label>Địa điểm</label>
-                        <input 
-                            type="text" placeholder="Tỉnh, thành phố..." value={location}
-                            onChange={(e) => setLocation(e.target.value)} 
-                        />
+                        <select
+                            value={location}
+                            onChange={(e) => setLocation(e.target.value)}
+                        >
+                            <option value="">Tất cả tỉnh/thành phố</option>
+                            {cities.map((city) => (
+                                <option key={city} value={city}>{city}</option>
+                            ))}
+                        </select>
                     </div>
                 </div>
 

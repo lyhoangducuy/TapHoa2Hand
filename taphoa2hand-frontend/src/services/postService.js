@@ -118,10 +118,20 @@ export const searchPosts = async (keyword, location, categoryId, postType, minPr
         if (sortBy) params.sortBy = sortBy;
 
         const response = await httpClient.get(`${API.SEARCH}`, { params });
-        
+
         return response.data; 
     } catch (error) {
         console.error("Lỗi khi tìm kiếm:", error);
+        throw error;
+    }
+};
+
+export const getSearchFilters = async () => {
+    try {
+        const response = await httpClient.get(API.GET_SEARCH_FILTERS);
+        return response.data.result;
+    } catch (error) {
+        console.error("Lỗi khi lấy search filters:", error);
         throw error;
     }
 };

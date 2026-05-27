@@ -56,10 +56,22 @@ public interface PostsRepository extends JpaRepository<Posts, String> {
         Page<Posts> findByUser(Users user, Pageable pageable);
 
         @Query(
-        value = "SELECT * FROM posts WHERE active = 1 ORDER BY created_at DESC", 
-        countQuery = "SELECT count(*) FROM posts WHERE active = 1", 
+        value = "SELECT * FROM posts WHERE active = 1 ORDER BY created_at DESC",
+        countQuery = "SELECT count(*) FROM posts WHERE active = 1",
         nativeQuery = true
     )
     Page<Posts> findInactivePosts(Pageable pageable);
+
+    // Lấy danh sách thành phố duy nhất từ các bài post (chỉ lấy status không phải SOLD hoặc HIDDEN)
+    @Query("SELECT DISTINCT a.city FROM Posts p JOIN p.postAddress a WHERE p.status NOT IN ('SOLD', 'HIDDEN') AND a.city IS NOT NULL AND a.city <> '' ORDER BY a.city")
+    List<String> findDistinctCities();
+
+    // Lấy giá thấp nhất từ các bài post (chỉ lấy status không phải SOLD hoặc HIDDEN)
+    @Query("SELECT MIN(p.price) FROM Posts p WHERE p.status NOT IN ('SOLD', 'HIDDEN')")
+    Long findMinPrice();
+
+    // Lấy giá cao nhất từ các bài post (chỉ lấy status không phải SOLD hoặc HIDDEN)
+    @Query("SELECT MAX(p.price) FROM Posts p WHERE p.status NOT IN ('SOLD', 'HIDDEN')")
+    Long findMaxPrice();
 
 }

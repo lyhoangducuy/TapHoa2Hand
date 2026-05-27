@@ -38,6 +38,7 @@ export const API = {
     GET_SALES:"/order/sales",
 
     SEARCH:"/posts/search",
+    GET_SEARCH_FILTERS:"/posts/search-filters",
     SELLING_POSTS:"/posts/selling",
     BUYING_POSTS:"/posts/buying",
     //users
