@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ReportDetailModal.module.scss';
 import { reviewReport } from '../../../../services/reportAdminService';
+import { updateOrderStatus } from '../../../../services/orderService';
 import { toast } from 'react-toastify';
 import {
     FiAlertTriangle, FiTrash2, FiEyeOff, FiLock, FiKey,
@@ -13,13 +14,7 @@ const cx = classNames.bind(styles);
 
 const ALL_PENALTIES = [
     { value: 'WARNING', label: 'Cảnh cáo', icon: FiAlertTriangle, desc: 'Gửi cảnh báo đến tài khoản' },
-    { value: 'REMOVE_POST', label: 'Gỡ bài đăng', icon: FiTrash2, desc: 'Xóa bài đăng bị vi phạm' },
-    { value: 'HIDE_POST', label: 'Ẩn bài đăng', icon: FiEyeOff, desc: 'Ẩn bài đăng khỏi kết quả tìm kiếm' },
-    { value: 'FREEZE_ACCOUNT_24H', label: 'Khóa 24 giờ', icon: FiLock, desc: 'Tạm khóa tài khoản 1 ngày' },
-    { value: 'FREEZE_ACCOUNT_7D', label: 'Khóa 7 ngày', icon: FiKey, desc: 'Tạm khóa tài khoản 1 tuần' },
-    { value: 'FREEZE_ACCOUNT_30D', label: 'Khóa 30 ngày', icon: FiKey, desc: 'Tạm khóa tài khoản 1 tháng' },
     { value: 'PERMANENT_BAN', label: 'Khóa vĩnh viễn', icon: FiSlash, desc: 'Cấm vĩnh viễn khỏi nền tảng' },
-    { value: 'STOP_ALL_TRANSACTIONS', label: 'Dừng giao dịch', icon: FiXCircle, desc: 'Ngăn tài khoản thực hiện giao dịch' },
     { value: 'REFUND_BUYER', label: 'Hoàn tiền người mua', icon: FiDollarSign, desc: 'Hoàn tiền cho người mua' },
     { value: 'REFUND_REPORTER', label: 'Hoàn tiền người tố', icon: FiDollarSign, desc: 'Hoàn tiền cho người tố cáo' },
 ];
@@ -84,17 +79,26 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate }) => {
         setConfirmModal(false);
         try {
             setIsLoading(true);
+
+            // Nếu có order liên quan và chọn hoàn tiền → update order status trước
+            if (report.orderId && selectedPenalties.includes('REFUND_BUYER')) {
+                await updateOrderStatus(report.orderId, 'RETURNED');
+                console.log('[Report] Order đã đổi sang RETURNED');
+            }
+
+            // Sau đó review report (cập nhật status + penalties)
             await reviewReport(report.id, {
                 status: confirmModalStatus,
                 resolutionNote: resolutionNote.trim(),
                 penalties: selectedPenalties
             });
-            toast.success('Review báo cáo thành công!');
+
+            toast.success('Xử lý báo cáo thành công!');
             onStatusUpdate?.();
             onClose();
         } catch (error) {
             console.error(error);
-            toast.error(error?.response?.data?.message || 'Review thất bại');
+            toast.error(error?.response?.data?.message || 'Xử lý thất bại');
         } finally {
             setIsLoading(false);
         }

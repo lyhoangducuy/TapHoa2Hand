@@ -281,6 +281,13 @@ public class OrderService {
             }
             return;
         }
+         if (newStatus == OrderStatusEnum.RETURNED) {
+             // Chỉ cho phép chuyển sang RETURNED nếu là người bán, người mua hoặc admin
+            if (!isAdmin) {
+                throw new AppException(ErrorCode.UNAUTHORIZED);
+            }
+            return;
+        }
         if (newStatus == OrderStatusEnum.SHIPPING || newStatus == OrderStatusEnum.DELIVERED
                 || newStatus == OrderStatusEnum.SETTLING) {
             // Cho phép chuyển từ CONFIRMED hoặc PAID_WAITING_PICKUP sang SHIPPING

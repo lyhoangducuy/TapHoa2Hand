@@ -283,8 +283,20 @@ public class ReportService {
                 order.setPreviousStatus(null);
                 orderRepository.save(order);
             } else if (newStatus == ReportStatusEnum.APPROVED || newStatus == ReportStatusEnum.PROCESSED) {
-                // Duyệt/Xử lý → hủy đơn, admin xử lý hoàn tiền thủ công
-                order.setStatus(OrderStatusEnum.CANCELLED);
+                // Duyệt/Xử lý → kiểm tra penalty có REFUND_BUYER không
+                boolean hasRefundBuyer = request.getPenalties() != null &&
+                        request.getPenalties().contains(PenaltyActionEnum.REFUND_BUYER);
+
+                if (hasRefundBuyer) {
+                    // Thông báo cho người mua biết đơn sẽ được hoàn tiền
+                    notificationService.createNotification(NotificationRequest.builder()
+                            .content("Đơn hàng #" + order.getId() + " đã được duyệt hoàn tiền. Tiền sẽ được hoàn vào tài khoản của bạn trong 1-3 ngày làm việc.")
+                            .userIds(List.of(order.getBuyer().getId()))
+                            .link("/order/myOrder/" + order.getId())
+                            .build());
+                    log.info("[REPORT] Order {} hoàn tiền cho buyer", order.getId());
+                }
+
                 order.setPreviousStatus(null);
                 orderRepository.save(order);
             }

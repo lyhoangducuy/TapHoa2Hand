@@ -254,7 +254,7 @@ const OrderCard = ({
                 )}
 
                 {/* Nút duyệt/từ chối của người bán - cho cả 2 phương thức */}
-                {!isBuyer && (statusName === 'PENDING' || statusName === 'CONFIRMED') && (
+                {!isBuyer && (statusName === 'PENDING' || statusName === 'CONFIRMED' || statusName==='PAID_WAITING_PICKUP') && (
                     <>
                         <button className={cx('btn-reject')} onClick={() => onReject(order.id)}>
                             <FiX /> Từ chối
