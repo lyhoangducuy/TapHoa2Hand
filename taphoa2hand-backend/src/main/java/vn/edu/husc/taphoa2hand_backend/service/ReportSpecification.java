@@ -1,4 +1,4 @@
-package vn.edu.husc.taphoa2hand_backend.specification;
+package vn.edu.husc.taphoa2hand_backend.service;
 
 import jakarta.persistence.criteria.Join;
 import org.springframework.data.jpa.domain.Specification;

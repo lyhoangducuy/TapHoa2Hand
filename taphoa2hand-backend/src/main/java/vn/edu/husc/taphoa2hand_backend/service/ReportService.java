@@ -24,7 +24,6 @@ import vn.edu.husc.taphoa2hand_backend.exception.AppException;
 import vn.edu.husc.taphoa2hand_backend.exception.ErrorCode;
 import vn.edu.husc.taphoa2hand_backend.mapper.ReportMapper;
 import vn.edu.husc.taphoa2hand_backend.repository.*;
-import vn.edu.husc.taphoa2hand_backend.specification.ReportSpecification;
 
 import java.io.IOException;
 import java.time.LocalDateTime;

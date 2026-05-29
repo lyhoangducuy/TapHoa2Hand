@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import classNames from 'classnames/bind';
 import styles from './Header.module.scss';
 import {
-    cilMenu, cilBell, cilEnvelopeOpen, cilUser,
-    cilSettings, cilLockLocked, cilAccountLogout
+    cilMenu, cilBell
 } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
 import { useNavigate } from 'react-router-dom';
