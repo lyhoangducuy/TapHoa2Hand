@@ -49,7 +49,7 @@ public class Posts extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
-     @NotBlank(message = "Tiêu đề không được để trống") // Đã sửa message
+    @NotBlank(message = "Tiêu đề không được để trống") // Đã sửa message
     @Size(min = 5, max = 200, message = "Tiêu đề phải có độ dài từ 5 đến 200 ký tự") // Đã sửa message
     String title;
     @NotNull(message="Giá không được để trống")
@@ -80,7 +80,7 @@ public class Posts extends BaseEntity {
     @EqualsAndHashCode.Exclude
     PostAddress postAddress;
 
-     @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.STRING)
     @Column(name = "post_type")
     PostTypeEnum postType;
 

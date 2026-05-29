@@ -36,12 +36,12 @@ public interface PostsRepository extends JpaRepository<Posts, String> {
                                         "AND (:location IS NULL OR :location = '' OR LOWER(a.city) LIKE LOWER(CONCAT('%', :location, '%')) OR LOWER(a.ward) LIKE LOWER(CONCAT('%', :location, '%'))) "
                                         +
                                         "AND (:categoryId IS NULL OR :categoryId = '' OR c.id = :categoryId) " +
-                        "AND (:postType IS NULL OR p.postType = :postType) " +
-                        "AND (:statuses IS NULL OR p.status IN :statuses) " +
-                        "AND (:minPrice IS NULL OR p.price >= :minPrice) " +
-                        "AND (:maxPrice IS NULL OR p.price <= :maxPrice) " +
-                        "AND (:dateFrom IS NULL OR DATE(p.createdAt) >= DATE(:dateFrom)) " +
-                        "AND (:dateTo IS NULL OR DATE(p.createdAt) <= DATE(:dateTo))")
+                                        "AND (:postType IS NULL OR p.postType = :postType) " +
+                                        "AND (:statuses IS NULL OR p.status IN :statuses) " +
+                                        "AND (:minPrice IS NULL OR p.price >= :minPrice) " +
+                                        "AND (:maxPrice IS NULL OR p.price <= :maxPrice) " +
+                                        "AND (:dateFrom IS NULL OR DATE(p.createdAt) >= DATE(:dateFrom)) " +
+                                        "AND (:dateTo IS NULL OR DATE(p.createdAt) <= DATE(:dateTo))")
         Page<Posts> searchPosts(@Param("keyword") String keyword,
                         @Param("location") String location,
                         @Param("categoryId") String categoryId,
@@ -55,23 +55,37 @@ public interface PostsRepository extends JpaRepository<Posts, String> {
 
         Page<Posts> findByUser(Users user, Pageable pageable);
 
-        @Query(
-        value = "SELECT * FROM posts WHERE active = 1 ORDER BY created_at DESC",
-        countQuery = "SELECT count(*) FROM posts WHERE active = 1",
-        nativeQuery = true
-    )
-    Page<Posts> findInactivePosts(Pageable pageable);
+        @Query(value = "SELECT * FROM posts WHERE active = 1 ORDER BY created_at DESC", countQuery = "SELECT count(*) FROM posts WHERE active = 1", nativeQuery = true)
+        Page<Posts> findInactivePosts(Pageable pageable);
 
-    // Lấy danh sách thành phố duy nhất từ các bài post (chỉ lấy status không phải SOLD hoặc HIDDEN)
-    @Query("SELECT DISTINCT a.city FROM Posts p JOIN p.postAddress a WHERE p.status NOT IN ('SOLD', 'HIDDEN') AND a.city IS NOT NULL AND a.city <> '' ORDER BY a.city")
-    List<String> findDistinctCities();
+        // Lấy danh sách thành phố duy nhất từ các bài post (chỉ lấy status không phải
+        // SOLD hoặc HIDDEN)
+        @Query("SELECT DISTINCT a.city FROM Posts p JOIN p.postAddress a WHERE p.status NOT IN ('SOLD', 'HIDDEN') AND a.city IS NOT NULL AND a.city <> '' ORDER BY a.city")
+        List<String> findDistinctCities();
 
-    // Lấy giá thấp nhất từ các bài post (chỉ lấy status không phải SOLD hoặc HIDDEN)
-    @Query("SELECT MIN(p.price) FROM Posts p WHERE p.status NOT IN ('SOLD', 'HIDDEN')")
-    Long findMinPrice();
+        // Lấy giá thấp nhất từ các bài post (chỉ lấy status không phải SOLD hoặc
+        // HIDDEN)
+        @Query("SELECT MIN(p.price) FROM Posts p WHERE p.status NOT IN ('SOLD', 'HIDDEN')")
+        Long findMinPrice();
 
-    // Lấy giá cao nhất từ các bài post (chỉ lấy status không phải SOLD hoặc HIDDEN)
-    @Query("SELECT MAX(p.price) FROM Posts p WHERE p.status NOT IN ('SOLD', 'HIDDEN')")
-    Long findMaxPrice();
+        // Lấy giá cao nhất từ các bài post (chỉ lấy status không phải SOLD hoặc HIDDEN)
+        @Query("SELECT MAX(p.price) FROM Posts p WHERE p.status NOT IN ('SOLD', 'HIDDEN')")
+        Long findMaxPrice();
 
+        @Query("""
+                            SELECT DISTINCT p
+                            FROM Posts p
+                            LEFT JOIN p.categories c
+                            WHERE
+                                (
+                                    LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                                    OR LOWER(c.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                                )
+                                AND p.active = true
+                                AND p.status IN :statuses
+                        """)
+        Page<Posts> recommendPostsByKeyword(
+                        @Param("keyword") String keyword,
+                        @Param("statuses") List<PostStatusEnum> statuses,
+                        Pageable pageable);
 }

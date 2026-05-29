@@ -7,6 +7,7 @@ import { FiRefreshCcw } from 'react-icons/fi';
 
 import { searchPosts, getSearchFilters } from "../../services/postService";
 import { getAllCategories } from "../../services/categoryService";
+import { getMyInfo } from '../../services/userService';
 
 // Hàm format thời gian
 const formatTimeAgo = (dateString) => {

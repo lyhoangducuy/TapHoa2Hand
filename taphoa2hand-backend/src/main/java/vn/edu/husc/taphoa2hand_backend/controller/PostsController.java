@@ -15,6 +15,7 @@ import vn.edu.husc.taphoa2hand_backend.dto.response.ApiResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostDeleteResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostDetailResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostsResponse;
+import vn.edu.husc.taphoa2hand_backend.service.ChatAiService;
 import vn.edu.husc.taphoa2hand_backend.service.PostsService;
 
 import java.io.IOException;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 @RequiredArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 public class PostsController {
+    ChatAiService chatAiService;
     PostsService postsService;
 
     @GetMapping("/getAll")
@@ -173,6 +175,14 @@ public class PostsController {
         return ApiResponse.<Page<PostsResponse>>builder()
                 .message("Lấy bài viết của người dùng thành công")
                 .result(postsService.getPostsByUser(userId, page, size))
+                .build();
+    }
+    @GetMapping("/recommend")
+    public ApiResponse<List<PostsResponse>> recommendPosts(
+            @RequestParam String userId) {
+        return ApiResponse.<List<PostsResponse>>builder()
+                .message("Lấy bài viết đề xuất thành công")
+                .result(chatAiService.recommendPosts(userId))
                 .build();
     }
 

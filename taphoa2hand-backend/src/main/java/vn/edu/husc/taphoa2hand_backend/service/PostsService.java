@@ -64,30 +64,77 @@ public class PostsService {
     CategoryRepository categoryRepository;
     PostImageRepository postImageRepository;
     OrderService orderService;
-
+    SearchHistoryService searchHistoryService;
     // Sử dụng FileService mới thay cho FileClient
     FileService fileService;
 
-    @Transactional(readOnly = true)
-    public Page<PostsResponse> searchPosts(String keyword, String location, String categoryId, String postType, Long minPrice, Long maxPrice, String dateFrom, String dateTo, String sortBy, int page, int size) {
-        // Create sort based on sortBy parameter
-        Sort sort = Sort.by("createdAt").descending(); // Default sort
+    @Transactional
+    public Page<PostsResponse> searchPosts(
+            String keyword,
+            String location,
+            String categoryId,
+            String postType,
+            Long minPrice,
+            Long maxPrice,
+            String dateFrom,
+            String dateTo,
+            String sortBy,
+            int page,
+            int size) {
+
+        // =========================
+        // SAVE SEARCH HISTORY
+        // =========================
+        try {
+            var context = SecurityContextHolder.getContext();
+            String username = context.getAuthentication().getName();
+            Users user = usersRepository.findByUsername(username).orElseThrow(
+                    () -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+            searchHistoryService.saveSearchHistory(
+                    user,
+                    keyword,
+                    location,
+                    categoryId,
+                    postType,
+                    minPrice != null ? minPrice.toString() : null,
+                    maxPrice != null ? maxPrice.toString() : null,
+                    sortBy,
+                    dateFrom,
+                    dateTo);
+
+        } catch (Exception e) {
+            System.out.println("Không thể lưu search history: " + e.getMessage());
+        }
+
+        // =========================
+        // CREATE SORT
+        // =========================
+        Sort sort = Sort.by("createdAt").descending();
+
         if (sortBy != null && !sortBy.trim().isEmpty()) {
+
             switch (sortBy) {
+
                 case "price_asc":
                     sort = Sort.by("price").ascending();
                     break;
+
                 case "price_desc":
                     sort = Sort.by("price").descending();
                     break;
+
                 default:
                     sort = Sort.by("createdAt").descending();
                     break;
             }
         }
+
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        // Debug logging
+        // =========================
+        // DEBUG LOG
+        // =========================
         System.out.println("SearchPosts called with:");
         System.out.println("keyword: " + keyword);
         System.out.println("location: " + location);
@@ -100,30 +147,51 @@ public class PostsService {
         System.out.println("sortBy: " + sortBy);
         System.out.println("page: " + page + ", size: " + size);
 
-        // Convert postType string to enum if provided
+        // =========================
+        // CONVERT POST TYPE
+        // =========================
         PostTypeEnum postTypeEnum = null;
+
         if (postType != null && !postType.trim().isEmpty()) {
+
             try {
-                postTypeEnum = PostTypeEnum.valueOf(postType.toUpperCase());
+
+                postTypeEnum = PostTypeEnum.valueOf(
+                        postType.toUpperCase());
+
             } catch (IllegalArgumentException e) {
-                System.out.println("Invalid postType: " + postType);
+
+                System.out.println(
+                        "Invalid postType: " + postType);
             }
         }
 
-        // Determine status list based on postType. BUY posts can be stored as either SEARCHING or AVAILABLE,
-        // so include both to avoid hiding valid buying posts.
-        // Khi không chọn loại tin → chỉ loại SOLD và HIDDEN
+        // =========================
+        // STATUS FILTER
+        // =========================
         List<PostStatusEnum> statusFilters;
+
         if (postTypeEnum == PostTypeEnum.SELL) {
-            statusFilters = List.of(PostStatusEnum.AVAILABLE);
+
+            statusFilters = List.of(
+                    PostStatusEnum.AVAILABLE);
+
         } else if (postTypeEnum == PostTypeEnum.BUY) {
-            statusFilters = List.of(PostStatusEnum.SEARCHING, PostStatusEnum.AVAILABLE);
+
+            statusFilters = List.of(
+                    PostStatusEnum.SEARCHING,
+                    PostStatusEnum.AVAILABLE);
+
         } else {
-            // Không chọn loại tin → hiện tất cả trừ SOLD và HIDDEN
-            statusFilters = List.of(PostStatusEnum.AVAILABLE, PostStatusEnum.SEARCHING);
+
+            statusFilters = List.of(
+                    PostStatusEnum.AVAILABLE,
+                    PostStatusEnum.SEARCHING);
         }
 
-        // Cung cấp Enum trực tiếp từ Service
+        // =========================
+        // SEARCH POSTS
+        // =========================
         Page<Posts> postsPage = postsRepository.searchPosts(
                 keyword,
                 location,
@@ -134,13 +202,14 @@ public class PostsService {
                 maxPrice,
                 dateFrom,
                 dateTo,
-                pageable
-        );
-        
+                pageable);
+        System.out.println(
+                "Found "
+                        + postsPage.getTotalElements()
+                        + " posts");
 
-        System.out.println("Found " + postsPage.getTotalElements() + " posts");
-
-        return postsPage.map(postsMapper::toPostsResponse);
+        return postsPage.map(
+                postsMapper::toPostsResponse);
     }
 
     @Transactional(readOnly = true)
@@ -161,7 +230,8 @@ public class PostsService {
     }
 
     // Lấy cities và price range từ posts có sẵn
-    public record SearchFilters(List<String> cities, Long minPrice, Long maxPrice) {}
+    public record SearchFilters(List<String> cities, Long minPrice, Long maxPrice) {
+    }
 
     @Transactional(readOnly = true)
     public SearchFilters getSearchFilters() {
@@ -170,7 +240,6 @@ public class PostsService {
         Long maxPrice = postsRepository.findMaxPrice();
         return new SearchFilters(cities, minPrice != null ? minPrice : 0L, maxPrice != null ? maxPrice : 10000000L);
     }
-
 
     @Transactional(readOnly = true)
     public PostDetailResponse getDetailPost(String postId) {
@@ -193,7 +262,7 @@ public class PostsService {
     @Transactional
     public PostDetailResponse createPost(PostCreateRequest request, List<MultipartFile> images) throws IOException {
         System.out.println("enter create post service");
-        
+
         // Validate images
         if (images == null || images.isEmpty()) {
             throw new AppException(ErrorCode.FILE_NOT_FOUND);
@@ -201,7 +270,7 @@ public class PostsService {
         if (images.size() > 10) {
             throw new AppException(ErrorCode.FILE_UPLOAD_LIMIT_EXCEEDED);
         }
-        
+
         // 1. Lấy thông tin user
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         Users currentUser = usersRepository.findByUsername(currentUsername)
@@ -252,7 +321,8 @@ public class PostsService {
             throw new AppException(ErrorCode.INVALID_POST_TYPE);
         }
 
-        // Set default status depending on post type: BUY -> SEARCHING, others -> AVAILABLE
+        // Set default status depending on post type: BUY -> SEARCHING, others ->
+        // AVAILABLE
         if (newPost.getPostType() == PostTypeEnum.BUY) {
             newPost.setStatus(PostStatusEnum.SEARCHING);
         } else {
@@ -412,10 +482,11 @@ public class PostsService {
 
         return postsMapper.toPostDetailResponse(savedPost);
     }
+
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional(readOnly = true)
     public Page<PostsResponse> getAllPostsAdmin(Pageable pageable) {
-         Page<Posts> pagePosts=postsRepository.findInactivePosts(pageable);
+        Page<Posts> pagePosts = postsRepository.findInactivePosts(pageable);
         return pagePosts.map(postsMapper::toPostsResponse);
     }
 
@@ -424,8 +495,9 @@ public class PostsService {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         Users currentUser = usersRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-            Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<Posts> pagePosts=postsRepository.findByUser(currentUser,pageable);;
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Posts> pagePosts = postsRepository.findByUser(currentUser, pageable);
+        ;
         return pagePosts.map(postsMapper::toPostsResponse);
     }
 
@@ -437,4 +509,5 @@ public class PostsService {
         Page<Posts> pagePosts = postsRepository.findByUser(user, pageable);
         return pagePosts.map(postsMapper::toPostsResponse);
     }
+
 }

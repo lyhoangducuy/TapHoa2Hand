@@ -30,6 +30,7 @@ export const API = {
     GET_USER_POSTS: (userId) => `/posts/user/${userId}`,
     GET_POST_STATUS:"/post-status/getAll",
     GET_POST_TYPE:"/post-type/getAll",
+    GET_POST_RECOMMEND:(userId) => `/posts/recommend?userId=${userId}`,
     CREATE_CONVERSATION:"/conversations/create",
     GET_CONVERSATIONS:"/conversations/my-chats",
     CREATE_CHATMESSAGE:"/chat-message/create",

@@ -3,7 +3,9 @@ package vn.edu.husc.taphoa2hand_backend.service;
 import java.net.MalformedURLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -13,6 +15,8 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.content.Media;
 import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.core.io.UrlResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MimeType;
@@ -24,14 +28,19 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import vn.edu.husc.taphoa2hand_backend.dto.request.ChatAi.ChatAiRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.PostsDTO.PostAiCheckRecord;
+import vn.edu.husc.taphoa2hand_backend.dto.request.Search.AiRecommendKeywordRecord;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.AiCheckResponseRecord;
+import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostsResponse;
 import vn.edu.husc.taphoa2hand_backend.entity.PostAiAssessment;
+import vn.edu.husc.taphoa2hand_backend.entity.PostStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.Posts;
+import vn.edu.husc.taphoa2hand_backend.entity.SearchHistory;
 import vn.edu.husc.taphoa2hand_backend.exception.AppException;
 import vn.edu.husc.taphoa2hand_backend.exception.ErrorCode;
 import vn.edu.husc.taphoa2hand_backend.mapper.PostsMapper;
 import vn.edu.husc.taphoa2hand_backend.repository.PostAiAssessmentRepository;
 import vn.edu.husc.taphoa2hand_backend.repository.PostsRepository;
+import vn.edu.husc.taphoa2hand_backend.repository.SearchHistoryRepository;
 
 @Service
 @Slf4j
@@ -41,14 +50,20 @@ public class ChatAiService {
     PostAiAssessmentRepository assessmentRepository;
     PostsRepository postsRepository;
     PostsMapper postsMapper;
+    SearchHistoryService searchHistoryService;
+    SearchHistoryRepository searchHistoryRepository;
 
     public ChatAiService(ChatClient.Builder builder,
             PostAiAssessmentRepository assessmentRepository,
-            PostsRepository postsRepository, PostsMapper postsMapper) {
+            PostsRepository postsRepository, PostsMapper postsMapper,
+            SearchHistoryService searchHistoryService,
+            SearchHistoryRepository searchHistoryRepository) {
         this.chatClient = builder.build();
         this.assessmentRepository = assessmentRepository;
         this.postsRepository = postsRepository;
         this.postsMapper = postsMapper;
+        this.searchHistoryService = searchHistoryService;
+        this.searchHistoryRepository = searchHistoryRepository;
     }
 
     public String chatAi(ChatAiRequest chatAiRequest) {
@@ -65,7 +80,7 @@ public class ChatAiService {
         ChatOptions chatOption = ChatOptions.builder()
                 .temperature(0D)
                 .build();
-        //no image
+        // no image
         if (file == null || file.isEmpty()) {
             return chatClient.prompt()
                     .options(chatOption)
@@ -74,7 +89,7 @@ public class ChatAiService {
                     .call()
                     .content();
         }
-        //have image
+        // have image
         Media media = Media.builder()
                 .mimeType(MimeTypeUtils.parseMimeType(file.getContentType()))
                 .data(file.getResource())
@@ -213,4 +228,62 @@ public class ChatAiService {
             throw new AppException(ErrorCode.UNAUTHENTICATED); // Thay bằng mã lỗi AI cụ thể của bạn
         }
     }
+
+    @Transactional(readOnly = true)
+    public List<PostsResponse> recommendPosts(
+            String userId) {
+
+        // =========================
+        // LẤY 5 KEYWORD GẦN NHẤT
+        // =========================
+        List<String> keywords = searchHistoryRepository
+                .findTop20ByUserIdAndKeywordIsNotNullOrderByCreatedAtDesc(
+                        userId)
+                .stream()
+                .map(SearchHistory::getKeyword)
+                .filter(keyword -> !keyword.isBlank())
+                .distinct()
+                .toList();
+        // =========================
+        // KHÔNG CÓ HISTORY
+        // =========================
+        if (keywords.isEmpty()) {
+            return List.of();
+        }
+
+        // =========================
+        // DANH SÁCH RECOMMEND
+        // =========================
+        Set<Posts> recommendedPosts = new LinkedHashSet<>();
+
+        // =========================
+        // SEARCH THEO KEYWORD
+        // =========================
+        for (String keyword : keywords) {
+
+            Page<Posts> page = postsRepository
+                    .recommendPostsByKeyword(
+                            keyword,
+                            List.of(
+                                    PostStatusEnum.AVAILABLE,
+                                    PostStatusEnum.SEARCHING),
+                            PageRequest.of(0, 10));
+            recommendedPosts.addAll(
+                    page.getContent());
+
+            // limit tối đa 20 bài
+            if (recommendedPosts.size() >= 20) {
+                break;
+            }
+        }
+
+        // =========================
+        // MAP RESPONSE
+        // =========================
+        return recommendedPosts.stream()
+                .limit(20)
+                .map(postsMapper::toPostsResponse)
+                .toList();
+    }
+
 }

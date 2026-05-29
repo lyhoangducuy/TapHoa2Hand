@@ -2,9 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom'; // Thêm cái này để chuyển trang
 import classNames from 'classnames/bind';
 import styles from './HomePage.module.scss';
-import { getSellingPosts, getBuyingPosts } from '../../services/postService';
+import { getSellingPosts, getBuyingPosts, getRecommendedPosts } from '../../services/postService';
 import { getAllCategories } from '../../services/categoryService';
 import BannerSlider from '../Banner/BannerSlider';
+import { getToken } from '../../services/localStorageService';
+import { getMyInfo } from '../../services/userService';
+
 
 // Hàm format thời gian
 const formatTimeAgo = (dateString) => {
@@ -41,6 +44,7 @@ const HomePage = () => {
     const cx = classNames.bind(styles);
     const [sellingPosts, setSellingPosts] = useState([]);
     const [buyingPosts, setBuyingPosts] = useState([]);
+    const [recommendedPosts, setRecommendedPosts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate(); // Hook điều hướng
@@ -68,6 +72,31 @@ const HomePage = () => {
                     // If buying endpoint fails, ignore so selling still shows
                     console.warn('Không lấy được tin cần mua:', e);
                 }
+
+                // Fetch recommended posts nếu đã đăng nhập
+                const token = getToken();
+
+if (token) {
+    try {
+        const userResponse = await getMyInfo();
+
+        const userId = userResponse?.data?.result?.id;
+
+        console.log("REAL USER ID:", userId);
+
+        if (userId) {
+            const recommendData = await getRecommendedPosts(userId);
+
+            console.log("recommendData", recommendData);
+
+            if (recommendData && Array.isArray(recommendData.result)) {
+                setRecommendedPosts(recommendData.result);
+            }
+        }
+    } catch (e) {
+        console.warn('Không lấy được tin gợi ý:', e);
+    }
+}
             } catch (err) {
                 console.error("Giao diện HomePage lỗi khi gọi API:", err);
             } finally {
@@ -110,6 +139,65 @@ const HomePage = () => {
             )}
 
             <BannerSlider></BannerSlider>
+
+            {/* Recommended Posts - Chỉ hiện khi có dữ liệu và user đã đăng nhập */}
+            {recommendedPosts && recommendedPosts.length > 0 && (
+                <section className={cx('section')}>
+                    <h2 className={cx('page-title')}>Gợi ý cho bạn</h2>
+                    <div className={cx('product-grid')}>
+                        {recommendedPosts.map((post) => (
+                            <div
+                                key={post?.id}
+                                className={cx('product-card', 'recommended-card')}
+                                onClick={() => post?.id && handleProductClick(post.id)}
+                            >
+                                <div className={cx('image-wrapper')}>
+                                    {post?.postImages && post.postImages.length > 0 ? (
+                                        <img src={post.postImages[0].imageUrl} alt={post?.title || 'Post'} />
+                                    ) : (
+                                        <div className={cx('no-image')}>Không ảnh</div>
+                                    )}
+                                    {post.postImages && post.postImages.length > 1 && (
+                                        <span className={cx('image-count')}>{post.postImages.length}</span>
+                                    )}
+                                </div>
+
+                                <div className={cx('info-wrapper')}>
+                                    <div className={cx('badges')}>
+                                        {post?.postType && (
+                                            <span className={cx('type-badge', post.postType.name?.toLowerCase() || 'sell')}>
+                                                {post.postType.displayName || post.postType.name || 'Tin rao bán'}
+                                            </span>
+                                        )}
+                                        {post?.status && (
+                                            <span className={cx('status-badge', post.status.name?.toLowerCase() || 'available')}>
+                                                {post.status.displayName || post.status.name || 'Đang bán'}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <h3 className={cx('post-title')}>{post?.title || 'Không có tiêu đề'}</h3>
+                                    <p className={cx('price')}>
+                                        {post?.price?.toLocaleString('vi-VN')} đ
+                                    </p>
+                                    <p className={cx('post-time')}>{formatTimeAgo(post?.createdAt)}</p>
+
+                                    {post?.acceptedPaymentMethods && post.acceptedPaymentMethods.length > 0 && (
+                                        <div className={cx('payments')}>
+                                            {post.acceptedPaymentMethods.map((pm) => (
+                                                <span key={pm?.name} className={cx('payment-badge')}>
+                                                    {pm?.description || pm?.name}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+
             <h2 className={cx('page-title')}>Tin đăng đang bán mới nhất</h2>
 
             <div className={cx('product-grid')}>
