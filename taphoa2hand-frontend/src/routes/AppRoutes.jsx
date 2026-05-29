@@ -14,7 +14,6 @@ import { PostEditPage } from '../pages/Post/Edit';
 import { ChatPage } from '../pages/Chat';
 import MyOrderPage from '../pages/Order/MyOrder/MyOrderPage';
 import OrderDetailPage from '../pages/Order/Detail/OrderDetailPage';
-import DashboardPage from '../pages/Admin/Dashboard/DashboardPage';
 import AdminLayout from '../components/Layouts/AdminLayout/AdminLayout';
 import UserAdminPage from '../pages/Admin/Users/UserAdminPage';
 import UserEditPage from '../pages/Admin/Users/UserTable/UpdateUser/UserEditPage';
@@ -33,6 +32,7 @@ import OrderAdminPage from '../pages/Admin/Orders/OrderAdminPage';
 import ReportAdminPage from '../pages/Admin/Reports';
 import MyReportsPage from '../pages/Users/MyReportsPage';
 import NoSearchLayout from '../components/Layouts/NoSearchLayout';
+import AdminStatisticsPage from '../pages/Admin/Dashboard/AdminStatisticsPage';
 const publicRoutes = [
     { path: '/', component: HomePage },
     { path: '/login', component: LoginPage, layout: NoSidebarLayout },
@@ -61,8 +61,6 @@ const privateRoutes = [
 
 // 3. DÀNH RIÊNG CHO ADMIN
 const adminRoutes = [
-    { path: '/admin', component: DashboardPage, layout: AdminLayout },
-    { path: '/admin/dashboard', component: DashboardPage, layout: AdminLayout },
     { path: '/admin/users', component: UserAdminPage, layout: AdminLayout },
     { path: '/admin/users/detail/:userId', component: UserEditPage, layout: AdminLayout },
     { path: '/admin/users/create', component: UserCreatePage, layout: AdminLayout },
@@ -85,6 +83,8 @@ const adminRoutes = [
     {path:'/admin/orders/:orderId', component: OrderDetailPage, layout: AdminLayout},
     //reports
     {path:'/admin/reports', component: ReportAdminPage, layout: AdminLayout},
+    //statistics
+    {path:'/admin/statistics', component: AdminStatisticsPage, layout: AdminLayout},
     //noti
     {path:"/admin/notifications",component:Notificationpage,layout:AdminLayout}
 ];

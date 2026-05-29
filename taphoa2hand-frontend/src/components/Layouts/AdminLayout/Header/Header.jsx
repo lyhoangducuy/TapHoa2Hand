@@ -231,11 +231,6 @@ const Header = ({ onToggleSidebar }) => {
                     </div>
                 </div>
 
-                <div className={cx('header-nav')}>
-                    <a href="/admin/dashboard" className={cx('nav-link')}>Bảng điều khiển</a>
-                    <a href="/admin/users" className={cx('nav-link')}>Người dùng</a>
-                    <a href="/admin/settings" className={cx('nav-link')}>Cài đặt</a>
-                </div>
 
                 <div className={cx('header-actions')}>
                     {/* Thông báo */}

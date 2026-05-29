@@ -4,7 +4,7 @@ import classNames from 'classnames/bind';
 import styles from './Sidebar.module.scss';
 import { CSidebar, CSidebarBrand, CSidebarNav, CNavItem, CNavTitle, CSidebarToggler } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { cilSpeedometer, cilBasket, cilPeople, cilSettings, cilChartLine, cilImage, cilList, cilWarning } from '@coreui/icons';
+import { cilSpeedometer, cilBasket, cilPeople,cilImage, cilList, cilWarning } from '@coreui/icons';
 
 const cx = classNames.bind(styles);
 
@@ -29,7 +29,7 @@ const Sidebar = ({ visible, onVisibleChange }) => {
 
         {/* Tách CNavItem và Link ra riêng biệt để không bị lồng thẻ <a> */}
         <CNavItem>
-          <Link to="/admin" className={`nav-link ${location.pathname === '/admin' ? 'active' : ''}`}>
+          <Link to="/admin/statistics" className={`nav-link ${location.pathname === '/admin/statistics' ? 'active' : ''}`}>
             <CIcon icon={cilSpeedometer} customClassName="nav-icon" /> Dashboard
           </Link>
         </CNavItem>
@@ -37,7 +37,7 @@ const Sidebar = ({ visible, onVisibleChange }) => {
         <CNavTitle>Quản lý nội dung</CNavTitle>
         <CNavItem>
           <Link to="/admin/posts" className={`nav-link ${location.pathname === '/admin/posts' ? 'active' : ''}`}>
-            <CIcon icon={cilBasket} customClassName="nav-icon" /> Quản lý bài đăng
+            <CIcon icon={cilBasket} customClassName="nav-icon" /> Bài đăng
           </Link>
         </CNavItem>
 
@@ -74,19 +74,6 @@ const Sidebar = ({ visible, onVisibleChange }) => {
         <CNavItem>
           <Link to="/admin/reports" className={`nav-link ${location.pathname === '/admin/reports' ? 'active' : ''}`}>
             <CIcon icon={cilWarning} customClassName="nav-icon" /> Báo cáo
-          </Link>
-        </CNavItem>
-        <CNavTitle>Cài đặt</CNavTitle>
-
-        <CNavItem>
-          <Link to="/admin/analytics" className={`nav-link ${location.pathname === '/admin/analytics' ? 'active' : ''}`}>
-            <CIcon icon={cilChartLine} customClassName="nav-icon" /> Thống kê doanh thu
-          </Link>
-        </CNavItem>
-
-        <CNavItem>
-          <Link to="/admin/settings" className={`nav-link ${location.pathname === '/admin/settings' ? 'active' : ''}`}>
-            <CIcon icon={cilSettings} customClassName="nav-icon" /> Cấu hình hệ thống
           </Link>
         </CNavItem>
       </CSidebarNav>

@@ -13,6 +13,7 @@ import vn.edu.husc.taphoa2hand_backend.entity.ReportStatusEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.ReportTypeEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.Users;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -45,4 +46,9 @@ public interface ReportRepository extends JpaRepository<Report, String>, JpaSpec
     List<Report> findByType(ReportTypeEnum type);
 
     Page<Report> findByType(ReportTypeEnum type, Pageable pageable);
+
+    // Statistics queries
+    Long countByCreatedAtBetween(LocalDateTime fromDate, LocalDateTime toDate);
+    
+    Page<Report> findByCreatedAtBetween(LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
 }
