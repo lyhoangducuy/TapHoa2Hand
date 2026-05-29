@@ -2,22 +2,22 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import classNames from "classnames/bind";
 import styles from "./Header.module.scss";
-import { 
-    FiSearch, FiBell, FiMessageSquare, FiUser, FiPlusCircle, 
-    FiLogIn, FiChevronDown, FiSettings, FiPackage, FiLogOut, FiHeart, FiFlag 
+import {
+    FiSearch, FiBell, FiMessageSquare, FiUser, FiPlusCircle,
+    FiLogIn, FiChevronDown, FiSettings, FiPackage, FiLogOut, FiHeart, FiFlag
 } from 'react-icons/fi';
 
 import Sidebar from "../Sidebar/Sidebar";
 import { getMyInfo } from "../../../../services/userService";
 import { getToken, removeToken } from "../../../../services/localstorageService";
-import { 
-    getUserNotifications, 
-    getUnreadNotificationCount, 
-    markNotificationAsRead 
+import {
+    getUserNotifications,
+    getUnreadNotificationCount,
+    markNotificationAsRead
 } from "../../../../services/notificationService";
-
+import { getSearchHistory } from "../../../../services/historySearchService";
 // Import các hàm socket từ service của bạn
-import { disconnectSocket, subscribeToNotifications, unsubscribeFromNotifications } from "../../../../services/socketService"; 
+import { disconnectSocket, subscribeToNotifications, unsubscribeFromNotifications } from "../../../../services/socketService";
 
 const cx = classNames.bind(styles);
 
@@ -77,6 +77,49 @@ const UserDropdown = ({ user, onLogout, onNavigate }) => {
 };
 
 // --- 2. COMPONENT NOTIFICATION DROPDOWN (REALTIME) ---
+const SearchHistoryDropdown = ({ userId, onSelect, visible }) => {
+    const [history, setHistory] = useState([]);
+
+    useEffect(() => {
+        if (!visible || !userId) return;
+
+        const fetchHistory = async () => {
+            try {
+                const res = await getSearchHistory(userId);
+                const data = res?.result || [];
+                setHistory(Array.isArray(data) ? data.slice(0, 10) : []);
+            } catch (err) {
+                console.error(err);
+                setHistory([]);
+            }
+        };
+
+        fetchHistory();
+    }, [visible, userId]);
+
+    if (!visible) return null;
+
+    return (
+        <div className={cx("search-history-dropdown")}>
+            {history.length === 0 ? (
+                <div className={cx("search-history-empty")}>
+                    Chưa có lịch sử tìm kiếm
+                </div>
+            ) : (
+                history.map((item, index) => (
+                    <div
+                        key={index}
+                        className={cx("search-history-item")}
+                        onClick={() => onSelect(item)}
+                    >
+                        <FiSearch className={cx("icon")} />
+                        <span>{item}</span>
+                    </div>
+                ))
+            )}
+        </div>
+    );
+};
 // --- 2. COMPONENT NOTIFICATION DROPDOWN (REALTIME) ---
 const NotificationDropdown = ({ user }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -99,14 +142,14 @@ const NotificationDropdown = ({ user }) => {
 
             // Bóc tách dữ liệu API
             let notiData = notiRes.data?.result || notiRes.result || [];
-            
+
             // ĐỀ PHÒNG: Nếu backend trả về 1 Object thay vì Array, ta phải nhét nó vào Array
             if (!Array.isArray(notiData) && notiData.id) {
                 notiData = [notiData];
             } else if (!Array.isArray(notiData)) {
                 notiData = []; // Khắc phục lỗi map() nếu dữ liệu rác
             }
-            
+
             setNotifications(notiData);
 
             let countData = countRes.data?.result ?? countRes.result ?? 0;
@@ -123,17 +166,17 @@ const NotificationDropdown = ({ user }) => {
 
             subscribeToNotifications((payload) => {
                 console.log("🔥 4. CÓ TÍN HIỆU REALTIME TỪ SOCKET! Payload gốc:", payload);
-                
+
                 let parsedData = payload;
 
                 // XỬ LÝ TRƯỜNG HỢP: Nếu dùng STOMP/SockJS, data thường nằm trong payload.body
                 if (payload && payload.body) {
-                    try { parsedData = JSON.parse(payload.body); } 
+                    try { parsedData = JSON.parse(payload.body); }
                     catch (e) { console.error("Lỗi parse STOMP body", e); }
-                } 
+                }
                 // XỬ LÝ TRƯỜNG HỢP: Socket trả về chuỗi String (chưa thành JSON)
                 else if (typeof payload === 'string') {
-                    try { parsedData = JSON.parse(payload); } 
+                    try { parsedData = JSON.parse(payload); }
                     catch (e) { console.error("Lỗi parse JSON string", e); }
                 }
 
@@ -144,7 +187,7 @@ const NotificationDropdown = ({ user }) => {
                 // Nếu mất ID thì ngưng, tránh làm sập React
                 if (!newNoti || !newNoti.id) {
                     console.error("❌ Dữ liệu realtime thiếu ID, không thể cập nhật UI!", newNoti);
-                    return; 
+                    return;
                 }
 
                 setNotifications(prev => {
@@ -207,8 +250,8 @@ const NotificationDropdown = ({ user }) => {
                             <div className={cx("noti-empty")}>Bạn chưa có thông báo nào</div>
                         ) : (
                             notifications.map((noti) => (
-                                <div 
-                                    key={noti.id} 
+                                <div
+                                    key={noti.id}
                                     className={cx("noti-item", { "unread": !noti.read })}
                                     onClick={() => handleNotificationClick(noti)}
                                 >
@@ -233,9 +276,9 @@ const NotificationDropdown = ({ user }) => {
 function Header() {
     const [isMobile, setIsMobile] = useState(false);
     const [user, setUser] = useState(null);
-    const [searchKeyword, setSearchKeyword] = useState(""); 
+    const [searchKeyword, setSearchKeyword] = useState("");
     const navigate = useNavigate();
-
+    const [showHistory, setShowHistory] = useState(false);
     useEffect(() => {
         const checkDevice = () => setIsMobile(window.innerWidth < 768);
         checkDevice();
@@ -250,9 +293,9 @@ function Header() {
                 try {
                     const res = await getMyInfo();
                     if (res.data.code === 1000) setUser(res.data.result);
-                } catch { 
-                    removeToken(); 
-                    setUser(null); 
+                } catch {
+                    removeToken();
+                    setUser(null);
                 }
             }
         };
@@ -289,17 +332,35 @@ function Header() {
                 </div>
 
                 <div className={cx("search-wrapper", { "mobile-search": isMobile })}>
-                    <input 
-                        type="text" 
-                        placeholder={isMobile ? "Tìm đồ cũ..." : "Tìm kiếm đồ cũ giá hời tại Huế..."}
-                        className={cx("search-input")} 
-                        value={searchKeyword}
-                        onChange={(e) => setSearchKeyword(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                    />
-                    <button className={cx("search-btn")} onClick={handleSearch}>
-                        <FiSearch />
-                    </button>
+                    <div className={cx("search-box")}>
+                        <input
+                            type="text"
+                            placeholder={isMobile ? "Tìm đồ cũ..." : "Tìm kiếm đồ cũ giá hời tại Huế..."}
+                            className={cx("search-input")}
+                            value={searchKeyword}
+                            onChange={(e) => setSearchKeyword(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            onFocus={() => setShowHistory(true)}
+                            onBlur={() => setTimeout(() => setShowHistory(false), 150)}
+                        />
+
+                        <button className={cx("search-btn")} onClick={handleSearch}>
+                            <FiSearch />
+                        </button>
+
+                        {/* DROPDOWN HISTORY */}
+                        {user && (
+                            <SearchHistoryDropdown
+                                userId={user?.id}
+                                visible={showHistory}
+                                onSelect={(keyword) => {
+                                    setSearchKeyword(keyword);
+                                    setShowHistory(false);
+                                    navigate(`/search?keyword=${encodeURIComponent(keyword)}`);
+                                }}
+                            />
+                        )}
+                    </div>
                 </div>
 
                 <div className={cx("actions")}>
@@ -310,7 +371,7 @@ function Header() {
                             <FiBell className={cx("icon")} /><span>Thông báo</span>
                         </div>
                     )}
-                    
+
                     <div className={cx("action-item")} onClick={() => navigate('/chat')}>
                         <FiMessageSquare className={cx("icon")} /><span>Nhắn tin</span>
                     </div>
