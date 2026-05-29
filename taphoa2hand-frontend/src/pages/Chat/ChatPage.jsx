@@ -7,7 +7,8 @@ import { getMyConversations, getChatMessages, createChatMessage } from '../../se
 import { createOrder } from '../../services/orderService';
 import {
     initiateSocketConnection, disconnectSocket, joinConversation,
-    leaveConversation, subscribeToNewMessages, unsubscribeFromMessages
+    leaveConversation, subscribeToNewMessages, unsubscribeFromMessages,
+    subscribeToUserStatus, unsubscribeFromUserStatus
 } from '../../services/socketService';
 
 import {
@@ -49,6 +50,17 @@ const formatTime = (dateString) => {
     });
 };
 
+// Play notification sound
+const playNotificationSound = () => {
+    try {
+        const audio = new Audio('/sounds/notification.mp3');
+        audio.volume = 0.5;
+        audio.play().catch(e => console.log('Cannot play sound:', e));
+    } catch (e) {
+        console.log('Sound not available');
+    }
+};
+
 // ==========================================
 // MAIN COMPONENT
 // ==========================================
@@ -69,6 +81,9 @@ function ChatPage() {
     const [messageInput, setMessageInput] = useState('');
     const [isSending, setIsSending] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
+    
+    // Online users tracking
+    const [onlineUsers, setOnlineUsers] = useState(new Set());
 
     const initialOrderForm = {
         sellerId: '',
@@ -178,8 +193,26 @@ function ChatPage() {
                 const parsedMessage = typeof newMessage === 'string' ? JSON.parse(newMessage) : newMessage;
                 const normalizedMessage = normalizeMessage(parsedMessage);
                 const isCurrentChat = String(normalizedMessage.conversationId) === String(activeChatId);
+                
+                // Skip if this is my own message (me: true)
+                if (normalizedMessage.me) {
+                    if (isCurrentChat) {
+                        setMessages((prev) => {
+                            const existingIndex = prev.findIndex((m) => String(m.id) === String(normalizedMessage.id));
+                            if (existingIndex !== -1) {
+                                const next = [...prev];
+                                next[existingIndex] = { ...next[existingIndex], ...normalizedMessage };
+                                return next;
+                            }
+                            return [...prev, normalizedMessage];
+                        });
+                    }
+                    return;
+                }
 
+                // Message from another user
                 if (isCurrentChat) {
+                    // Current chat - just update UI
                     setMessages((prev) => {
                         const existingIndex = prev.findIndex((m) => String(m.id) === String(normalizedMessage.id));
                         if (existingIndex !== -1) {
@@ -189,18 +222,27 @@ function ChatPage() {
                         }
                         return [...prev, normalizedMessage];
                     });
+                    setChats((prevChats) => prevChats.map((chat) =>
+                        String(chat.id) === String(activeChatId) ? { ...chat, unread: 0 } : chat
+                    ));
+                } else {
+                    // Not current chat - show notification + sound
+                    playNotificationSound();
+                    toast.info(`📩 ${normalizedMessage.sender?.fullName || 'Người dùng'}: ${normalizedMessage.message?.substring(0, 50) || 'Đã gửi một tin nhắn'}...`, {
+                        position: "top-right",
+                        autoClose: 3000
+                    });
+                    setChats((prevChats) => prevChats.map((chat) =>
+                        String(chat.id) === String(normalizedMessage.conversationId)
+                            ? {
+                                  ...chat,
+                                  lastMessage: normalizedMessage.message || '📎 Tin nhắn mới',
+                                  time: formatTime(normalizedMessage.createdDate || Date.now()),
+                                  unread: (chat.unread || 0) + 1
+                              }
+                            : chat
+                    ));
                 }
-
-                setChats((prevChats) => prevChats.map((chat) =>
-                    String(chat.id) === String(normalizedMessage.conversationId)
-                        ? {
-                              ...chat,
-                              lastMessage: normalizedMessage.message || chat.lastMessage,
-                              time: formatTime(normalizedMessage.createdDate || normalizedMessage.createdAt || Date.now()),
-                              unread: isCurrentChat ? 0 : (chat.unread || 0) + 1
-                          }
-                        : chat
-                ));
             } catch (error) {
                 console.error('Lỗi khi parse dữ liệu socket:', error);
             }
@@ -211,6 +253,23 @@ function ChatPage() {
             unsubscribeFromMessages();
         };
     }, [activeChatId, currentUserId]);
+
+    // Subscribe to user online/offline status
+    useEffect(() => {
+        subscribeToUserStatus(({ userId, status }) => {
+            setOnlineUsers((prev) => {
+                const next = new Set(prev);
+                if (status === 'ONLINE') {
+                    next.add(userId);
+                } else {
+                    next.delete(userId);
+                }
+                return next;
+            });
+        });
+
+        return () => unsubscribeFromUserStatus();
+    }, []);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -511,6 +570,7 @@ function ChatPage() {
                 filteredChats={filteredChats}
                 activeChatId={activeChatId} 
                 handleChatSelect={handleChatSelect}
+                onlineUsers={onlineUsers}
             />
             
             <ChatWindow 

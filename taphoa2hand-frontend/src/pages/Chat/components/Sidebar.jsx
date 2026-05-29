@@ -21,7 +21,8 @@ function Sidebar({
     isLoading, 
     filteredChats, 
     activeChatId, 
-    handleChatSelect 
+    handleChatSelect,
+    onlineUsers = new Set()
 }) {
     return (
         <div className={cx('sidebar')}>
@@ -57,11 +58,17 @@ function Sidebar({
                             className={cx('chat-item', { active: String(activeChatId) === String(chat.id) })} 
                             onClick={() => handleChatSelect(chat.id)}
                         >
-                            <div className={cx('avatar')}>
+                            <div className={cx('avatar-wrapper')}>
                                 {chat.avatar ? (
-                                    <img src={chat.avatar} alt="avatar" />
+                                    <img src={chat.avatar} alt="avatar" className={cx('avatar-img')} />
                                 ) : (
-                                    chat.name?.charAt(0).toUpperCase()
+                                    <div className={cx('avatar-placeholder')}>
+                                        {chat.name?.charAt(0).toUpperCase()}
+                                    </div>
+                                )}
+                                {/* Online dot indicator */}
+                                {onlineUsers.has(chat.userId) && (
+                                    <span className={cx('online-dot')} />
                                 )}
                             </div>
                             <div className={cx('chat-info')}>

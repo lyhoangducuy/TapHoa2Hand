@@ -21,6 +21,11 @@ export const initiateSocketConnection = (token) => {
         socket.on('disconnect', () => {
             console.log('Đã ngắt kết nối Socket.IO');
         });
+
+        // Listen user online/offline status
+        socket.on('user_status', (userId, status) => {
+            console.log('User status changed:', userId, status);
+        });
     }
     return socket;
 };
@@ -62,6 +67,23 @@ export const subscribeToNewMessages = (callback) => {
 export const unsubscribeFromMessages = () => {
     if (!socket) return;
     socket.off('receive_new_message');
+};
+
+// Lắng nghe user status changes (online/offline)
+export const subscribeToUserStatus = (callback) => {
+    if (!socket) return;
+    
+    socket.off('user_status');
+    socket.on('user_status', (userId, status) => {
+        console.log('User status:', userId, status);
+        callback({ userId, status });
+    });
+};
+
+// Gỡ lắng nghe user status
+export const unsubscribeFromUserStatus = () => {
+    if (!socket) return;
+    socket.off('user_status');
 };
 
 export const getSocket = () => socket;

@@ -54,6 +54,10 @@ public class SocketHandler {
             client.joinRoom(verifyToken.getUserId());
             log.info("User " + verifyToken.getUserId() + " đã tự động join room!");
             log.info("Web socket sesssion with id: {}", webSocketSession.getId());
+
+            // BROADCAST: Thông báo user ONLINE cho tất cả client
+            server.getBroadcastOperations().sendEvent("user_status", verifyToken.getUserId(), "ONLINE");
+            log.info("Broadcast user_online: " + verifyToken.getUserId());
         } else {
             log.info("Authentication fail: " + client.getSessionId());
 
@@ -65,7 +69,15 @@ public class SocketHandler {
     @OnDisconnect
     public void clientDisconnected(SocketIOClient client) {
         log.info("Client disconnected: " + client.getSessionId());
+        // Lấy userId trước khi xóa session
+        String userId = webSocketSessionService.getUserIdBySocketSessionId(client.getSessionId().toString());
         webSocketSessionService.deleteSocketSession(client.getSessionId().toString());
+
+        // BROADCAST: Thông báo user OFFLINE cho tất cả client
+        if (userId != null) {
+            server.getBroadcastOperations().sendEvent("user_status", userId, "OFFLINE");
+            log.info("Broadcast user_offline: " + userId);
+        }
     }
 
     @OnEvent("connectToNoti")

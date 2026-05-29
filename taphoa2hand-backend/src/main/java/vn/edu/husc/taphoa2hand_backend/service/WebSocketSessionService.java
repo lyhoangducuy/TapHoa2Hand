@@ -21,4 +21,9 @@ public class WebSocketSessionService {
     public void deleteSocketSession(String socketSessionId){
         webSocketSessionRepository.deleteBySocketSessionId(socketSessionId);
     }
+    public String getUserIdBySocketSessionId(String socketSessionId) {
+        return webSocketSessionRepository.findBySocketSessionId(socketSessionId)
+                .map(WebSocketSession::getUserId)
+                .orElse(null);
+    }
 }
