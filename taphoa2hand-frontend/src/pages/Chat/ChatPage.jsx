@@ -191,6 +191,8 @@ function ChatPage() {
         subscribeToNewMessages((newMessage) => {
             try {
                 const parsedMessage = typeof newMessage === 'string' ? JSON.parse(newMessage) : newMessage;
+                if (!parsedMessage) return;
+                
                 const normalizedMessage = normalizeMessage(parsedMessage);
                 const isCurrentChat = String(normalizedMessage.conversationId) === String(activeChatId);
                 
@@ -226,12 +228,7 @@ function ChatPage() {
                         String(chat.id) === String(activeChatId) ? { ...chat, unread: 0 } : chat
                     ));
                 } else {
-                    // Not current chat - show notification + sound
-                    playNotificationSound();
-                    toast.info(`📩 ${normalizedMessage.sender?.fullName || 'Người dùng'}: ${normalizedMessage.message?.substring(0, 50) || 'Đã gửi một tin nhắn'}...`, {
-                        position: "top-right",
-                        autoClose: 3000
-                    });
+                    // Not current chat - update sidebar unread count only (Header handles popup)
                     setChats((prevChats) => prevChats.map((chat) =>
                         String(chat.id) === String(normalizedMessage.conversationId)
                             ? {

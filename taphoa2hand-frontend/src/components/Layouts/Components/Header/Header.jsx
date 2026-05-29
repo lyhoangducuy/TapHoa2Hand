@@ -4,7 +4,7 @@ import classNames from "classnames/bind";
 import styles from "./Header.module.scss";
 import {
     FiSearch, FiBell, FiMessageSquare, FiUser, FiPlusCircle,
-    FiLogIn, FiChevronDown, FiSettings, FiPackage, FiLogOut, FiHeart, FiFlag
+    FiLogIn, FiChevronDown, FiSettings, FiPackage, FiLogOut, FiHeart, FiFlag, FiX
 } from 'react-icons/fi';
 
 import Sidebar from "../Sidebar/Sidebar";
@@ -17,9 +17,24 @@ import {
 } from "../../../../services/notificationService";
 import { getSearchHistory } from "../../../../services/historySearchService";
 // Import các hàm socket từ service của bạn
-import { disconnectSocket, subscribeToNotifications, unsubscribeFromNotifications } from "../../../../services/socketService";
+import {
+    disconnectSocket,
+    subscribeToNotifications,
+    unsubscribeFromNotifications,
+    subscribeToNewMessages,
+    unsubscribeFromMessages
+} from "../../../../services/socketService";
 
 const cx = classNames.bind(styles);
+
+// Play notification sound
+const playNotificationSound = () => {
+    try {
+        const audio = new Audio('/sounds/notification.mp3');
+        audio.volume = 0.5;
+        audio.play().catch(() => { });
+    } catch (e) { }
+};
 
 // --- 1. COMPONENT USER DROPDOWN ---
 const UserDropdown = ({ user, onLogout, onNavigate }) => {
@@ -272,6 +287,38 @@ const NotificationDropdown = ({ user }) => {
     );
 };
 
+// --- CHAT NOTIFICATION POPUP ---
+const ChatNotificationPopup = ({ chatPopup, onClose, onNavigate }) => {
+    if (!chatPopup) return null;
+
+    const handleClick = () => {
+        onNavigate(`/chat?activeId=${chatPopup.conversationId}`);
+        onClose();
+    };
+
+    return (
+        <div className={cx("chat-popup-dropdown")} onClick={handleClick}>
+            <div className={cx("chat-popup-content")}>
+                <div className={cx("chat-popup-header")}>
+                    <FiMessageSquare />
+                    <span>Tin nhắn mới</span>
+                    <button className={cx("chat-popup-close")} onClick={(e) => { e.stopPropagation(); onClose(); }}>
+                        <FiX />
+                    </button>
+                </div>
+                <div className={cx("chat-popup-body")}>
+                    <div className={cx("chat-popup-sender")}>
+                        <strong>{chatPopup.senderName}</strong>
+                    </div>
+                    <div className={cx("chat-popup-message")}>
+                        {chatPopup.message || 'Đã gửi một tin nhắn'}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // --- 3. COMPONENT HEADER CHÍNH ---
 function Header() {
     const [isMobile, setIsMobile] = useState(false);
@@ -279,6 +326,110 @@ function Header() {
     const [searchKeyword, setSearchKeyword] = useState("");
     const navigate = useNavigate();
     const [showHistory, setShowHistory] = useState(false);
+
+    // Chat notification popup state
+    const [chatPopup, setChatPopup] = useState(null);
+    const [unreadChatCount, setUnreadChatCount] = useState(0);
+    const chatPopupTimerRef = useRef(null);
+
+    // Get current chat conversation ID from URL to avoid showing popup for current chat
+    const getCurrentChatId = () => {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('activeId');
+    };
+
+    // Handle new chat message notification - stable callback ref
+    const handleNewChatMessageRef = useRef(null);
+
+    // Create the handler once
+    useEffect(() => {
+        handleNewChatMessageRef.current = (messageData) => {
+            try {
+                // Parse if string
+                const parsedMessage = typeof messageData === 'string'
+                    ? JSON.parse(messageData)
+                    : messageData;
+                console.log("SOCKET MESSAGE:", parsedMessage);
+                console.log("CURRENT USER:", user);
+                if (!parsedMessage) return;
+
+                // bỏ qua tin nhắn của chính mình
+                // bỏ qua tin nhắn của chính mình
+if (String(parsedMessage.sender?.userId) === String(user?.id)) {
+    return;
+}
+
+                // Skip if this is my own message
+                // Skip if message is from myself
+                // Skip if message is from myself
+                if (String(parsedMessage.senderId) === String(user?.id)) {
+                    return;
+                }
+                // Skip if currently viewing this conversation
+                const currentChatId = getCurrentChatId();
+                if (currentChatId && String(parsedMessage.conversationId) === String(currentChatId)) return;
+
+                // Play sound
+                playNotificationSound();
+
+                // Show popup with new message data
+                setChatPopup({
+                    conversationId: parsedMessage.conversationId,
+                    senderName: parsedMessage.sender?.fullName || parsedMessage.sender?.username || 'Người dùng',
+                    message: parsedMessage.message || ''
+                });
+
+                // Increment unread count
+                setUnreadChatCount(prev => prev + 1);
+
+                // Clear existing timer
+                if (chatPopupTimerRef.current) {
+                    clearTimeout(chatPopupTimerRef.current);
+                }
+
+                // Auto hide after 3 seconds
+                chatPopupTimerRef.current = setTimeout(() => {
+                    setChatPopup(null);
+                }, 3000);
+            } catch (e) {
+                console.error('Error handling chat message:', e);
+            }
+        };
+    }, [user]);
+
+    // Subscribe to new chat messages (global listener)
+    useEffect(() => {
+        if (!user) return; // Only subscribe when logged in
+
+        const unsubscribe = subscribeToNewMessages((data) => {
+            if (handleNewChatMessageRef.current) {
+                handleNewChatMessageRef.current(data);
+            }
+        });
+
+        return () => {
+            if (typeof unsubscribe === 'function') {
+                unsubscribe();
+            }
+            if (chatPopupTimerRef.current) {
+                clearTimeout(chatPopupTimerRef.current);
+            }
+        };
+    }, [user]);
+
+    // Subscribe to notifications
+    useEffect(() => {
+        if (!user) return;
+
+        const unsubscribe = subscribeToNotifications(() => { });
+
+        return () => {
+            if (typeof unsubscribe === 'function') {
+                unsubscribe();
+            }
+        };
+    }, [user]);
+
     useEffect(() => {
         const checkDevice = () => setIsMobile(window.innerWidth < 768);
         checkDevice();
@@ -302,8 +453,15 @@ function Header() {
         fetchUser();
     }, []);
 
+    // Reset unread count when viewing chat
+    useEffect(() => {
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('/chat')) {
+            setUnreadChatCount(0);
+        }
+    }, [window.location.search]);
+
     const handleLogout = () => {
-        unsubscribeFromNotifications(); // Ngắt kết nối socket trước khi logout
         disconnectSocket();
         removeToken();
         setUser(null);
@@ -321,8 +479,22 @@ function Header() {
         if (e.key === 'Enter') handleSearch();
     };
 
+    const handleChatPopupClose = () => {
+        if (chatPopupTimerRef.current) {
+            clearTimeout(chatPopupTimerRef.current);
+        }
+        setChatPopup(null);
+    };
+
     return (
         <header className={cx("wrapper", { "wrapper-mobile": isMobile })}>
+            {/* Chat Notification Popup */}
+            <ChatNotificationPopup
+                chatPopup={chatPopup}
+                onClose={handleChatPopupClose}
+                onNavigate={navigate}
+            />
+
             <div className={cx(isMobile ? "inner-mobile" : "inner-desktop")}>
                 <div className={cx("header-left")}>
                     <Sidebar />
@@ -372,8 +544,14 @@ function Header() {
                         </div>
                     )}
 
-                    <div className={cx("action-item")} onClick={() => navigate('/chat')}>
-                        <FiMessageSquare className={cx("icon")} /><span>Nhắn tin</span>
+                    <div className={cx("action-item", "chat-action")} onClick={() => { navigate('/chat'); setUnreadChatCount(0); }}>
+                        <FiMessageSquare className={cx("icon")} />
+                        <span>Nhắn tin</span>
+                        {unreadChatCount > 0 && (
+                            <span className={cx("badge", "chat-badge")}>
+                                {unreadChatCount > 99 ? '99+' : unreadChatCount}
+                            </span>
+                        )}
                     </div>
 
                     <div className={cx("btn-group")}>
