@@ -1,5 +1,6 @@
 package vn.edu.husc.taphoa2hand_backend.service;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -41,7 +42,7 @@ public class ChatMessageService {
     ChatMessageMapper chatMessageMapper;
     WebSocketSessionRepository webSocketSessionRepository;
     ObjectMapper objectMapper;
-
+    FileService fileService;
     SocketIOServer socketIOServer;
 
     @Transactional
@@ -60,7 +61,7 @@ public class ChatMessageService {
     }
 
     @Transactional
-    public ChatMessageResponse create(ChatMessageRequest request) {
+    public ChatMessageResponse create(ChatMessageRequest request) throws IOException {
         // Validate conversationId
         String userName = SecurityContextHolder.getContext().getAuthentication().getName();
         var conversation = conversationRepository.findById(request.getConversationId())
@@ -83,15 +84,27 @@ public class ChatMessageService {
                 .username(userName)
                 .avatar(userResponseGet.getAvatar())
                 .fullName(userResponseGet.getFullName())
-
                 .build());
+
+        // Handle media upload
+        if (request.getFile() != null && !request.getFile().isEmpty()) {
+            var uploadResult = fileService.uploadMedia(request.getFile());
+            chatMessage.setMediaUrl(uploadResult.getUrl());
+            
+            // Determine media type based on content type
+            String contentType = request.getFile().getContentType();
+            if (contentType != null && contentType.startsWith("image/")) {
+                chatMessage.setMediaType("IMAGE");
+            } else if (contentType != null && contentType.startsWith("video/")) {
+                chatMessage.setMediaType("VIDEO");
+            }
+        }
+
         // Create chat message
         chatMessage = chatMessageRepository.save(chatMessage);
-        // connect socket
-
         ChatMessageResponse chatMessageResponse = chatMessageMapper.toChatMessageResponse(chatMessage);
+
         // publish socket to client in conversation
-        // get participants userIds
         List<String> userIds = conversation.getParticipants()
                 .stream()
                 .map(ParticipantInfo::getUsername).toList();
@@ -102,45 +115,16 @@ public class ChatMessageService {
         socketIOServer.getAllClients().stream().forEach(client -> {
             var webSocketSession = webSocketSessions.get(client.getSessionId().toString());
             if (Objects.nonNull(webSocketSession)) {
-                String messaged = null;
                 try {
                     chatMessageResponse.setMe(webSocketSession.getUserId().equals(userResponseGet.getId()));
-                    messaged = objectMapper.writeValueAsString(chatMessageResponse);
+                    String messaged = objectMapper.writeValueAsString(chatMessageResponse);
                     client.sendEvent("receive_new_message", messaged);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });// Lấy danh sách session từ DB
-        Map<String, WebSocketSession> webSocketSessions1 = webSocketSessionRepository.findByUserIdIn(userIds)
-                .stream()
-                .collect(Collectors.toMap(
-                        WebSocketSession::getSocketSessionId, Function.identity()));
-
-        System.out.println(">>> SỐ LƯỢNG SESSION TÌM THẤY TRONG DB: " + webSocketSessions1.size());
-
-        socketIOServer.getAllClients().stream().forEach(client -> {
-            String sessionId = client.getSessionId().toString();
-            System.out.println(">>> ĐANG KIỂM TRA CLIENT CÓ ID LÀ: " + sessionId);
-
-            var webSocketSession = webSocketSessions1.get(sessionId);
-            System.out.println(">>> MATCH VỚI DB KHÔNG? " + (webSocketSession != null));
-
-            if (Objects.nonNull(webSocketSession)) {
-                String messaged = null;
-                try {
-                    chatMessageResponse.setMe(webSocketSession.getUserId()
-                            .equals(userResponseGet.getUsername()));
-                    messaged = objectMapper.writeValueAsString(chatMessageResponse);
-                    client.sendEvent("receive_new_message", messaged);
-                    System.out.println(">>> ĐÃ GỬI THÀNH CÔNG CHO: " + sessionId);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         });
-        // convert to response
+
         return toChatMessageResponse(chatMessage);
     }
 

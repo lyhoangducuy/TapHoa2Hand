@@ -12,8 +12,11 @@ import vn.edu.husc.taphoa2hand_backend.dto.response.ChatMessage.ChatMessageRespo
 import vn.edu.husc.taphoa2hand_backend.entity.ChatMessage;
 import vn.edu.husc.taphoa2hand_backend.service.ChatMessageService;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,12 +30,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 public class ChatMessageController {
     ChatMessageService chatMessageService;
-    @PostMapping("/create")
-    public ApiResponse<ChatMessageResponse> createChatMessage(@RequestBody @Valid ChatMessageRequest request) {
+    
+    @PostMapping(value = "/create", consumes = "multipart/form-data")
+    public ApiResponse<ChatMessageResponse> createChatMessage(@ModelAttribute ChatMessageRequest request) throws IOException {
         return ApiResponse.<ChatMessageResponse>builder()
                             .result(chatMessageService.create(request))
                             .build();
     }
+    
     @GetMapping
     public ApiResponse<List<ChatMessageResponse>> getChatMessage(@RequestParam("conversationId") String conversationId){
         return ApiResponse.<List<ChatMessageResponse>>builder()

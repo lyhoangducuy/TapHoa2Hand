@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.web.multipart.MultipartFile;
 
 @Data
 @AllArgsConstructor
@@ -15,6 +16,8 @@ import lombok.experimental.FieldDefaults;
 public class ChatMessageRequest {
     @NotBlank
     String conversationId;
-    @NotBlank
+    
     String message;
+    
+    MultipartFile file;
 }

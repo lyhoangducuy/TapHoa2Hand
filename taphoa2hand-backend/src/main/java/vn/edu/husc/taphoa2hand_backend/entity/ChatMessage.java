@@ -27,7 +27,7 @@ public class ChatMessage {
     @Column(name = "conversation_id", nullable = false)
     String conversationId;
 
-    @Column(columnDefinition = "TEXT") // Cho phép tin nhắn dài, không bị giới hạn 255 ký tự
+    @Column(columnDefinition = "TEXT")
     String message;
 
     /**
@@ -35,6 +35,18 @@ public class ChatMessage {
      * Giúp lấy tin nhắn kèm luôn Avatar/Name của người gửi mà không cần Join bảng Users.
      */
     ParticipantInfo sender;
+
+    /**
+     * URL của media đính kèm (image/video)
+     */
+    @Column(name = "media_url")
+    String mediaUrl;
+
+    /**
+     * Loại media: IMAGE | VIDEO | null
+     */
+    @Column(name = "media_type")
+    String mediaType;
 
     @Builder.Default
     @Column(name = "created_date")

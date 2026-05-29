@@ -22,4 +22,8 @@ public class ChatMessageResponse {
     String message;
     ParticipantInfo sender;
     Instant createdDate;
+    
+    // Media fields
+    String mediaUrl;
+    String mediaType; // IMAGE | VIDEO | null
 }

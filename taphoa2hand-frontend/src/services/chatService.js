@@ -44,17 +44,17 @@ export const getChatMessages = async (conversationId) => {
     return response.json();
 };
 
-// API: Gửi tin nhắn mới
-export const createChatMessage = async (chatData) => {
-    const url = API.CREATE_CHATMESSAGE || "/chat-meassage/create";
+// API: Gửi tin nhắn mới (text + media)
+export const createChatMessage = async (formData) => {
+    const url = API.CREATE_CHATMESSAGE || "/chat-message/create";
     
     const response = await fetch(CONFIG.API_GATEWAY + url, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
             "Authorization": `Bearer ${token}`
+            // Note: Không set Content-Type khi dùng FormData, browser sẽ tự set multipart/form-data với boundary
         },
-        body: JSON.stringify(chatData),
+        body: formData,
     });
     return response.json();
 };

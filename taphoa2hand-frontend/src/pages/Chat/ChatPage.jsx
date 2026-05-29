@@ -68,6 +68,7 @@ function ChatPage() {
     const [messages, setMessages] = useState([]);
     const [messageInput, setMessageInput] = useState('');
     const [isSending, setIsSending] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
 
     const initialOrderForm = {
         sellerId: '',
@@ -221,15 +222,27 @@ function ChatPage() {
         setChats((prev) => prev.map((chat) => String(chat.id) === String(chatId) ? { ...chat, unread: 0 } : chat));
     };
 
+    const handleFileSelect = (file) => {
+        setSelectedFile(file);
+    };
+
     const handleSendMessage = async () => {
-        if (!messageInput.trim() || !activeChatId || isSending) return;
+        if ((!messageInput.trim() && !selectedFile) || !activeChatId || isSending) return;
         const trimmedMessage = messageInput.trim();
         setMessageInput('');
         setIsSending(true);
 
         try {
-            const response = await createChatMessage({ conversationId: activeChatId, message: trimmedMessage });
+            const formData = new FormData();
+            formData.append('conversationId', activeChatId);
+            formData.append('message', trimmedMessage || '');
+            if (selectedFile) {
+                formData.append('file', selectedFile);
+            }
+
+            const response = await createChatMessage(formData);
             if (response.code === 1000 && response.result) {
+                setSelectedFile(null);
                 const newlySentMessage = normalizeMessage({ ...response.result, me: true });
                 setMessages((prev) => {
                     const existingIndex = prev.findIndex((m) => String(m.id) === String(newlySentMessage.id));
@@ -243,7 +256,7 @@ function ChatPage() {
 
                 setChats((prev) => prev.map((chat) =>
                     String(chat.id) === String(activeChatId)
-                        ? { ...chat, lastMessage: newlySentMessage.message, time: formatTime(newlySentMessage.createdDate || newlySentMessage.createdAt), unread: 0 }
+                        ? { ...chat, lastMessage: newlySentMessage.message || (selectedFile ? '📎 Đã gửi tệp đính kèm' : newlySentMessage.message), time: formatTime(newlySentMessage.createdDate || newlySentMessage.createdAt), unread: 0 }
                         : chat
                 ));
             }
@@ -524,7 +537,10 @@ function ChatPage() {
                     messageInput={messageInput}
                     setMessageInput={setMessageInput} 
                     isSending={isSending}
-                    onSendMessage={handleSendMessage} 
+                    onSendMessage={handleSendMessage}
+                    selectedFile={selectedFile}
+                    setSelectedFile={setSelectedFile}
+                    onFileSelect={handleFileSelect}
                 />
             </ChatWindow>
 
