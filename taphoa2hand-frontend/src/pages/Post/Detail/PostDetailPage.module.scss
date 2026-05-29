@@ -194,6 +194,52 @@
                 strong { color: #333; text-align: right; }
             }
         }
+
+        .post-type-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+
+            &.sell, &.SELL {
+                background: #e8f5e9;
+                color: #2e7d32;
+            }
+
+            &.buy, &.BUY {
+                background: #e3f2fd;
+                color: #1565c0;
+            }
+        }
+
+        .category-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+
+            .category-tag {
+                padding: 6px 14px;
+                background: #f0f0f0;
+                border-radius: 16px;
+                font-size: 0.9rem;
+                color: #555;
+            }
+        }
+
+        .payment-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+
+            .payment-tag {
+                padding: 6px 14px;
+                background: #fff3e0;
+                border-radius: 16px;
+                font-size: 0.9rem;
+                color: #e65100;
+            }
+        }
     }
 }
 

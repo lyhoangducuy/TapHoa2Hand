@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './PostDetailPage.module.scss';
-import { FiChevronRight, FiBox, FiInfo, FiHome } from 'react-icons/fi';
+import { FiChevronRight, FiBox, FiInfo, FiHome, FiList, FiCreditCard } from 'react-icons/fi';
 
 import { getPostDetail } from '../../../services/postService';
 import { isFavoritePost } from '../../../services/favoriteService';
@@ -64,6 +64,8 @@ useEffect(() => {
     const address = post.postAddress || {};
     const seller = post.user || {};
     const categoryName = post.categories?.length > 0 ? (post.categories[0].name || post.categories[0]) : null;
+    const postTypeName = post.postType?.name || post.postType || 'SELL';
+    const postTypeDisplay = postTypeName === 'BUY' ? 'Cần mua' : 'Cần bán';
 
     return (
         <div className={cx('wrapper')}>
@@ -81,11 +83,9 @@ useEffect(() => {
 
             <div className={cx('container')}>
                 <div className={cx('left-column')}>
-                    
+
                     {/* Ảnh sản phẩm */}
                     <ImageGallery images={post.postImages || []} status={post.status} postType={post.postType} />
-
-                    
 
                     {/* Mô tả */}
                     <div className={cx('info-block')}>
@@ -101,7 +101,7 @@ useEffect(() => {
                             <div className={cx('spec-row')}><span>Dòng sản phẩm</span><strong>{detail.model || 'Đang cập nhật'}</strong></div>
                             <div className={cx('spec-row')}><span>Tình trạng</span><strong>{detail.itemCondition || 'Đang cập nhật'}</strong></div>
                             <div className={cx('spec-row')}><span>Thời gian sử dụng</span><strong>{detail.usedDuration || 'Không rõ'}</strong></div>
-                            <div className={cx('spec-row')}><span>Lý do </span><strong>{detail.reasonForSelling || 'Không rõ'}</strong></div>
+                            <div className={cx('spec-row')}><span>Lý do bán</span><strong>{detail.reasonForSelling || 'Không rõ'}</strong></div>
                         </div>
                     </div>
                 </div>
