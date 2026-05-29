@@ -201,7 +201,17 @@
     color: #991b1b;
     background: #fef2f2;
 }
-
+/* ─── Returned Banner ─── */
+.returned-banner {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #048019;
+    background: #fef2f2;
+}
 /* ─── Reported Banner ─── */
 .reported-banner {
     display: flex;

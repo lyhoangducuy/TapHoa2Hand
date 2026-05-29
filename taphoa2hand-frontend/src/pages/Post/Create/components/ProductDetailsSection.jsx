@@ -13,13 +13,13 @@ function ProductDetailsSection({ postDetail, fieldErrors, onDetailChange }) {
                 </div>
                 <div>
                     <h2 className={cx('card-title')}>Chi tiết sản phẩm</h2>
-                    <p className={cx('card-desc')}>Mô tả đầy đủ thông tin sản phẩm</p>
+                    <p className={cx('card-desc')}>Mô tả đầy đủ thông tin sản phẩm<span className={cx('required')}>*</span></p>
                 </div>
             </div>
             <div className={cx('card-body')}>
                 <div className={cx('grid2Cols')}>
                     <div className={cx('formGroup')}>
-                        <label className={cx('label')}>Thương hiệu</label>
+                        <label className={cx('label')}>Thương hiệu<span className={cx('required')}>*</span></label>
                         <input
                             className={cx('inputControl')}
                             name="brand"
@@ -29,7 +29,7 @@ function ProductDetailsSection({ postDetail, fieldErrors, onDetailChange }) {
                         />
                     </div>
                     <div className={cx('formGroup')}>
-                        <label className={cx('label')}>Model</label>
+                        <label className={cx('label')}>Dòng sản phẩm<span className={cx('required')}>*</span></label>
                         <input
                             className={cx('inputControl')}
                             name="model"
@@ -50,7 +50,7 @@ function ProductDetailsSection({ postDetail, fieldErrors, onDetailChange }) {
                         {fieldErrors.itemCondition && <span className={cx('errorText')}>{fieldErrors.itemCondition}</span>}
                     </div>
                     <div className={cx('formGroup')}>
-                        <label className={cx('label')}>Thời gian đã sử dụng</label>
+                        <label className={cx('label')}>Thời gian đã sử dụng<span className={cx('required')}>*</span></label>
                         <input
                             className={cx('inputControl')}
                             name="usedDuration"
@@ -62,7 +62,7 @@ function ProductDetailsSection({ postDetail, fieldErrors, onDetailChange }) {
                 </div>
 
                 <div className={cx('formGroup')}>
-                    <label className={cx('label')}>Lý do bán</label>
+                    <label className={cx('label')}>Lý do bán<span className={cx('required')}>*</span></label>
                     <input
                         className={cx('inputControl')}
                         name="reasonForSelling"

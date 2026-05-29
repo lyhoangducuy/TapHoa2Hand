@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import {
     FiEye, FiStar, FiX, FiCheck, FiCreditCard,
     FiPackage, FiCheckCircle, FiFlag, FiMapPin,
-    FiPhone, FiUser, FiChevronDown, FiChevronUp
+    FiPhone, FiUser, FiChevronDown, FiChevronUp,
+    FiRepeat
 } from 'react-icons/fi';
 
 import * as feedbackService from '../../../../services/feedbackService';
@@ -52,6 +53,7 @@ const STATUS_COLORS = {
     SETTLING: { bg: '#fff7ed', color: '#9a3412', dot: '#f97316' },
     COMPLETED: { bg: '#f0fdfa', color: '#134e4a', dot: '#14b8a6' },
     CANCELLED: { bg: '#fef2f2', color: '#991b1b', dot: '#ef4444' },
+    RETURNED: { bg: '#fffbeb', color: '#92400e', dot: '#f59e0b' },
     REPORTED: { bg: '#fefce8', color: '#854d0e', dot: '#eab308' },
 };
 
@@ -136,7 +138,7 @@ const OrderCard = ({
 
 
             {/* STEPPER - Hiển thị khác nhau cho từng phương thức */}
-            {!['CANCELLED', 'CANCELLED_AUTO', 'REPORTED'].includes(statusName) && (
+            {!['CANCELLED', 'CANCELLED_AUTO', 'REPORTED', 'RETURNED'].includes(statusName) && (
                 <div className={cx('stepper')}>
                     {steps.map((stepKey, i) => {
                         const done = stepIndex > i;
@@ -158,13 +160,17 @@ const OrderCard = ({
                     <FiX size={14} /> Đơn đã bị hủy
                 </div>
             )}
+            {(statusName === 'RETURNED' )&& (
+                <div className={cx('returned-banner')}>
+                    <FiRepeat size={14} /> Đơn đã bị trả hàng đang hoàn tiền
+                </div>
+            )}
 
             {statusName === 'REPORTED' && (
                 <div className={cx('reported-banner')}>
                     <FiFlag size={14} /> Đơn đang bị báo cáo, chờ xử lý
                 </div>
             )}
-
             {/* BODY PREVIEW */}
             <div className={cx('body-preview')}>
                 <div className={cx('info-row')}>
@@ -211,11 +217,6 @@ const OrderCard = ({
                             ⏱ Giữ tiền đến: {new Date(order.holdUntil).toLocaleString('vi-VN')}
                         </p>
                     )}
-                    {isDirectPayment && (
-                        <p className={cx('escrow-note')}>
-                            💵 Thanh toán trực tiếp - Không qua trung gian
-                        </p>
-                    )}
                 </div>
             </div>
 
@@ -254,7 +255,7 @@ const OrderCard = ({
                 )}
 
                 {/* Nút duyệt/từ chối của người bán - cho cả 2 phương thức */}
-                {!isBuyer && (statusName === 'PENDING' || statusName === 'CONFIRMED' || statusName==='PAID_WAITING_PICKUP') && (
+                {!isBuyer && (statusName === 'PENDING' || statusName === 'CONFIRMED' || statusName === 'PAID_WAITING_PICKUP') && (
                     <>
                         <button className={cx('btn-reject')} onClick={() => onReject(order.id)}>
                             <FiX /> Từ chối

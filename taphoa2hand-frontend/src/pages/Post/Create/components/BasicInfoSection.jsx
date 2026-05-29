@@ -9,7 +9,8 @@ function BasicInfoSection({ formData, postTypes, fieldErrors, onBasicChange }) {
         <fieldset className={cx('fieldset')}>
             <legend className={cx('legend')}>Thông tin cơ bản</legend>
             <div className={cx('formGroup')}>
-                <label>Loại tin:</label>
+                <label>Loại tin: </label>
+                
                 <select 
                     className={cx('inputControl')} 
                     name="postTypeName" 
@@ -17,15 +18,17 @@ function BasicInfoSection({ formData, postTypes, fieldErrors, onBasicChange }) {
                     onChange={onBasicChange}
                     required
                 >
+                    
                     {postTypes.map((type) => (
                         <option key={type.name} value={type.name}>
                             {type.displayName}
                         </option>
                     ))}
                 </select>
+                
             </div>
             <div className={cx('formGroup')}>
-                <label>Tiêu đề:</label>
+                <label>Tiêu đề: <span className={cx('required')}>*</span></label>
                 <input 
                     className={cx('inputControl', { error: fieldErrors.title })} 
                     name="title" 

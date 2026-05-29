@@ -217,7 +217,7 @@ function CreatePostPage() {
                         </div>
                         <div className={cx('card-body')}>
                             <div className={cx('formGroup')}>
-                                <label className={cx('label')}>Loại tin</label>
+                                <label className={cx('label')}>Loại tin<span className={cx('required')}>*</span></label>
                                 <select
                                     className={cx('selectControl')}
                                     name="postTypeName"
