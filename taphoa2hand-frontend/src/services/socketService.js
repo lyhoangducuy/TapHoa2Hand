@@ -2,15 +2,19 @@ import { io } from 'socket.io-client';
 import { CONFIG } from '../configurations/configuration';
 import { getToken } from './localstorageService';
 
+// ==========================================
+// SINGLETON STATE
+// ==========================================
 let socket = null;
 let isConnecting = false;
+let isConnected = false;
 
 // ==========================================
 // CALLBACK REGISTRIES (Pub/Sub Pattern)
 // ==========================================
-const messageCallbacks = new Set();
-const notificationCallbacks = new Set();
-const userStatusCallbacks = new Set();
+const messageListeners = [];
+const notificationListeners = [];
+const userStatusListeners = [];
 
 // ==========================================
 // UTILITY: Parse message data
@@ -29,55 +33,62 @@ const parseMessageData = (data) => {
 };
 
 // ==========================================
-// INTERNAL: Dispatch to all registered callbacks
+// INTERNAL: Dispatch to all registered listeners
 // ==========================================
-const dispatchToMessageCallbacks = (data) => {
+const dispatchToMessageListeners = (data) => {
     const parsed = parseMessageData(data);
     if (!parsed) return;
-    messageCallbacks.forEach(callback => {
+    messageListeners.forEach(callback => {
         try {
             callback(parsed);
         } catch (e) {
-            console.error('Error in message callback:', e);
+            console.error('Error in message listener:', e);
         }
     });
 };
 
-const dispatchToNotificationCallbacks = (data) => {
-    notificationCallbacks.forEach(callback => {
+const dispatchToNotificationListeners = (data) => {
+    notificationListeners.forEach(callback => {
         try {
             callback(data);
         } catch (e) {
-            console.error('Error in notification callback:', e);
+            console.error('Error in notification listener:', e);
         }
     });
 };
 
-const dispatchToUserStatusCallbacks = (data) => {
-    userStatusCallbacks.forEach(callback => {
+const dispatchToUserStatusListeners = (data) => {
+    userStatusListeners.forEach(callback => {
         try {
             callback(data);
         } catch (e) {
-            console.error('Error in user status callback:', e);
+            console.error('Error in user status listener:', e);
         }
     });
 };
 
 // ==========================================
-// SOCKET INITIALIZATION (Singleton)
+// SOCKET CONNECTION (Singleton - Only once)
 // ==========================================
+
+/**
+ * Connect socket - only connects once, returns existing socket if already connected
+ */
 export const initiateSocketConnection = (token) => {
-    // Nếu đã có socket và đang connect rồi thì return
-    if (socket && socket.connected) {
+    // Already connected - just return
+    if (socket && isConnected) {
+        console.log('Socket already connected:', socket.id);
         return socket;
     }
 
-    // Nếu đang trong quá trình connect thì đợi
+    // Currently connecting - wait
     if (isConnecting) {
+        console.log('Socket is connecting...');
         return socket;
     }
 
     isConnecting = true;
+    console.log('Initiating socket connection...');
 
     socket = io(CONFIG.SOCKET_URL, {
         query: { token: token },
@@ -89,11 +100,13 @@ export const initiateSocketConnection = (token) => {
 
     socket.on('connect', () => {
         console.log('✅ Socket connected:', socket.id);
+        isConnected = true;
         isConnecting = false;
     });
 
     socket.on('disconnect', (reason) => {
         console.log('❌ Socket disconnected:', reason);
+        isConnected = false;
     });
 
     socket.on('connect_error', (error) => {
@@ -101,26 +114,34 @@ export const initiateSocketConnection = (token) => {
         isConnecting = false;
     });
 
-    // === GLOBAL MESSAGE LISTENER ===
+    // === GLOBAL MESSAGE LISTENER (Only once!) ===
     socket.on('receive_new_message', (data) => {
         console.log('📩 Socket receive_new_message:', data);
-        dispatchToMessageCallbacks(data);
+        dispatchToMessageListeners(data);
     });
 
     // === GLOBAL NOTIFICATION LISTENER ===
     socket.on('new_notification', (data) => {
         console.log('🔔 Socket new_notification:', data);
-        dispatchToNotificationCallbacks(data);
+        dispatchToNotificationListeners(data);
     });
 
     // === USER STATUS LISTENER ===
     socket.on('user_status', (userId, status) => {
         console.log('👤 Socket user_status:', userId, status);
-        dispatchToUserStatusCallbacks({ userId, status });
+        dispatchToUserStatusListeners({ userId, status });
     });
 
     isConnecting = false;
     return socket;
+};
+
+/**
+ * Connect socket with userId (alias for initiateSocketConnection)
+ * Call this early when app loads with user token
+ */
+export const connectSocket = (token) => {
+    return initiateSocketConnection(token);
 };
 
 // ==========================================
@@ -137,11 +158,12 @@ export const disconnectSocket = () => {
         
         socket.disconnect();
         socket = null;
+        isConnected = false;
         
         // Clear callback registries
-        messageCallbacks.clear();
-        notificationCallbacks.clear();
-        userStatusCallbacks.clear();
+        messageListeners.length = 0;
+        notificationListeners.length = 0;
+        userStatusListeners.length = 0;
         
         console.log('Socket disconnected and cleaned up');
     }
@@ -151,14 +173,14 @@ export const disconnectSocket = () => {
 // CONVERSATION ROOM MANAGEMENT
 // ==========================================
 export const joinConversation = (conversationId) => {
-    if (socket && socket.connected) {
+    if (socket && isConnected) {
         socket.emit('join_conversation', conversationId);
         console.log('Joined conversation:', conversationId);
     }
 };
 
 export const leaveConversation = (conversationId) => {
-    if (socket && socket.connected) {
+    if (socket && isConnected) {
         socket.emit('leave_conversation', conversationId);
         console.log('Left conversation:', conversationId);
     }
@@ -174,24 +196,31 @@ export const leaveConversation = (conversationId) => {
  * @returns {Function} Unsubscribe function
  */
 export const subscribeToNewMessages = (callback) => {
-    messageCallbacks.add(callback);
-    console.log('Subscribed to new messages. Total:', messageCallbacks.size);
+    if (!messageListeners.includes(callback)) {
+        messageListeners.push(callback);
+        console.log('📝 Subscribed to new messages. Total:', messageListeners.length);
+    }
     
     // Return unsubscribe function
     return () => {
-        messageCallbacks.delete(callback);
-        console.log('Unsubscribed from new messages. Total:', messageCallbacks.size);
+        const index = messageListeners.indexOf(callback);
+        if (index > -1) {
+            messageListeners.splice(index, 1);
+            console.log('📝 Unsubscribed from new messages. Total:', messageListeners.length);
+        }
     };
 };
 
 /**
- * Unsubscribe specific callback from messages
+ * Remove all message listeners (for cleanup)
  */
-export const unsubscribeFromMessages = (callback) => {
-    if (callback) {
-        messageCallbacks.delete(callback);
-    }
+export const removeAllMessageListeners = () => {
+    messageListeners.length = 0;
 };
+
+// ==========================================
+// NOTIFICATION SUBSCRIPTIONS
+// ==========================================
 
 /**
  * Subscribe to notifications
@@ -199,24 +228,28 @@ export const unsubscribeFromMessages = (callback) => {
  * @returns {Function} Unsubscribe function
  */
 export const subscribeToNotifications = (callback) => {
-    notificationCallbacks.add(callback);
+    if (!notificationListeners.includes(callback)) {
+        notificationListeners.push(callback);
+        console.log('🔔 Subscribed to notifications. Total:', notificationListeners.length);
+    }
     
     return () => {
-        notificationCallbacks.delete(callback);
+        const index = notificationListeners.indexOf(callback);
+        if (index > -1) {
+            notificationListeners.splice(index, 1);
+        }
     };
 };
 
 /**
- * Unsubscribe specific callback from notifications
+ * Remove all notification listeners
  */
-export const unsubscribeFromNotifications = (callback) => {
-    if (callback) {
-        notificationCallbacks.delete(callback);
-    }
+export const removeAllNotificationListeners = () => {
+    notificationListeners.length = 0;
 };
 
 // ==========================================
-// USER STATUS SUBSCRIPTIONS (Pub/Sub)
+// USER STATUS SUBSCRIPTIONS
 // ==========================================
 
 /**
@@ -225,22 +258,40 @@ export const unsubscribeFromNotifications = (callback) => {
  * @returns {Function} Unsubscribe function
  */
 export const subscribeToUserStatus = (callback) => {
-    userStatusCallbacks.add(callback);
-    console.log('Subscribed to user status. Total:', userStatusCallbacks.size);
+    if (!userStatusListeners.includes(callback)) {
+        userStatusListeners.push(callback);
+        console.log('👤 Subscribed to user status. Total:', userStatusListeners.length);
+    }
     
     return () => {
-        userStatusCallbacks.delete(callback);
-        console.log('Unsubscribed from user status. Total:', userStatusCallbacks.size);
+        const index = userStatusListeners.indexOf(callback);
+        if (index > -1) {
+            userStatusListeners.splice(index, 1);
+        }
     };
 };
 
 /**
- * Unsubscribe specific callback from user status
+ * Remove all user status listeners
  */
-export const unsubscribeFromUserStatus = (callback) => {
-    if (callback) {
-        userStatusCallbacks.delete(callback);
-    }
+export const removeAllUserStatusListeners = () => {
+    userStatusListeners.length = 0;
+};
+
+// ==========================================
+// LEGACY UNSUBSCRIBE FUNCTIONS (for compatibility)
+// ==========================================
+export const unsubscribeFromMessages = () => {
+    // Legacy - kept for backward compatibility
+    // Use the returned unsubscribe function instead
+};
+
+export const unsubscribeFromNotifications = () => {
+    // Legacy - kept for backward compatibility
+};
+
+export const unsubscribeFromUserStatus = () => {
+    // Legacy - kept for backward compatibility
 };
 
 // ==========================================
@@ -248,4 +299,4 @@ export const unsubscribeFromUserStatus = (callback) => {
 // ==========================================
 export const getSocket = () => socket;
 
-export const isSocketConnected = () => socket && socket.connected;
+export const isSocketConnected = () => isConnected;

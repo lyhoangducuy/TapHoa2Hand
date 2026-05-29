@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Thêm cái này để chuyển trang
+import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './HomePage.module.scss';
 import { getSellingPosts, getBuyingPosts, getRecommendedPosts } from '../../services/postService';
@@ -7,6 +7,7 @@ import { getAllCategories } from '../../services/categoryService';
 import BannerSlider from '../Banner/BannerSlider';
 import { getToken } from '../../services/localStorageService';
 import { getMyInfo } from '../../services/userService';
+import { connectSocket } from '../../services/socketService';
 
 
 // Hàm format thời gian
@@ -84,7 +85,11 @@ if (token) {
 
         console.log("REAL USER ID:", userId);
 
+        // Connect socket early when user is logged in
         if (userId) {
+            await connectSocket(token);
+            console.log("Socket connected from HomePage");
+            
             const recommendData = await getRecommendedPosts(userId);
 
             console.log("recommendData", recommendData);

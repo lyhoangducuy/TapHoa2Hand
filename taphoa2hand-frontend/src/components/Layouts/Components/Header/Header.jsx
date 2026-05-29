@@ -349,25 +349,24 @@ function Header() {
                 const parsedMessage = typeof messageData === 'string'
                     ? JSON.parse(messageData)
                     : messageData;
-                console.log("SOCKET MESSAGE:", parsedMessage);
-                console.log("CURRENT USER:", user);
+                
+                console.log("📩 SOCKET MESSAGE:", parsedMessage);
+                console.log("👤 CURRENT USER ID:", user?.id);
+                
                 if (!parsedMessage) return;
 
-                // bỏ qua tin nhắn của chính mình
-                // bỏ qua tin nhắn của chính mình
-if (String(parsedMessage.sender?.userId) === String(user?.id)) {
-    return;
-}
-
-                // Skip if this is my own message
-                // Skip if message is from myself
-                // Skip if message is from myself
-                if (String(parsedMessage.senderId) === String(user?.id)) {
+                // Skip if this is my own message - check sender.userId
+                if (String(parsedMessage.sender?.userId) === String(user?.id)) {
+                    console.log("⏭️ Skip - message from myself");
                     return;
                 }
+
                 // Skip if currently viewing this conversation
                 const currentChatId = getCurrentChatId();
-                if (currentChatId && String(parsedMessage.conversationId) === String(currentChatId)) return;
+                if (currentChatId && String(parsedMessage.conversationId) === String(currentChatId)) {
+                    console.log("⏭️ Skip - currently viewing this conversation");
+                    return;
+                }
 
                 // Play sound
                 playNotificationSound();
@@ -397,10 +396,8 @@ if (String(parsedMessage.sender?.userId) === String(user?.id)) {
         };
     }, [user]);
 
-    // Subscribe to new chat messages (global listener)
+    // Subscribe to new chat messages (global listener - only once)
     useEffect(() => {
-        if (!user) return; // Only subscribe when logged in
-
         const unsubscribe = subscribeToNewMessages((data) => {
             if (handleNewChatMessageRef.current) {
                 handleNewChatMessageRef.current(data);
@@ -411,24 +408,8 @@ if (String(parsedMessage.sender?.userId) === String(user?.id)) {
             if (typeof unsubscribe === 'function') {
                 unsubscribe();
             }
-            if (chatPopupTimerRef.current) {
-                clearTimeout(chatPopupTimerRef.current);
-            }
         };
-    }, [user]);
-
-    // Subscribe to notifications
-    useEffect(() => {
-        if (!user) return;
-
-        const unsubscribe = subscribeToNotifications(() => { });
-
-        return () => {
-            if (typeof unsubscribe === 'function') {
-                unsubscribe();
-            }
-        };
-    }, [user]);
+    }, []); // Empty deps - subscribe only once
 
     useEffect(() => {
         const checkDevice = () => setIsMobile(window.innerWidth < 768);
@@ -545,13 +526,15 @@ if (String(parsedMessage.sender?.userId) === String(user?.id)) {
                     )}
 
                     <div className={cx("action-item", "chat-action")} onClick={() => { navigate('/chat'); setUnreadChatCount(0); }}>
-                        <FiMessageSquare className={cx("icon")} />
+                        <div className={cx("icon-wrapper")}>
+                            <FiMessageSquare className={cx("icon")} />
+                            {unreadChatCount > 0 && (
+                                <span className={cx("chat-badge")}>
+                                    {unreadChatCount > 99 ? '99+' : unreadChatCount}
+                                </span>
+                            )}
+                        </div>
                         <span>Nhắn tin</span>
-                        {unreadChatCount > 0 && (
-                            <span className={cx("badge", "chat-badge")}>
-                                {unreadChatCount > 99 ? '99+' : unreadChatCount}
-                            </span>
-                        )}
                     </div>
 
                     <div className={cx("btn-group")}>

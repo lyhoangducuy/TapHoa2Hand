@@ -6,9 +6,9 @@ import { toast } from 'react-toastify';
 import { getMyConversations, getChatMessages, createChatMessage } from '../../services/chatService';
 import { createOrder } from '../../services/orderService';
 import {
-    initiateSocketConnection, disconnectSocket, joinConversation,
-    leaveConversation, subscribeToNewMessages, unsubscribeFromMessages,
-    subscribeToUserStatus, unsubscribeFromUserStatus
+    joinConversation,
+    leaveConversation, subscribeToNewMessages,
+    subscribeToUserStatus
 } from '../../services/socketService';
 
 import {
@@ -113,10 +113,9 @@ function ChatPage() {
     const [orderForm, setOrderForm] = useState(initialOrderForm);
 
     const messagesEndRef = useRef(null);
-    const token = localStorage.getItem('token');
     
     const currentUser = safeParseJSON(localStorage.getItem('user') || '{}', {});
-    const currentUserId = currentUser?.id || currentUser?.userId || currentUser?.sub || getUserIdFromToken(token);
+    const currentUserId = currentUser?.id || currentUser?.userId || currentUser?.sub;
 
     const currentChat = chats.find((c) => String(c.id) === String(activeChatId));
 
@@ -130,33 +129,44 @@ function ChatPage() {
         if (urlActiveId) setActiveChatId(urlActiveId);
     }, [urlActiveId]);
 
-    useEffect(() => {
-        if (token) initiateSocketConnection(token);
-        return () => disconnectSocket();
-    }, [token]);
-
+    // Fetch conversations list on mount and when switching chats
     useEffect(() => {
         const fetchChats = async () => {
             try {
                 setIsLoading(true);
                 const response = await getMyConversations();
                 if (response && response.result) {
-                    const formattedChats = response.result.map((conv) => ({
-                        id: conv.id,
-                        name: conv.conversationName || 'Khách hàng',
-                        avatar: conv.conversationAvatar,
-                        lastMessage: conv.lastMessage || 'Đã kết nối...',
-                        time: formatTime(conv.updatedAt || conv.createdAt),
-                        unread: conv.unread || 0,
-                        type: conv.type?.toLowerCase() || 'selling',
-                        postId: conv.postId,
-                        postTitle: conv.postTitle,
-                        postImage: conv.postImage,
-                        postPrice: conv.postPrice,
-                        postType: conv.postType,
-                        postStatus: conv.postStatus,
-                        isMyPost: conv.isMyPost
-                    }));
+                    const formattedChats = response.result.map((conv) => {
+                        // Get the other user's ID from participants
+                        const otherParticipant = conv.participants?.find(p => p.userId !== currentUserId);
+                        
+                        // Extract last message - try multiple possible field names
+                        const lastMsg = 
+                            conv.lastMessage?.message ||   // Nested message object
+                            conv.lastMessage ||            // Direct string field
+                            conv.latestMessage?.message || // Alternative name
+                            conv.latestMessage ||          // Alternative string
+                            conv.lastMessageContent ||     // Another possible name
+                            '';                           // Default empty
+                        
+                        return {
+                            id: conv.id,
+                            name: conv.conversationName || 'Khách hàng',
+                            avatar: conv.conversationAvatar,
+                            lastMessage: lastMsg || 'Chưa có tin nhắn',
+                            time: formatTime(conv.updatedAt || conv.createdAt),
+                            unread: conv.unread || 0,
+                            type: conv.type?.toLowerCase() || 'selling',
+                            postId: conv.postId,
+                            postTitle: conv.postTitle,
+                            postImage: conv.postImage,
+                            postPrice: conv.postPrice,
+                            postType: conv.postType,
+                            postStatus: conv.postStatus,
+                            isMyPost: conv.isMyPost,
+                            userId: otherParticipant?.userId || conv.userId // For online dot check
+                        };
+                    });
                     setChats(formattedChats);
                 }
             } catch (error) {
@@ -188,72 +198,14 @@ function ChatPage() {
         fetchMessages();
         joinConversation(activeChatId);
 
-        subscribeToNewMessages((newMessage) => {
-            try {
-                const parsedMessage = typeof newMessage === 'string' ? JSON.parse(newMessage) : newMessage;
-                if (!parsedMessage) return;
-                
-                const normalizedMessage = normalizeMessage(parsedMessage);
-                const isCurrentChat = String(normalizedMessage.conversationId) === String(activeChatId);
-                
-                // Skip if this is my own message (me: true)
-                if (normalizedMessage.me) {
-                    if (isCurrentChat) {
-                        setMessages((prev) => {
-                            const existingIndex = prev.findIndex((m) => String(m.id) === String(normalizedMessage.id));
-                            if (existingIndex !== -1) {
-                                const next = [...prev];
-                                next[existingIndex] = { ...next[existingIndex], ...normalizedMessage };
-                                return next;
-                            }
-                            return [...prev, normalizedMessage];
-                        });
-                    }
-                    return;
-                }
-
-                // Message from another user
-                if (isCurrentChat) {
-                    // Current chat - just update UI
-                    setMessages((prev) => {
-                        const existingIndex = prev.findIndex((m) => String(m.id) === String(normalizedMessage.id));
-                        if (existingIndex !== -1) {
-                            const next = [...prev];
-                            next[existingIndex] = { ...next[existingIndex], ...normalizedMessage };
-                            return next;
-                        }
-                        return [...prev, normalizedMessage];
-                    });
-                    setChats((prevChats) => prevChats.map((chat) =>
-                        String(chat.id) === String(activeChatId) ? { ...chat, unread: 0 } : chat
-                    ));
-                } else {
-                    // Not current chat - update sidebar unread count only (Header handles popup)
-                    setChats((prevChats) => prevChats.map((chat) =>
-                        String(chat.id) === String(normalizedMessage.conversationId)
-                            ? {
-                                  ...chat,
-                                  lastMessage: normalizedMessage.message || '📎 Tin nhắn mới',
-                                  time: formatTime(normalizedMessage.createdDate || Date.now()),
-                                  unread: (chat.unread || 0) + 1
-                              }
-                            : chat
-                    ));
-                }
-            } catch (error) {
-                console.error('Lỗi khi parse dữ liệu socket:', error);
-            }
-        });
-
         return () => {
             leaveConversation(activeChatId);
-            unsubscribeFromMessages();
         };
-    }, [activeChatId, currentUserId]);
+    }, [activeChatId]);
 
-    // Subscribe to user online/offline status
+    // Subscribe to user online/offline status - use returned unsubscribe function
     useEffect(() => {
-        subscribeToUserStatus(({ userId, status }) => {
+        const unsubscribe = subscribeToUserStatus(({ userId, status }) => {
             setOnlineUsers((prev) => {
                 const next = new Set(prev);
                 if (status === 'ONLINE') {
@@ -265,8 +217,85 @@ function ChatPage() {
             });
         });
 
-        return () => unsubscribeFromUserStatus();
+        return () => {
+            if (typeof unsubscribe === 'function') {
+                unsubscribe();
+            }
+        };
     }, []);
+
+    // UNIFIED: Subscribe to new messages and update both sidebar AND chat window
+    useEffect(() => {
+        const unsubscribe = subscribeToNewMessages((messageData) => {
+            try {
+                const parsedMessage = typeof messageData === 'string' 
+                    ? JSON.parse(messageData) 
+                    : messageData;
+                if (!parsedMessage) return;
+                
+                const normalizedMessage = normalizeMessage(parsedMessage);
+                
+                console.log('📩 Socket message in ChatPage:', normalizedMessage);
+                
+                // Update conversations sidebar
+                setChats(prevChats => {
+                    const updated = prevChats.map(chat => {
+                        if (String(chat.id) === String(normalizedMessage.conversationId)) {
+                            const isActiveChat = String(activeChatId) === String(normalizedMessage.conversationId);
+                            return {
+                                ...chat,
+                                lastMessage: normalizedMessage.message || '📎 Tin nhắn mới',
+                                time: formatTime(normalizedMessage.createdDate || Date.now()),
+                                unread: isActiveChat ? 0 : (chat.unread || 0) + (normalizedMessage.me ? 0 : 1)
+                            };
+                        }
+                        return chat;
+                    });
+
+                    // Move updated chat to top (most recent)
+                    const targetChat = updated.find(c => String(c.id) === String(normalizedMessage.conversationId));
+                    if (targetChat) {
+                        const filtered = updated.filter(c => String(c.id) !== String(normalizedMessage.conversationId));
+                        return [targetChat, ...filtered];
+                    }
+                    
+                    return updated;
+                });
+
+                // Append message to chat window if this is the active conversation
+                if (activeChatId && String(activeChatId) === String(normalizedMessage.conversationId)) {
+                    setMessages(prev => {
+                        // Check for duplicate
+                        const exists = prev.some(m => String(m.id) === String(normalizedMessage.id));
+                        if (exists) {
+                            // Update existing message
+                            return prev.map(m => 
+                                String(m.id) === String(normalizedMessage.id) 
+                                    ? { ...m, ...normalizedMessage } 
+                                    : m
+                            );
+                        }
+                        return [...prev, normalizedMessage];
+                    });
+                    
+                    // Reset unread for active chat
+                    setChats(prevChats => prevChats.map(chat =>
+                        String(chat.id) === String(activeChatId) 
+                            ? { ...chat, unread: 0 } 
+                            : chat
+                    ));
+                }
+            } catch (error) {
+                console.error('Lỗi khi xử lý socket message:', error);
+            }
+        });
+
+        return () => {
+            if (typeof unsubscribe === 'function') {
+                unsubscribe();
+            }
+        };
+    }, [activeChatId]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
