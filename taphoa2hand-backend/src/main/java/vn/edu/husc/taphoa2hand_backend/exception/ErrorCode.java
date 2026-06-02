@@ -49,6 +49,13 @@ public enum ErrorCode {
     REGISTER_SESSION_EXPIRED(5010, "Phiên đăng ký đã hết hạn", HttpStatus.BAD_REQUEST),
     OTP_RESEND_TOO_FREQUENTLY(5011, "Gửi lại OTP quá thường xuyên. Vui lòng chờ trước khi yêu cầu OTP mới",
             HttpStatus.BAD_REQUEST),
+    OTP_TOO_MANY_ATTEMPTS(5012, "Bạn đã nhập sai OTP quá nhiều lần. Vui lòng yêu cầu OTP mới",
+            HttpStatus.BAD_REQUEST),
+    RESET_SESSION_EXPIRED(5013, "Phiên đặt lại mật khẩu đã hết hạn. Vui lòng bắt đầu lại quy trình",
+            HttpStatus.BAD_REQUEST),
+    RESET_TOKEN_INVALID(5014, "Mã đặt lại mật khẩu không hợp lệ", HttpStatus.BAD_REQUEST),
+    SAME_PASSWORD_NOT_ALLOWED(5015, "Mật khẩu mới không được trùng với mật khẩu hiện tại", HttpStatus.BAD_REQUEST),
+    PASSWORD_CHANGED_RELOGIN(5016, "Mật khẩu đã được thay đổi. Vui lòng đăng nhập lại", HttpStatus.UNAUTHORIZED),
 
     POST_NOT_FOUND(6001, "Không tìm thấy bài viết", HttpStatus.NOT_FOUND),
 

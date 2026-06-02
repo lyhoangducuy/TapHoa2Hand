@@ -247,7 +247,7 @@ function LoginPage() {
                         </label>
 
                         <a
-                            href="#"
+                            href="/forgot-password"
                             className={cx('forgot-password')}
                         >
                             Quên mật khẩu?

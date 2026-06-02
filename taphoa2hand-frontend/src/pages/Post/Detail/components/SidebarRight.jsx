@@ -43,7 +43,11 @@ const SidebarRight = ({
     const scopeStr = typeof currentUser?.scope === 'string' ? currentUser.scope : '';
     const isAdmin = scopeStr.includes('ROLE_ADMIN'); 
     const payments = post.acceptedPaymentMethods || [];
-
+console.log("currentUser =", currentUser);
+console.log("seller =", seller);
+console.log("meUsername =", meUsername);
+console.log("sellerUsername =", sellerUsername);
+console.log("isOwner =", isOwner);
     const formatPrice = (price) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
     useEffect(() => {

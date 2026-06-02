@@ -29,6 +29,7 @@ import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostDeleteResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostDetailResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostImageResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.PostsResponse;
+import vn.edu.husc.taphoa2hand_backend.dto.response.Posts.UsersResponse;
 import vn.edu.husc.taphoa2hand_backend.entity.Categories;
 import vn.edu.husc.taphoa2hand_backend.entity.PaymentMethodEnum;
 import vn.edu.husc.taphoa2hand_backend.entity.PostAddress;
@@ -255,6 +256,12 @@ public class PostsService {
         OrderOfPostResponse ordersOfPost = orderService.countOrdersOfPost(postId);
         postDetailResponse.setOrderCount(ordersOfPost.getOrderCount());
         postDetailResponse.setOrders(ordersOfPost.getOrders());
+        postDetailResponse.setUser(new UsersResponse().builder()
+                .id(post.getUser().getId())
+                .username(post.getUser().getUsername())
+                .fullName(post.getUser().getFullName())
+                .avatar(post.getUser().getAvatar())
+                .build());
 
         return postDetailResponse;
     }

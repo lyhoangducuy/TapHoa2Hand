@@ -9,6 +9,9 @@ import com.nimbusds.jose.JOSEException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import vn.edu.husc.taphoa2hand_backend.dto.request.AuthenDTO.ForgotPasswordRequest;
+import vn.edu.husc.taphoa2hand_backend.dto.request.AuthenDTO.ResetPasswordRequest;
+import vn.edu.husc.taphoa2hand_backend.dto.request.AuthenDTO.VerifyForgotPasswordOtpRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.LogoutRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.RefreshRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.UserRedisCodeRequest;
@@ -18,9 +21,11 @@ import vn.edu.husc.taphoa2hand_backend.dto.request.AuthenDTO.IntrospectRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.AuthenDTO.RegisterRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.response.ApiResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.AuthenticationResponse;
+import vn.edu.husc.taphoa2hand_backend.dto.response.ForgotPasswordResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.IntrospectResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.RegisterResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.ResultCodeResponse;
+import vn.edu.husc.taphoa2hand_backend.dto.response.VerifyForgotPasswordOtpResponse;
 import vn.edu.husc.taphoa2hand_backend.service.AuthenticationService;
 import vn.edu.husc.taphoa2hand_backend.service.LoginAttemptService;
 
@@ -109,4 +114,60 @@ public class AuthenticationController {
                 .build();
     }
 
+    // ============== FORGOT PASSWORD APIs ==============
+
+    /**
+     * Bước 1: Nhập email để nhận OTP
+     */
+    @PostMapping("/forgot-password")
+    public ApiResponse<ForgotPasswordResponse> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
+        authenticationService.forgotPassword(request.getEmail());
+        return ApiResponse.<ForgotPasswordResponse>builder()
+                .result(ForgotPasswordResponse.builder()
+                        .success(true)
+                        .message("OTP đã được gửi đến email của bạn")
+                        .build())
+                .build();
+    }
+
+    /**
+     * Bước 2: Xác thực OTP để nhận reset token
+     */
+    @PostMapping("/verify-forgot-password-otp")
+    public ApiResponse<VerifyForgotPasswordOtpResponse> verifyForgotPasswordOtp(
+            @RequestBody @Valid VerifyForgotPasswordOtpRequest request) {
+        var result = authenticationService.verifyForgotPasswordOtp(request.getEmail(), request.getOtp());
+        return ApiResponse.<VerifyForgotPasswordOtpResponse>builder()
+                .result(result)
+                .build();
+    }
+
+    /**
+     * Bước 3: Đặt mật khẩu mới
+     */
+    @PostMapping("/reset-password")
+    public ApiResponse<ForgotPasswordResponse> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
+        authenticationService.resetPassword(request);
+        return ApiResponse.<ForgotPasswordResponse>builder()
+                .result(ForgotPasswordResponse.builder()
+                        .success(true)
+                        .message("Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.")
+                        .build())
+                .build();
+    }
+
+    /**
+     * Gửi lại OTP cho quên mật khẩu
+     */
+    @PostMapping("/resend-forgot-password-otp")
+    public ApiResponse<ForgotPasswordResponse> resendForgotPasswordOtp(
+            @RequestBody @Valid ForgotPasswordRequest request) {
+        authenticationService.resendForgotPasswordOtp(request.getEmail());
+        return ApiResponse.<ForgotPasswordResponse>builder()
+                .result(ForgotPasswordResponse.builder()
+                        .success(true)
+                        .message("OTP mới đã được gửi đến email của bạn")
+                        .build())
+                .build();
+    }
 }

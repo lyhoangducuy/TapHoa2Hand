@@ -33,9 +33,11 @@ import ReportAdminPage from '../pages/Admin/Reports';
 import MyReportsPage from '../pages/Users/MyReportsPage';
 import NoSearchLayout from '../components/Layouts/NoSearchLayout';
 import AdminStatisticsPage from '../pages/Admin/Dashboard/AdminStatisticsPage';
+import { ForgotPasswordPage } from '../pages/Authe/ForgotPassword';
 const publicRoutes = [
     { path: '/', component: HomePage },
     { path: '/login', component: LoginPage, layout: NoSidebarLayout },
+    { path: '/forgot-password', component: ForgotPasswordPage, layout: NoSidebarLayout },
     { path: '/register', component: RegisterPage, layout: NoSidebarLayout },
     { path: '/search', component: SearchPage ,layout: NoSearchLayout},
     { path: '/post-detail/:postId', component: PostDetailPage },
