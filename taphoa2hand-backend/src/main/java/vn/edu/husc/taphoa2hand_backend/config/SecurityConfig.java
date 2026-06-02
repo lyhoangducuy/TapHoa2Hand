@@ -26,104 +26,109 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private CustomJwtDecoder jwtDecoder;
-    @Autowired
-    private CaptchaFilter captchaFilter;
+        @Autowired
+        private CustomJwtDecoder jwtDecoder;
+        @Autowired
+        private CaptchaFilter captchaFilter;
 
-    private static final String[] POST_PUBLIC_ENDPOINTS = {
-            "/user/create",
-            "/auth/introspect",
-            "/auth/login",
-            "/auth/logout",
-            "/auth/refresh",
-            "/posts/getAll",
-            "/media/upload",
-            "/auth/register",
-            "/auth/send-code",
-            "/auth/re-send-code",
-            "/media/download/**"
-    };
-    private static final String[] GET_PUBLIC_ENDPOINTS = {
-            "/posts/getAll",
-            "/media/download/**",
-            "/posts/{postId}",
-            "/categories/getAll",
-            "/posts/search/*",
-            "/banners",
-            "/orders/count/**"
-    };
+        private static final String[] POST_PUBLIC_ENDPOINTS = {
+                        "/user/create",
+                        "/auth/introspect",
+                        "/auth/login",
+                        "/auth/logout",
+                        "/auth/refresh",
+                        "/posts/getAll",
+                        "/posts/*",
+                        "/media/upload",
+                        "/auth/register",
+                        "/auth/send-code",
+                        "/auth/re-send-code",
+                        "/media/download/**",
+                        "/auth/forgot-password",
+                        "/auth/verify-forgot-password-otp",
+                        "/auth/reset-password",
+                        "/auth/resend-forgot-password-otp"
+        };
+        private static final String[] GET_PUBLIC_ENDPOINTS = {
+                        "/posts/getAll",
+                        "/media/download/**",
+                        "/posts/{postId}",
+                        "/categories/getAll",
+                        "/posts/search/*",
+                        "/banners",
+                        "/orders/count/**"
+        };
 
-    @Bean
-    public SecurityFilterChain filterChain(
-            HttpSecurity httpSecurity) throws Exception {
+        @Bean
+        public SecurityFilterChain filterChain(
+                        HttpSecurity httpSecurity) throws Exception {
 
-        httpSecurity.cors(
-                cors -> cors.configurationSource(
-                        corsConfigurationSource()));
+                httpSecurity.cors(
+                                cors -> cors.configurationSource(
+                                                corsConfigurationSource()));
 
-        httpSecurity
-                .authorizeHttpRequests(request -> request.requestMatchers(
-                        HttpMethod.POST,
-                        POST_PUBLIC_ENDPOINTS)
-                        .permitAll())
-                .authorizeHttpRequests(request -> request.requestMatchers(
-                        HttpMethod.GET,
-                        GET_PUBLIC_ENDPOINTS)
-                        .permitAll()
-                        .anyRequest()
-                        .authenticated());
+                httpSecurity
+                                .authorizeHttpRequests(request -> request.requestMatchers(
+                                                HttpMethod.POST,
+                                                POST_PUBLIC_ENDPOINTS)
+                                                .permitAll())
+                                .authorizeHttpRequests(request -> request.requestMatchers(
+                                                HttpMethod.GET,
+                                                GET_PUBLIC_ENDPOINTS)
+                                                .permitAll()
+                                                .anyRequest()
+                                                .authenticated());
 
-        httpSecurity.oauth2ResourceServer(
-                oauth2 -> oauth2.jwt(
-                        jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder)
-                                .jwtAuthenticationConverter(
-                                        jwtAuthenticationConverter()))
-                        .authenticationEntryPoint(
-                                new JwtAuthenticationEntryPoint()));
+                httpSecurity.oauth2ResourceServer(
+                                oauth2 -> oauth2.jwt(
+                                                jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder)
+                                                                .jwtAuthenticationConverter(
+                                                                                jwtAuthenticationConverter()))
+                                                .authenticationEntryPoint(
+                                                                new JwtAuthenticationEntryPoint()));
 
-        httpSecurity.addFilterBefore(
-                captchaFilter,
-                UsernamePasswordAuthenticationFilter.class);
+                httpSecurity.addFilterBefore(
+                                captchaFilter,
+                                UsernamePasswordAuthenticationFilter.class);
 
-        httpSecurity.csrf(
-                AbstractHttpConfigurer::disable);
+                httpSecurity.csrf(
+                                AbstractHttpConfigurer::disable);
 
-        return httpSecurity.build();
-    }
+                return httpSecurity.build();
+        }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration corsConfiguration = new CorsConfiguration();
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration corsConfiguration = new CorsConfiguration();
 
-        // Cấu hình origin của Frontend
-        corsConfiguration.addAllowedOrigin("http://localhost:5173");
-        corsConfiguration.addAllowedMethod("*");
-        corsConfiguration.addAllowedHeader("*");
+                // Cấu hình origin của Frontend
+                corsConfiguration.addAllowedOrigin("http://localhost:5173");
+                corsConfiguration.addAllowedMethod("*");
+                corsConfiguration.addAllowedHeader("*");
 
-        // Rất quan trọng khi làm việc với Token/Authentication
-        corsConfiguration.setAllowCredentials(true);
+                // Rất quan trọng khi làm việc với Token/Authentication
+                corsConfiguration.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", corsConfiguration);
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", corsConfiguration);
 
-        return source;
-    }
+                return source;
+        }
 
-    @Bean
-    JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        authoritiesConverter.setAuthorityPrefix("");
-        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
-        return converter;
-    }
-    // @Bean
-    // JwtDecoder jwtDecoder() {
-    // SecretKeySpec secretKeySpec = new SecretKeySpec(signedKey.getBytes(),
-    // "HS512");
-    // return NimbusJwtDecoder.withSecretKey(secretKeySpec)
-    // .macAlgorithm(MacAlgorithm.HS512)
-    // .build();
-    // };
+        @Bean
+        JwtAuthenticationConverter jwtAuthenticationConverter() {
+                JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
+                authoritiesConverter.setAuthorityPrefix("");
+                JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+                converter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
+                return converter;
+        }
+        // @Bean
+        // JwtDecoder jwtDecoder() {
+        // SecretKeySpec secretKeySpec = new SecretKeySpec(signedKey.getBytes(),
+        // "HS512");
+        // return NimbusJwtDecoder.withSecretKey(secretKeySpec)
+        // .macAlgorithm(MacAlgorithm.HS512)
+        // .build();
+        // };
 }

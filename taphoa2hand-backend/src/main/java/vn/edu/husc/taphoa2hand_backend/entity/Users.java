@@ -59,6 +59,8 @@ public class Users extends BaseEntity {
 
     private LocalDateTime lockedUntil;
 
+    private LocalDateTime passwordChangedAt;
+
     private boolean transactionsStopped = false;
 
     @ManyToMany(fetch = FetchType.EAGER)

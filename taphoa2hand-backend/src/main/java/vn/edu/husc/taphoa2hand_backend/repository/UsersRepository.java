@@ -27,4 +27,5 @@ public interface UsersRepository extends JpaRepository<Users, String> {
     Long countByCreatedAtBetween(LocalDateTime fromDate, LocalDateTime toDate);
     
     Page<Users> findByCreatedAtBetween(LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
+    Optional<Users> findByEmail(String email);
 }

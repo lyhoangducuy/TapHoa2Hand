@@ -3,6 +3,7 @@ package vn.edu.husc.taphoa2hand_backend.service;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashSet;
@@ -33,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import vn.edu.husc.taphoa2hand_backend.dto.JwtInfo;
+import vn.edu.husc.taphoa2hand_backend.dto.request.AuthenDTO.ResetPasswordRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.LogoutRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.RefreshRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.UserRedisCodeRequest;
@@ -42,13 +44,18 @@ import vn.edu.husc.taphoa2hand_backend.dto.request.AuthenDTO.RegisterRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.response.AuthenticationResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.IntrospectResponse;
 import vn.edu.husc.taphoa2hand_backend.dto.response.RegisterResponse;
+import vn.edu.husc.taphoa2hand_backend.dto.response.VerifyForgotPasswordOtpResponse;
 import vn.edu.husc.taphoa2hand_backend.entity.EmailInfo;
+import vn.edu.husc.taphoa2hand_backend.entity.ForgotPasswordRedis;
 import vn.edu.husc.taphoa2hand_backend.entity.RedisToken;
+import vn.edu.husc.taphoa2hand_backend.entity.ResetPasswordSessionRedis;
 import vn.edu.husc.taphoa2hand_backend.entity.Roles;
 import vn.edu.husc.taphoa2hand_backend.entity.Users;
 import vn.edu.husc.taphoa2hand_backend.exception.AppException;
 import vn.edu.husc.taphoa2hand_backend.exception.ErrorCode;
+import vn.edu.husc.taphoa2hand_backend.repository.ForgotPasswordRedisRepository;
 import vn.edu.husc.taphoa2hand_backend.repository.RedisTokenRepository;
+import vn.edu.husc.taphoa2hand_backend.repository.ResetPasswordSessionRedisRepository;
 import vn.edu.husc.taphoa2hand_backend.repository.RolesRepository;
 import vn.edu.husc.taphoa2hand_backend.repository.UserRedisCodeRequestRepository;
 import vn.edu.husc.taphoa2hand_backend.repository.UsersRepository;
@@ -66,6 +73,9 @@ public class AuthenticationService {
     UserRedisCodeRequestRepository userRedisCodeRequestRepository;
     UserValidationHelper userValidationHelper;
     LoginAttemptService loginAttemptService;
+    ForgotPasswordRedisRepository forgotPasswordRedisRepository;
+    ResetPasswordSessionRedisRepository resetPasswordSessionRedisRepository;
+    
     @NonFinal
     @Value("${jwt.signed-key}")
     protected String SIGNER_KEY;
@@ -78,6 +88,170 @@ public class AuthenticationService {
     @NonFinal
     @Value("${jwt.code-duration-seconds}")
     protected Long CODE_DURATION_SECONDS;
+    @NonFinal
+    @Value("${forgot-password.max-otp-attempts:5}")
+    protected Integer MAX_OTP_ATTEMPTS;
+    @NonFinal
+    @Value("${forgot-password.resend-cooldown-seconds:60}")
+    protected Long RESEND_COOLDOWN_SECONDS;
+
+    @Transactional
+    public void forgotPassword(String email) {
+
+        Users user = usersRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        String otp = generateOTP();
+
+        ForgotPasswordRedis redisData = ForgotPasswordRedis.builder()
+                .email(email)
+                .otp(otp)
+                .failedAttempts(0L)
+                .lastSentTime(System.currentTimeMillis())
+                .timeToLive(CODE_DURATION_SECONDS)
+                .build();
+
+        forgotPasswordRedisRepository.save(redisData);
+
+        emailService.sendEmail(
+                EmailInfo.builder()
+                        .toEmail(email)
+                        .subject("TapHoa2Hand - Khôi phục mật khẩu")
+                        .body(
+                                "Mã OTP của bạn là: "
+                                        + otp
+                                        + "\nCó hiệu lực trong 5 phút.")
+                        .build());
+    }
+
+    /**
+     * Verify OTP for forgot password
+     * Returns reset token if OTP is valid
+     */
+    public VerifyForgotPasswordOtpResponse verifyForgotPasswordOtp(String email, String otp) {
+        // 1. Find OTP in Redis
+        ForgotPasswordRedis redisData = forgotPasswordRedisRepository.findById(email)
+                .orElseThrow(() -> new AppException(ErrorCode.OTP_EXPIRED_OR_NOT_FOUND));
+
+        // 2. Check if OTP matches
+        if (!redisData.getOtp().equals(otp)) {
+            // Increment failed attempts
+            Long failedAttempts = redisData.getFailedAttempts() != null ? redisData.getFailedAttempts() + 1 : 1;
+            redisData.setFailedAttempts(failedAttempts);
+            
+            // If too many attempts, delete OTP and throw error
+            if (failedAttempts >= MAX_OTP_ATTEMPTS) {
+                forgotPasswordRedisRepository.deleteById(email);
+                throw new AppException(ErrorCode.OTP_TOO_MANY_ATTEMPTS);
+            }
+            
+            // Save updated failed attempts
+            forgotPasswordRedisRepository.save(redisData);
+            throw new AppException(ErrorCode.OTP_INVALID);
+        }
+
+        // 3. OTP is valid - Generate reset token
+        String resetToken = UUID.randomUUID().toString();
+
+        // 4. Save reset token to Redis
+        ResetPasswordSessionRedis resetSession = ResetPasswordSessionRedis.builder()
+                .email(email)
+                .resetToken(resetToken)
+                .timeToLive(CODE_DURATION_SECONDS)
+                .build();
+        resetPasswordSessionRedisRepository.save(resetSession);
+
+        // 5. Delete OTP from Redis
+        forgotPasswordRedisRepository.deleteById(email);
+
+        return VerifyForgotPasswordOtpResponse.builder()
+                .success(true)
+                .message("Xác thực OTP thành công")
+                .resetToken(resetToken)
+                .build();
+    }
+
+    /**
+     * Reset password with reset token
+     */
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        String email = request.getEmail();
+        String resetToken = request.getResetToken();
+        String newPassword = request.getNewPassword();
+        String confirmPassword = request.getConfirmPassword();
+
+        // 1. Find reset session in Redis
+        ResetPasswordSessionRedis resetSession = resetPasswordSessionRedisRepository.findById(email)
+                .orElseThrow(() -> new AppException(ErrorCode.RESET_SESSION_EXPIRED));
+
+        // 2. Verify reset token
+        if (!resetSession.getResetToken().equals(resetToken)) {
+            throw new AppException(ErrorCode.RESET_TOKEN_INVALID);
+        }
+
+        // 3. Check password match
+        if (!newPassword.equals(confirmPassword)) {
+            throw new AppException(ErrorCode.PASSWORD_CONFIRM_NOT_MATCH);
+        }
+
+        // 4. Find user
+        Users user = usersRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        // 5. Check new password is not same as current
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            throw new AppException(ErrorCode.SAME_PASSWORD_NOT_ALLOWED);
+        }
+
+        // 6. Update password
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setPasswordChangedAt(LocalDateTime.now());
+        usersRepository.save(user);
+
+        // 7. Delete reset session from Redis
+        resetPasswordSessionRedisRepository.deleteById(email);
+
+        // 8. Delete OTP if still exists (cleanup)
+        forgotPasswordRedisRepository.deleteById(email);
+    }
+
+    /**
+     * Resend OTP for forgot password
+     */
+    public void resendForgotPasswordOtp(String email) {
+        // 1. Check if OTP still exists in Redis
+        ForgotPasswordRedis redisData = forgotPasswordRedisRepository.findById(email)
+                .orElseThrow(() -> new AppException(ErrorCode.OTP_EXPIRED_OR_NOT_FOUND));
+
+        // 2. Check cooldown period (60 seconds)
+        long currentTime = System.currentTimeMillis();
+        long timePassed = currentTime - redisData.getLastSentTime();
+        long cooldownMillis = RESEND_COOLDOWN_SECONDS * 1000;
+
+        if (timePassed < cooldownMillis) {
+            throw new AppException(ErrorCode.OTP_RESEND_TOO_FREQUENTLY);
+        }
+
+        // 3. Generate new OTP
+        String newOtp = generateOTP();
+
+        // 4. Update Redis data
+        redisData.setOtp(newOtp);
+        redisData.setLastSentTime(currentTime);
+        redisData.setTimeToLive(CODE_DURATION_SECONDS);
+        redisData.setFailedAttempts(0L); // Reset failed attempts on new OTP
+
+        forgotPasswordRedisRepository.save(redisData);
+
+        // 5. Send email
+        emailService.sendEmail(
+                EmailInfo.builder()
+                        .toEmail(email)
+                        .subject("TapHoa2Hand - Khôi phục mật khẩu (OTP mới)")
+                        .body("Mã OTP mới của bạn là: " + newOtp + "\nCó hiệu lực trong 5 phút.")
+                        .build());
+    }
 
     public IntrospectResponse introspect(IntrospectRequest request)
             throws JOSEException, ParseException {
@@ -252,7 +426,7 @@ public class AuthenticationService {
 
     private String generateToken(Users user, String type, long durationSeconds) {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
-        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+        JWTClaimsSet.Builder claimsBuilder = new JWTClaimsSet.Builder()
                 .subject(user.getUsername())
                 .issuer("taphoa2hand.com")
                 .issueTime(new Date())
@@ -262,8 +436,14 @@ public class AuthenticationService {
                                 .toEpochMilli()))
                 .claim("scope", buildScope(user))
                 .claim("type", type) // Đóng dấu loại token ở đây
-                .jwtID(UUID.randomUUID().toString())
-                .build();
+                .jwtID(UUID.randomUUID().toString());
+        
+        // Add passwordChangedAt claim for session invalidation
+        if (user.getPasswordChangedAt() != null) {
+            claimsBuilder.claim("passwordChangedAt", user.getPasswordChangedAt().toString());
+        }
+        
+        JWTClaimsSet claimsSet = claimsBuilder.build();
         Payload payload = new Payload(claimsSet.toJSONObject());
         JWSObject jwsObject = new JWSObject(header, payload);
         try {
@@ -324,6 +504,19 @@ public class AuthenticationService {
         String tokenType = signedJWT.getJWTClaimsSet().getStringClaim("type");
         if (!targetType.equals(tokenType))
             throw new AppException(ErrorCode.UNAUTHENTICATED);
+
+        // 4. Kiểm tra passwordChangedAt - nếu mật khẩu đã thay đổi sau khi token được tạo
+        String tokenPasswordChangedAt = signedJWT.getJWTClaimsSet().getStringClaim("passwordChangedAt");
+        if (tokenPasswordChangedAt != null) {
+            String username = signedJWT.getJWTClaimsSet().getSubject();
+            Users user = usersRepository.findByUsername(username).orElse(null);
+            if (user != null && user.getPasswordChangedAt() != null) {
+                LocalDateTime tokenPasswordTime = LocalDateTime.parse(tokenPasswordChangedAt);
+                if (user.getPasswordChangedAt().isAfter(tokenPasswordTime)) {
+                    throw new AppException(ErrorCode.PASSWORD_CHANGED_RELOGIN);
+                }
+            }
+        }
 
         return signedJWT;
     }
