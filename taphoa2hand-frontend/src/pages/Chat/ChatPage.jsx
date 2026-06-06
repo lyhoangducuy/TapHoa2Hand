@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 
 import { getMyConversations, getChatMessages, createChatMessage } from '../../services/chatService';
 import { createOrder } from '../../services/orderService';
+import { getMyInfo } from '../../services/userService';
 import {
     joinConversation,
     leaveConversation, subscribeToNewMessages,
@@ -111,11 +112,27 @@ function ChatPage() {
     const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
     const [createdOrder, setCreatedOrder] = useState(null);
     const [orderForm, setOrderForm] = useState(initialOrderForm);
+    const [currentUser, setCurrentUser] = useState(null);
 
     const messagesEndRef = useRef(null);
     
-    const currentUser = safeParseJSON(localStorage.getItem('user') || '{}', {});
-    const currentUserId = currentUser?.id || currentUser?.userId || currentUser?.sub;
+    // Fetch current user info on mount
+    useEffect(() => {
+        const fetchCurrentUser = async () => {
+            try {
+                const res = await getMyInfo();
+                if (res?.data?.code === 1000) {
+                    setCurrentUser(res.data.result);
+                }
+            } catch (error) {
+                console.error('Lỗi lấy thông tin user:', error);
+            }
+        };
+        fetchCurrentUser();
+    }, []);
+
+    const currentUserId = currentUser?.id;
+    const currentUsername = currentUser?.username;
 
     const currentChat = chats.find((c) => String(c.id) === String(activeChatId));
 
@@ -524,9 +541,13 @@ function ChatPage() {
 
         try {
             const isBuyPost = String(currentChat?.postType || '').toUpperCase() === 'BUY';
+            
+            // Backend sẽ tự lấy seller từ conversation
+            // sellerId = conversationId để backend tìm seller
+            // buyerId = username vì backend findByUsername
             const payload = {
-                sellerId: String(currentChat?.userId || currentChat?.id || ''), 
-                buyerId: String(currentUserId), 
+                sellerId: String(activeChatId || ''), // conversationId để backend tìm seller
+                buyerId: String(currentUsername || ''), // username thay vì id vì backend findByUsername
                 postId: String(currentChat?.postId || ''),
                 method: orderForm.method,
                 receiverName,

@@ -1,0 +1,237 @@
+#
+# There is insufficient memory for the Java Runtime Environment to continue.
+# Native memory allocation (mmap) failed to map 389120 bytes for G1 virtual space
+# Possible reasons:
+#   The system is out of physical RAM or swap space
+#   The process is running with CompressedOops enabled, and the Java Heap may be blocking the growth of the native heap
+# Possible solutions:
+#   Reduce memory load on the system
+#   Increase physical memory or swap space
+#   Check if swap backing store is full
+#   Decrease Java heap size (-Xmx/-Xms)
+#   Decrease number of Java threads
+#   Decrease Java thread stack sizes (-Xss)
+#   Set larger code cache with -XX:ReservedCodeCacheSize=
+#   JVM is running with Zero Based Compressed Oops mode in which the Java heap is
+#     placed in the first 32GB address space. The Java Heap base address is the
+#     maximum limit for the native heap growth. Please use -XX:HeapBaseMinAddress
+#     to set the Java Heap base and to place the Java Heap above 32GB virtual address.
+# This output file may be truncated or incomplete.
+#
+#  Out of Memory Error (os_windows.cpp:3603), pid=17204, tid=8412
+#
+# JRE version:  (21.0.7+8) (build )
+# Java VM: Java HotSpot(TM) 64-Bit Server VM (21.0.7+8-LTS-245, mixed mode, sharing, tiered, compressed oops, compressed class ptrs, g1 gc, windows-amd64)
+# No core dump will be written. Minidumps are not enabled by default on client versions of Windows
+#
+
+---------------  S U M M A R Y ------------
+
+Command Line: -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=58640 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=taphoa2hand-backend -XX:+ShowCodeDetailsInExceptionMessages vn.edu.husc.taphoa2hand_backend.Taphoa2handBackendApplication
+
+Host: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz, 8 cores, 11G,  Windows 11 , 64 bit Build 22621 (10.0.22621.5415)
+Time: Sat Jun  6 17:25:54 2026 SE Asia Standard Time elapsed time: 0.037834 seconds (0d 0h 0m 0s)
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x000001b9827b1830):  JavaThread "Unknown thread" [_thread_in_vm, id=8412, stack(0x000000262aa00000,0x000000262ab00000) (1024K)]
+
+Stack: [0x000000262aa00000,0x000000262ab00000]
+Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+V  [jvm.dll+0x6cae19]
+V  [jvm.dll+0x855741]
+V  [jvm.dll+0x857c6e]
+V  [jvm.dll+0x858343]
+V  [jvm.dll+0x27e0b6]
+V  [jvm.dll+0x6c7595]
+V  [jvm.dll+0x6bc0fa]
+V  [jvm.dll+0x353eaa]
+V  [jvm.dll+0x35bb26]
+V  [jvm.dll+0x3ae554]
+V  [jvm.dll+0x3ae7d8]
+V  [jvm.dll+0x3281bc]
+V  [jvm.dll+0x328d1b]
+V  [jvm.dll+0x81eaf9]
+V  [jvm.dll+0x3bb211]
+V  [jvm.dll+0x807d78]
+V  [jvm.dll+0x4503ee]
+V  [jvm.dll+0x451fe1]
+C  [jli.dll+0x52a3]
+C  [ucrtbase.dll+0x29333]
+C  [KERNEL32.DLL+0x1259d]
+C  [ntdll.dll+0x5af78]
+
+
+---------------  P R O C E S S  ---------------
+
+Threads class SMR info:
+_java_thread_list=0x00007ff90432cc48, length=0, elements={
+}
+
+Java Threads: ( => current thread )
+Total: 0
+
+Other Threads:
+  0x000001b982996120 WorkerThread "GC Thread#0"                     [id=4492, stack(0x000000262ab00000,0x000000262ac00000) (1024K)]
+  0x000001b9829a2f00 ConcurrentGCThread "G1 Main Marker"            [id=2820, stack(0x000000262ac00000,0x000000262ad00000) (1024K)]
+  0x000001b9829a3bb0 WorkerThread "G1 Conc#0"                       [id=16208, stack(0x000000262ad00000,0x000000262ae00000) (1024K)]
+
+[error occurred during error reporting (printing all threads), id 0xc0000005, EXCEPTION_ACCESS_VIOLATION (0xc0000005) at pc=0x00007ff903a9a947]
+VM state: not at safepoint (not fully initialized)
+
+VM Mutex/Monitor currently owned by a thread:  ([mutex/lock_event])
+[0x00007ff90439df50] Heap_lock - owner thread: 0x000001b9827b1830
+
+Heap address: 0x0000000742000000, size: 3040 MB, Compressed Oops mode: Zero based, Oop shift amount: 3
+
+CDS archive(s) mapped at: [0x0000000000000000-0x0000000000000000-0x0000000000000000), size 0, SharedBaseAddress: 0x0000000800000000, ArchiveRelocationMode: 1.
+Narrow klass base: 0x0000000000000000, Narrow klass shift: 0, Narrow klass range: 0x0
+
+GC Precious Log:
+ CardTable entry size: 512
+ Card Set container configuration: InlinePtr #cards 4 size 8 Array Of Cards #cards 16 size 48 Howl #buckets 8 coarsen threshold 3686 Howl Bitmap #cards 512 size 80 coarsen threshold 460 Card regions per heap region 1 cards per card region 4096
+
+Heap:
+ garbage-first heap   total 0K, used 0K [0x0000000742000000, 0x0000000800000000)
+  region size 2048K, 0 young (0K), 0 survivors (0K)
+
+[error occurred during error reporting (printing heap information), id 0xc0000005, EXCEPTION_ACCESS_VIOLATION (0xc0000005) at pc=0x00007ff903e83e79]
+GC Heap History (0 events):
+No events
+
+Dll operation events (1 events):
+Event: 0.008 Loaded shared library C:\Program Files\Java\jdk-21\bin\java.dll
+
+Deoptimization events (0 events):
+No events
+
+Classes loaded (0 events):
+No events
+
+Classes unloaded (0 events):
+No events
+
+Classes redefined (0 events):
+No events
+
+Internal exceptions (0 events):
+No events
+
+ZGC Phase Switch (0 events):
+No events
+
+VM Operations (0 events):
+No events
+
+Events (0 events):
+No events
+
+
+Dynamic libraries:
+0x00007ff78adc0000 - 0x00007ff78add0000 	C:\Program Files\Java\jdk-21\bin\java.exe
+0x00007ff9ac670000 - 0x00007ff9ac888000 	C:\WINDOWS\SYSTEM32\ntdll.dll
+0x00007ff9ab920000 - 0x00007ff9ab9e4000 	C:\WINDOWS\System32\KERNEL32.DLL
+0x00007ff9a9ba0000 - 0x00007ff9a9f73000 	C:\WINDOWS\System32\KERNELBASE.dll
+0x00007ff9aa1f0000 - 0x00007ff9aa301000 	C:\WINDOWS\System32\ucrtbase.dll
+0x00007ff995940000 - 0x00007ff99595b000 	C:\Program Files\Java\jdk-21\bin\VCRUNTIME140.dll
+0x00007ff9958c0000 - 0x00007ff9958d9000 	C:\Program Files\Java\jdk-21\bin\jli.dll
+0x00007ff9ab780000 - 0x00007ff9ab831000 	C:\WINDOWS\System32\ADVAPI32.dll
+0x00007ff9ab870000 - 0x00007ff9ab917000 	C:\WINDOWS\System32\msvcrt.dll
+0x00007ff9abba0000 - 0x00007ff9abc48000 	C:\WINDOWS\System32\sechost.dll
+0x00007ff9a9b70000 - 0x00007ff9a9b98000 	C:\WINDOWS\System32\bcrypt.dll
+0x00007ff9ab240000 - 0x00007ff9ab358000 	C:\WINDOWS\System32\RPCRT4.dll
+0x00007ff9ab520000 - 0x00007ff9ab6d2000 	C:\WINDOWS\System32\USER32.dll
+0x00007ff9a9f80000 - 0x00007ff9a9fa6000 	C:\WINDOWS\System32\win32u.dll
+0x00007ff993200000 - 0x00007ff99349c000 	C:\WINDOWS\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.0.22621.6060_none_2712eda17382d24b\COMCTL32.dll
+0x00007ff9aa5c0000 - 0x00007ff9aa5e9000 	C:\WINDOWS\System32\GDI32.dll
+0x00007ff9aa0d0000 - 0x00007ff9aa1eb000 	C:\WINDOWS\System32\gdi32full.dll
+0x00007ff9aa030000 - 0x00007ff9aa0ca000 	C:\WINDOWS\System32\msvcp_win.dll
+0x00007ff99bd40000 - 0x00007ff99bd4a000 	C:\WINDOWS\SYSTEM32\VERSION.dll
+0x00007ff9aa380000 - 0x00007ff9aa3b1000 	C:\WINDOWS\System32\IMM32.DLL
+0x00007ff995930000 - 0x00007ff99593c000 	C:\Program Files\Java\jdk-21\bin\vcruntime140_1.dll
+0x00007ff937db0000 - 0x00007ff937e3e000 	C:\Program Files\Java\jdk-21\bin\msvcp140.dll
+0x00007ff903760000 - 0x00007ff90447a000 	C:\Program Files\Java\jdk-21\bin\server\jvm.dll
+0x00007ff9aa7b0000 - 0x00007ff9aa821000 	C:\WINDOWS\System32\WS2_32.dll
+0x00007ff9a8590000 - 0x00007ff9a85dd000 	C:\WINDOWS\SYSTEM32\POWRPROF.dll
+0x00007ff9a3130000 - 0x00007ff9a3164000 	C:\WINDOWS\SYSTEM32\WINMM.dll
+0x00007ff9a8570000 - 0x00007ff9a8583000 	C:\WINDOWS\SYSTEM32\UMPDC.dll
+0x00007ff9a8810000 - 0x00007ff9a8828000 	C:\WINDOWS\SYSTEM32\kernel.appcore.dll
+0x00007ff9958b0000 - 0x00007ff9958ba000 	C:\Program Files\Java\jdk-21\bin\jimage.dll
+0x00007ff9a71a0000 - 0x00007ff9a73d3000 	C:\WINDOWS\SYSTEM32\DBGHELP.DLL
+0x00007ff9ac290000 - 0x00007ff9ac621000 	C:\WINDOWS\System32\combase.dll
+0x00007ff9aa3c0000 - 0x00007ff9aa498000 	C:\WINDOWS\System32\OLEAUT32.dll
+0x00007ff9826c0000 - 0x00007ff9826f2000 	C:\WINDOWS\SYSTEM32\dbgcore.DLL
+0x00007ff9a9fb0000 - 0x00007ff9aa02b000 	C:\WINDOWS\System32\bcryptPrimitives.dll
+0x00007ff995840000 - 0x00007ff99585f000 	C:\Program Files\Java\jdk-21\bin\java.dll
+
+dbghelp: loaded successfully - version: 4.0.5 - missing functions: none
+symbol engine: initialized successfully - sym options: 0x614 - pdb path: .;C:\Program Files\Java\jdk-21\bin;C:\WINDOWS\SYSTEM32;C:\WINDOWS\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.0.22621.6060_none_2712eda17382d24b;C:\Program Files\Java\jdk-21\bin\server
+
+VM Arguments:
+jvm_args: -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=58640 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=taphoa2hand-backend -XX:+ShowCodeDetailsInExceptionMessages 
+java_command: vn.edu.husc.taphoa2hand_backend.Taphoa2handBackendApplication
+java_class_path (initial): D:\TapHoa2Hand\taphoa2hand-backend\target\classes;C:\Users\ducuy\.m2\repository\org\springframework\boot\spring-boot-starter-data-jpa\3.3.5\spring-boot-starter-data-jpa-3.3.5.jar;C:\Users\ducuy\.m2\repository\org\springframework\boot\spring-boot-starter-aop\3.3.5\spring-boot-starter-aop-3.3.5.jar;C:\Users\ducuy\.m2\repository\org\aspectj\aspectjweaver\1.9.22.1\aspectjweaver-1.9.22.1.jar;C:\Users\ducuy\.m2\repository\org\springframework\boot\spring-boot-starter-jdbc\3.3.5\spring-boot-starter-jdbc-3.3.5.jar;C:\Users\ducuy\.m2\repository\com\zaxxer\HikariCP\5.1.0\HikariCP-5.1.0.jar;C:\Users\ducuy\.m2\repository\org\springframework\spring-jdbc\6.1.14\spring-jdbc-6.1.14.jar;C:\Users\ducuy\.m2\repository\org\hibernate\orm\hibernate-core\6.5.3.Final\hibernate-core-6.5.3.Final.jar;C:\Users\ducuy\.m2\repository\jakarta\persistence\jakarta.persistence-api\3.1.0\jakarta.persistence-api-3.1.0.jar;C:\Users\ducuy\.m2\repository\jakarta\transaction\jakarta.transaction-api\2.0.1\jakarta.transaction-api-2.0.1.jar;C:\Users\ducuy\.m2\repository\org\jboss\logging\jboss-logging\3.5.3.Final\jboss-logging-3.5.3.Final.jar;C:\Users\ducuy\.m2\repository\org\hibernate\common\hibernate-commons-annotations\6.0.6.Final\hibernate-commons-annotations-6.0.6.Final.jar;C:\Users\ducuy\.m2\repository\io\smallrye\jandex\3.1.2\jandex-3.1.2.jar;C:\Users\ducuy\.m2\repository\com\fasterxml\classmate\1.7.0\classmate-1.7.0.jar;C:\Users\ducuy\.m2\repository\net\bytebuddy\byte-buddy\1.14.19\byte-buddy-1.14.19.jar;C:\Users\ducuy\.m2\repository\org\glassfish\jaxb\jaxb-runtime\4.0.5\jaxb-runtime-4.0.5.jar;C:\Users\ducuy\.m2\repository\org\glassfish\jaxb\jaxb-core\4.0.5\jaxb-core-4.0.5.jar;C:\Users\ducuy\.m2\repository\org\glassfish\jaxb\txw2\4.0.5\txw2-4.0.5.jar;C:\Users\ducuy\.m2\repository\com\sun\istack\istack-commons-runtime\4.1.2\istack-commons-runtime-4.1.2.jar;C:\Users\ducuy\.m2\repository\jakarta\inject\jakarta.inject-api\2.0.1\jakarta.inject-api-2.0.1.jar;C:\Users\ducuy\.m2\repository\org\antlr\antlr4-runtime\4.13.0\antlr4-runtime-4.13.0.jar;C:\Users\ducuy\.m2\repository\org\springframework\data\spring-data-jpa\3.3.5\spring-data-jpa-3.3.5.jar;C:\Users\ducuy\.m2\repository\org\springframework\data\spring-data-commons\3.3.5\spring-data-commons-3.3.5.jar;C:\Users\ducuy\.m2\repository\org\springframework\spring-orm\6.1.14\spring-orm-6.1.14.jar;C:\Users\ducuy\.m2\repository\org\springframework\spring-context\6.1.14\spring-context-6.1.14.jar;C:\Users\ducuy\.m2\repository\org\springframework\spring-tx\6.1.14\spring-tx-6.1.14.jar;C:\Users\ducuy\.m2\repository\org\springframework\spring-beans\6.1.14\spring-beans-6.1.14.jar;C:\Users\ducuy\.m2\repository\jakarta\annotation\jakarta.annotation-api\2.1.1\jakarta.annotation-api-2.1.1.jar;C:\Users\ducuy\.m2\repository\org\springframework\spring-aspects\6.1.14\spring-aspects-6.1.14.jar;C:\Users\ducuy\.m2\repository\org\springframework\boot\spring-boot-starter-data-redis\3.3.5\spring-boot-starter-data-redis-3.3.5.jar;C:\Users\ducuy\.m2\repository\org\springframework\boot\spring-boot-starter\3.3.5\spring-boot-starter-3.3.5.jar;C:\Users\ducuy\.m2\repository\org\springframework\boot\spring-boot\3.3.5\spring-boot-3.3.5.jar;C:\Users\ducuy\.m2\repository\org\springframework\boot\spring-boot-autoconfigure\3.3.5\spring-boot-autoconfigure-3.3.5.jar;C:\Users\ducuy\.m2\repository\org\springframework\boot\spring-boot-starter-logging\3.3.5\spring-boot-starter-logging-3.3.5.jar;C:\Users\ducuy\.m2\repository\ch\qos\logback\logback-classic\1.5.11\logback-classic-1.5.11.jar;C:\Users\ducuy\.m2\repository\ch\qos\logback\logback-core\1.5.11\logback-core-1.5.11.jar;C:\Users\ducuy\.m2\repository\org\apache\logging\log4j\log4j-to-slf4j\2.23.1\log4j-to-slf4j-2.23.1.jar;C:\Users\ducuy\.m2\repository\org\slf4j\jul-to-slf4j\2.0.16\jul-to-slf4j-2.0.16.jar;C:\Users\ducuy\.m2\repository\org\yaml\snakeyaml\2.2\snakeyaml-2.2.jar;C:\Users\ducuy\.m2\repository\org\springframework\data\spring-data-redis\3.3.5\spring-data-redis-3.3.5.jar;C:\Users\ducuy\.m2\repository\org\springframework\data\spring-data-keyvalue\3.3.5\spring-data-keyvalue-3.3.5.jar;C:\Users\ducuy\.m2\repository\org\springframework\spring-oxm\6.1.14\spring-oxm-6.1.14.jar;C:\Users\ducuy\.m2\repository\io\lettuce\lettuce-core\6.3.2.RELEASE\lettuce-core-6.3.2.RELEASE.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-common\4.1.114.Final\netty-common-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-handler\4.1.114.Final\netty-handler-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-transport\4.1.114.Final\netty-transport-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\projectreactor\reactor-core\3.6.11\reactor-core-3.6.11.jar;C:\Users\ducuy\.m2\repository\org\reactivestreams\reactive-streams\1.0.4\reactive-streams-1.0.4.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-all\4.1.114.Final\netty-all-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-buffer\4.1.114.Final\netty-buffer-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-codec\4.1.114.Final\netty-codec-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-codec-dns\4.1.114.Final\netty-codec-dns-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-codec-haproxy\4.1.114.Final\netty-codec-haproxy-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-codec-http\4.1.114.Final\netty-codec-http-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-codec-http2\4.1.114.Final\netty-codec-http2-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-codec-memcache\4.1.114.Final\netty-codec-memcache-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-codec-mqtt\4.1.114.Final\netty-codec-mqtt-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-codec-redis\4.1.114.Final\netty-codec-redis-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-codec-smtp\4.1.114.Final\netty-codec-smtp-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-codec-socks\4.1.114.Final\netty-codec-socks-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-codec-stomp\4.1.114.Final\netty-codec-stomp-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-codec-xml\4.1.114.Final\netty-codec-xml-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-transport-native-unix-common\4.1.114.Final\netty-transport-native-unix-common-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-handler-proxy\4.1.114.Final\netty-handler-proxy-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-handler-ssl-ocsp\4.1.114.Final\netty-handler-ssl-ocsp-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-resolver\4.1.114.Final\netty-resolver-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-resolver-dns\4.1.114.Final\netty-resolver-dns-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-transport-rxtx\4.1.114.Final\netty-transport-rxtx-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-transport-sctp\4.1.114.Final\netty-transport-sctp-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-transport-udt\4.1.114.Final\netty-transport-udt-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-transport-classes-epoll\4.1.114.Final\netty-transport-classes-epoll-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-transport-classes-kqueue\4.1.114.Final\netty-transport-classes-kqueue-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-resolver-dns-classes-macos\4.1.114.Final\netty-resolver-dns-classes-macos-4.1.114.Final.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-transport-native-epoll\4.1.114.Final\netty-transport-native-epoll-4.1.114.Final-linux-x86_64.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-transport-native-epoll\4.1.114.Final\netty-transport-native-epoll-4.1.114.Final-linux-aarch_64.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-transport-native-epoll\4.1.114.Final\netty-transport-native-epoll-4.1.114.Final-linux-riscv64.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-transport-native-kqueue\4.1.114.Final\netty-transport-native-kqueue-4.1.114.Final-osx-x86_64.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-transport-native-kqueue\4.1.114.Final\netty-transport-native-kqueue-4.1.114.Final-osx-aarch_64.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-resolver-dns-native-macos\4.1.114.Final\netty-resolver-dns-native-macos-4.1.114.Final-osx-x86_64.jar;C:\Users\ducuy\.m2\repository\io\netty\netty-resolver-dns-native-macos\4.1.114.Final\netty-resolver-dns-native-macos-4.1.114.Final-osx-aarch_64.jar;C:\Users\ducuy\.m2\repository\org\springframework\boot\spring-boot-starter-security\3.3.5\spring-boot-starter-security-3.3.5.jar;C:\Users\ducuy\.m2\repository\org\springframework\spring-aop\6.1.14\spring-aop-6.1.14.jar;C:\Users\ducuy\.m2\repository\org\springframework\security\spring-security-config\6.3.4\spring-security-config-6.3.4.jar;C:\Users\ducuy\.m2\repository\org\springframework\security\spring-security-web\6.3.4\spring-security-web-6.3.4.jar;C:\Users\ducuy\.m2\repository\org\springframework\spring-expression\6.1.14\spring-expression-6.1.14.jar;C:\Users\ducuy\.m2\repository\org\springframework\boot\spring-boot-starter-web\3.3.5\spring-boot-starter-web-3.3.5.jar;C:\Users\ducuy\.m2\repository\org\springframework\boot\spring-boot-starter-json\3.3.5\spring-boot-starter-json-3.3.5.jar;C:\Users\ducuy\.m2\repository\com\fasterxml\jackson\datatype\jackson-datatype-jdk8\2.17.2\jackson-datatype-jdk8-2.17.2.jar;C:\Users\ducuy\.m2\repository\com\fasterxml\jackson\datatype\jackson-datatype-jsr310\2.17.2\jackson-datatype-jsr310-2.17.2.jar;C:\Users\ducuy\.m2\repository\com\fasterxml\jackson\module\jackson-module-parameter-names\2.17.2\jackson-module-parameter-names-2.17.2.jar;C:\Users\ducuy\.m2\repository\org\springframework\boot\spring-boot-starter-tomcat\3.3.5\spring-boot-starter-tomcat-3.3.5.jar;C:\Users\ducuy\.m2\repository\org\apache\tomcat\embed\tomcat-embed-core\10.1.31\tomcat-embed-core-10.1.31.jar;C:\Users\ducuy\.m2\repository\org\apache\tomcat\embed\tomcat-embed-websocket\10.1.31\tomcat-embed-websocket-10.1.31.jar;C:\Users\ducuy\.m2\repository\org\springframework\spring-web\6.1.14\spring-web-6.1.14.jar;C:\Users\ducuy\.m2\repository\io\micrometer\micrometer-observation\1.13.6\micrometer-observation-1.13.6.jar;C:\Users\ducuy\.m2\repository\io\micrometer\micrometer-commons\1.13.6\micrometer-commons-1.13.6.jar;C:\Users\ducuy\.m2\repository\org\springframework\spring-webmvc\6.1.14\spring-webmvc-6.1.14.jar;C:\Users\ducuy\.m2\repository\org\springframework\boot\spring-boot-starter-validation\3.3.5\spring-boot-starter-validation-3.3.5.jar;C:\Users\ducuy\.m2\repository\org\apache\tomcat\embed\tomcat-embed-el\10.1.31\tomcat-embed-el-10.1.31.jar;C:\Users\ducuy\.m2\repository\org\hibernate\validator\hibernate-validator\8.0.1.Final\hibernate-validator-8.0.1.Final.jar;C:\Users\ducuy\.m2\repository\jakarta\validation\jakarta.validation-api\3.0.2\jakarta.validation-api-3.0.2.jar;C:\Users\ducuy\.m2\repository\org\springframework\boot\spring-boot-starter-oauth2-resource-server\3.3.5\spring-boot-starter-oauth2-resource-server-3.3.5.jar;C:\Users\ducuy\.m2\repository\org\springframework\security\spring-security-core\6.3.4\spring-security-core-6.3.4.jar;C:\Users\ducuy\.m2\repository\org\springframework\security\spring-security-crypto\6.3.4\spring-security-crypto-6.3.4.jar;C:\Users\ducuy\.m2\repository\org\springframework\security\spring-security-oauth2-resource-server\6.3.4\spring-security-oauth2-resource-server-6.3.4.jar;C:\Users\ducuy\.m2\repository\org\springframework\security\spring-security-oauth2-core\6.3.4\spring-security-oauth2-core-6.3.4.jar;C:\Users\ducuy\.m2\repository\org\springframework\security\spring-security-oauth2-jose\6.3.4\spring-security-oauth2-jose-6.3.4.jar;C:\Users\ducuy\.m2\repository\com\nimbusds\nimbus-jose-jwt\9.37.3\nimbus-jose-jwt-9.37.3.jar;C:\Users\ducuy\.m2\repository\com\github\stephenc\jcip\jcip-annotations\1.0-1\jcip-annotations-1.0-1.jar;C:\Users\ducuy\.m2\repository\org\mariadb\jdbc\mariadb-java-client\3.3.3\mariadb-java-client-3.3.3.jar;C:\Users\ducuy\.m2\repository\com\github\waffle\waffle-jna\3.3.0\waffle-jna-3.3.0.jar;C:\Users\ducuy\.m2\repository\net\java\dev\jna\jna\5.13.0\jna-5.13.0.jar;C:\Users\ducuy\.m2\repository\net\java\dev\jna\jna-platform\5.13.0\jna-platform-5.13.0.jar;C:\Users\ducuy\.m2\repository\org\slf4j\jcl-over-slf4j\2.0.16\jcl-over-slf4j-2.0.16.jar;C:\Users\ducuy\.m2\repository\com\github\ben-manes\caffeine\caffeine\3.1.8\caffeine-3.1.8.jar;C:\Users\ducuy\.m2\repository\org\checkerframework\checker-qual\3.32.0\checker-qual-3.32.0.jar;C:\Users\ducuy\.m2\repository\org\projectlombok\lombok\1.18.34\lombok-1.18.34.jar;C:\Users\ducuy\.m2\repository\org\mapstruct\mapstruct\1.6.3\mapstruct-1.6.3.jar;C:\Users\ducuy\.m2\repository\jakarta\xml\bind\jakarta.xml.bind-api\4.0.2\jakarta.xml.bind-api-4.0.2.jar;C:\Users\ducuy\.m2\repository\jakarta\activation\jakarta.activation-api\2.1.3\jakarta.activation-api-2.1.3.jar;C:\Users\ducuy\.m2\repository\org\springframework\spring-core\6.1.14\spring-core-6.1.14.jar;C:\Users\ducuy\.m2\repository\org\springframework\spring-jcl\6.1.14\spring-jcl-6.1.14.jar;C:\Users\ducuy\.m2\repository\org\springframework\boot\spring-boot-starter-mail\3.3.5\spring-boot-starter-mail-3.3.5.jar;C:\Users\ducuy\.m2\repository\org\springframework\spring-context-support\6.1.14\spring-context-support-6.1.14.jar;C:\Users\ducuy\.m2\repository\org\eclipse\angus\jakarta.mail\2.0.3\jakarta.mail-2.0.3.jar;C:\Users\ducuy\.m2\repository\org\eclipse\angus\angus-activation\2.0.2\angus-activation-2.0.2.jar;C:\Users\ducuy\.m2\repository\org\springframework\cloud\spring-cloud-starter-openfeign\4.1.1\spring-cloud-starter-openfeign-4.1.1.jar;C:\Users\ducuy\.m2\repository\org\springframework\cloud\spring-cloud-starter\4.1.2\spring-cloud-starter-4.1.2.jar;C:\Users\ducuy\.m2\repository\org\springframework\cloud\spring-cloud-context\4.1.2\spring-cloud-context-4.1.2.jar;C:\Users\ducuy\.m2\repository\org\springframework\security\spring-security-rsa\1.1.2\spring-security-rsa-1.1.2.jar;C:\Users\ducuy\.m2\repository\org\bouncycastle\bcprov-jdk18on\1.77\bcprov-jdk18on-1.77.jar;C:\Users\ducuy\.m2\repository\org\springframework\cloud\spring-cloud-openfeign-core\4.1.1\spring-cloud-openfeign-core-4.1.1.jar;C:\Users\ducuy\.m2\repository\commons-fileupload\commons-fileupload\1.5\commons-fileupload-1.5.jar;C:\Users\ducuy\.m2\repository\org\springframework\cloud\spring-cloud-commons\4.1.2\spring-cloud-commons-4.1.2.jar;C:\Users\ducuy\.m2\repository\io\github\openfeign\feign-core\13.2.1\feign-core-13.2.1.jar;C:\Users\ducuy\.m2\repository\io\github\openfeign\feign-slf4j\13.2.1\feign-slf4j-13.2.1.jar;C:\Users\ducuy\.m2\repository\io\github\openfeign\form\feign-form-spring\3.8.0\feign-form-spring-3.8.0.jar;C:\Users\ducuy\.m2\repository\io\github\openfeign\form\feign-form\3.8.0\feign-form-3.8.0.jar;C:\Users\ducuy\.m2\repository\org\slf4j\slf4j-api\2.0.16\slf4j-api-2.0.16.jar;C:\Users\ducuy\.m2\repository\com\corundumstudio\socketio\netty-socketio\2.0.13\netty-socketio-2.0.13.jar;C:\Users\ducuy\.m2\repository\com\fasterxml\jackson\core\jackson-core\2.17.2\jackson-core-2.17.2.jar;C:\Users\ducuy\.m2\repository\com\fasterxml\jackson\core\jackson-databind\2.17.2\jackson-databind-2.17.2.jar;C:\Users\ducuy\.m2\repository\com\fasterxml\jackson\core\jackson-annotations\2.17.2\jackson-annotations-2.17.2.jar;C:\Users\ducuy\.m2\repository\org\springframework\ai\spring-ai-starter-model-openai\1.0.0\spring-ai-starter-model-openai-1.0.0.jar;C:\Users\ducuy\.m2\repository\org\springframework\ai\spring-ai-autoconfigure-model-openai\1.0.0\spring-ai-autoconfigure-model-openai-1.0.0.jar;C:\Users\ducuy\.m2\repository\org\springframework\ai\spring-ai-autoconfigure-model-tool\1.0.0\spring-ai-autoconfigure-model-tool-1.0.0.jar;C:\Users\ducuy\.m2\repository\org\springframework\ai\spring-ai-autoconfigure-retry\1.0.0\spring-ai-autoconfigure-retry-1.0.0.jar;C:\Users\ducuy\.m2\repository\org\springframework\ai\spring-ai-autoconfigure-model-chat-observation\1.0.0\spring-ai-autoconfigure-model-chat-observation-1.0.0.jar;C:\Users\ducuy\.m2\repository\org\springframework\ai\spring-ai-autoconfigure-model-embedding-observation\1.0.0\spring-ai-autoconfigure-model-embedding-observation-1.0.0.jar;C:\Users\ducuy\.m2\repository\org\springframework\ai\spring-ai-autoconfigure-model-image-observation\1.0.0\spring-ai-autoconfigure-model-image-observation-1.0.0.jar;C:\Users\ducuy\.m2\repository\org\springframework\ai\spring-ai-openai\1.0.0\spring-ai-openai-1.0.0.jar;C:\Users\ducuy\.m2\repository\org\springframework\ai\spring-ai-model\1.0.0\spring-ai-model-1.0.0.jar;C:\Users\ducuy\.m2\repository\org\springframework\ai\spring-ai-commons\1.0.0\spring-ai-commons-1.0.0.jar;C:\Users\ducuy\.m2\repository\io\micrometer\micrometer-core\1.13.6\micrometer-core-1.13.6.jar;C:\Users\ducuy\.m2\repository\org\hdrhistogram\HdrHistogram\2.2.2\HdrHistogram-2.2.2.jar;C:\Users\ducuy\.m2\repository\org\latencyutils\LatencyUtils\2.0.3\LatencyUtils-2.0.3.jar;C:\Users\ducuy\.m2\repository\io\micrometer\context-propagation\1.1.2\context-propagation-1.1.2.jar;C:\Users\ducuy\.m2\repository\org\springframework\ai\spring-ai-template-st\1.0.0\spring-ai-template-st-1.0.0.jar;C:\Users\ducuy\.m2\repository\org\antlr\ST4\4.3.4\ST4-4.3.4.jar;C:\Users\ducuy\.m2\repository\org\antlr\antlr-runtime\3.5.3\antlr-runtime-3.5.3.jar;C:\Users\ducuy\.m2\repository\org\springframework\spring-messaging\6.1.14\spring-messaging-6.1.14.jar;C:\Users\ducuy\.m2\repository\com\github\victools\jsonschema-module-swagger-2\4.37.0\jsonschema-module-swagger-2-4.37.0.jar;C:\Users\ducuy\.m2\repository\io\swagger\core\v3\swagger-annotations\2.2.25\swagger-annotations-2.2.25.jar;C:\Users\ducuy\.m2\repository\org\springframework\ai\spring-ai-retry\1.0.0\spring-ai-retry-1.0.0.jar;C:\Users\ducuy\.m2\repository\org\springframework\retry\spring-retry\2.0.10\spring-retry-2.0.10.jar;C:\Users\ducuy\.m2\repository\org\springframework\spring-webflux\6.1.14\spring-webflux-6.1.14.jar;C:\Users\ducuy\.m2\repository\com\github\victools\jsonschema-generator\4.37.0\jsonschema-generator-4.37.0.jar;C:\Users\ducuy\.m2\repository\com\github\victools\jsonschema-module-jackson\4.37.0\jsonschema-module-jackson-4.37.0.jar;C:\Users\ducuy\.m2\repository\org\springframework\ai\spring-ai-autoconfigure-model-chat-client\1.0.0\spring-ai-autoconfigure-model-chat-client-1.0.0.jar;C:\Users\ducuy\.m2\repository\org\springframework\ai\spring-ai-client-chat\1.0.0\spring-ai-client-chat-1.0.0.jar;C:\Users\ducuy\.m2\repository\com\fasterxml\jackson\module\jackson-module-jsonSchema\2.17.2\jackson-module-jsonSchema-2.17.2.jar;C:\Users\ducuy\.m2\repository\javax\validation\validation-api\1.1.0.Final\validation-api-1.1.0.Final.jar;C:\Users\ducuy\.m2\repository\com\knuddels\jtokkit\1.1.0\jtokkit-1.1.0.jar;C:\Users\ducuy\.m2\repository\org\springframework\ai\spring-ai-autoconfigure-model-chat-memory\1.0.0\spring-ai-autoconfigure-model-chat-memory-1.0.0.jar;C:\Users\ducuy\.m2\repository\com\google\firebase\firebase-admin\9.1.1\firebase-admin-9.1.1.jar;C:\Users\ducuy\.m2\repository\com\google\api-client\google-api-client\2.0.0\google-api-client-2.0.0.jar;C:\Users\ducuy\.m2\repository\com\google\oauth-client\google-oauth-client\1.34.1\google-oauth-client-1.34.1.jar;C:\Users\ducuy\.m2\repository\com\google\http-client\google-http-client-gson\1.42.1\google-http-client-gson-1.42.1.jar;C:\Users\ducuy\.m2\repository\com\google\http-client\google-http-client-apache-v2\1.42.1\google-http-client-apache-v2-1.42.1.jar;C:\Users\ducuy\.m2\repository\org\apache\httpcomponents\httpcore\4.4.16\httpcore-4.4.16.jar;C:\Users\ducuy\.m2\repository\org\apache\httpcomponents\httpclient\4.5.13\httpclient-4.5.13.jar;C:\Users\ducuy\.m2\repository\com\google\api-client\google-api-client-gson\2.0.0\google-api-client-gson-2.0.0.jar;C:\Users\ducuy\.m2\repository\com\google\http-client\google-http-client\1.42.2\google-http-client-1.42.2.jar;C:\Users\ducuy\.m2\repository\com\google\code\findbugs\jsr305\3.0.2\jsr305-3.0.2.jar;C:\Users\ducuy\.m2\repository\com\google\j2objc\j2objc-annotations\1.3\j2objc-annotations-1.3.jar;C:\Users\ducuy\.m2\repository\io\opencensus\opencensus-api\0.31.1\opencensus-api-0.31.1.jar;C:\Users\ducuy\.m2\repository\io\opencensus\opencensus-contrib-http-util\0.31.1\opencensus-contrib-http-util-0.31.1.jar;C:\Users\ducuy\.m2\repository\com\google\api\api-common\2.2.1\api-common-2.2.1.jar;C:\Users\ducuy\.m2\repository\javax\annotation\javax.annotation-api\1.3.2\javax.annotation-api-1.3.2.jar;C:\Users\ducuy\.m2\repository\com\google\auto\value\auto-value-annotations\1.9\auto-value-annotations-1.9.jar;C:\Users\ducuy\.m2\repository\com\google\auth\google-auth-library-oauth2-http\1.12.1\google-auth-library-oauth2-http-1.12.1.jar;C:\Users\ducuy\.m2\repository\com\google\auth\google-auth-library-credentials\1.12.1\google-auth-library-credentials-1.12.1.jar;C:\Users\ducuy\.m2\repository\com\google\cloud\google-cloud-storage\2.14.0\google-cloud-storage-2.14.0.jar;C:\Users\ducuy\.m2\repository\com\google\guava\failureaccess\1.0.1\failureaccess-1.0.1.jar;C:\Users\ducuy\.m2\repository\com\google\guava\listenablefuture\9999.0-empty-to-avoid-conflict-with-guava\listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar;C:\Users\ducuy\.m2\repository\com\google\http-client\google-http-client-jackson2\1.42.2\google-http-client-jackson2-1.42.2.jar;C:\Users\ducuy\.m2\repository\com\google\apis\google-api-services-storage\v1-rev20220705-2.0.0\google-api-services-storage-v1-rev20220705-2.0.0.jar;C:\Users\ducuy\.m2\repository\com\google\code\gson\gson\2.10.1\gson-2.10.1.jar;C:\Users\ducuy\.m2\repository\com\google\cloud\google-cloud-core\2.8.22\google-cloud-core-2.8.22.jar;C:\Users\ducuy\.m2\repository\com\google\cloud\google-cloud-core-http\2.8.22\google-cloud-core-http-2.8.22.jar;C:\Users\ducuy\.m2\repository\com\google\http-client\google-http-client-appengine\1.42.2\google-http-client-appengine-1.42.2.jar;C:\Users\ducuy\.m2\repository\com\google\api\gax-httpjson\0.104.4\gax-httpjson-0.104.4.jar;C:\Users\ducuy\.m2\repository\com\google\cloud\google-cloud-core-grpc\2.8.22\google-cloud-core-grpc-2.8.22.jar;C:\Users\ducuy\.m2\repository\io\grpc\grpc-core\1.50.1\grpc-core-1.50.1.jar;C:\Users\ducuy\.m2\repository\com\google\android\annotations\4.1.1.4\annotations-4.1.1.4.jar;C:\Users\ducuy\.m2\repository\org\codehaus\mojo\animal-sniffer-annotations\1.22\animal-sniffer-annotations-1.22.jar;C:\Users\ducuy\.m2\repository\com\google\api\gax\2.19.4\gax-2.19.4.jar;C:\Users\ducuy\.m2\repository\com\google\api\gax-grpc\2.19.4\gax-grpc-2.19.4.jar;C:\Users\ducuy\.m2\repository\io\grpc\grpc-alts\1.50.1\grpc-alts-1.50.1.jar;C:\Users\ducuy\.m2\repository\io\grpc\grpc-grpclb\1.50.1\grpc-grpclb-1.50.1.jar;C:\Users\ducuy\.m2\repository\org\conscrypt\conscrypt-openjdk-uber\2.5.2\conscrypt-openjdk-uber-2.5.2.jar;C:\Users\ducuy\.m2\repository\io\grpc\grpc-context\1.50.1\grpc-context-1.50.1.jar;C:\Users\ducuy\.m2\repository\com\google\api\grpc\proto-google-iam-v1\1.6.4\proto-google-iam-v1-1.6.4.jar;C:\Users\ducuy\.m2\repository\com\google\protobuf\protobuf-java\3.21.8\protobuf-java-3.21.8.jar;C:\Users\ducuy\.m2\repository\com\google\protobuf\protobuf-java-util\3.21.8\protobuf-java-util-3.21.8.jar;C:\Users\ducuy\.m2\repository\com\google\api\grpc\proto-google-common-protos\2.9.6\proto-google-common-protos-2.9.6.jar;C:\Users\ducuy\.m2\repository\org\threeten\threetenbp\1.6.3\threetenbp-1.6.3.jar;C:\Users\ducuy\.m2\repository\com\google\api\grpc\proto-google-cloud-storage-v2\2.14.0-alpha\proto-google-cloud-storage-v2-2.14.0-alpha.jar;C:\Users\ducuy\.m2\repository\com\google\api\grpc\grpc-google-cloud-storage-v2\2.14.0-alpha\grpc-google-cloud-storage-v2-2.14.0-alpha.jar;C:\Users\ducuy\.m2\repository\io\grpc\grpc-protobuf\1.50.1\grpc-protobuf-1.50.1.jar;C:\Users\ducuy\.m2\repository\com\google\api\grpc\gapic-google-cloud-storage-v2\2.14.0-alpha\gapic-google-cloud-storage-v2-2.14.0-alpha.jar;C:\Users\ducuy\.m2\repository\io\grpc\grpc-api\1.50.1\grpc-api-1.50.1.jar;C:\Users\ducuy\.m2\repository\io\grpc\grpc-netty-shaded\1.50.1\grpc-netty-shaded-1.50.1.jar;C:\Users\ducuy\.m2\repository\io\perfmark\perfmark-api\0.25.0\perfmark-api-0.25.0.jar;C:\Users\ducuy\.m2\repository\io\grpc\grpc-auth\1.50.1\grpc-auth-1.50.1.jar;C:\Users\ducuy\.m2\repository\io\grpc\grpc-stub\1.50.1\grpc-stub-1.50.1.jar;C:\Users\ducuy\.m2\repository\io\grpc\grpc-googleapis\1.50.1\grpc-googleapis-1.50.1.jar;C:\Users\ducuy\.m2\repository\io\grpc\grpc-xds\1.50.1\grpc-xds-1.50.1.jar;C:\Users\ducuy\.m2\repository\io\opencensus\opencensus-proto\0.2.0\opencensus-proto-0.2.0.jar;C:\Users\ducuy\.m2\repository\io\grpc\grpc-services\1.50.1\grpc-services-1.50.1.jar;C:\Users\ducuy\.m2\repository\com\google\re2j\re2j\1.6\re2j-1.6.jar;C:\Users\ducuy\.m2\repository\com\google\api\grpc\grpc-google-iam-v1\1.6.4\grpc-google-iam-v1-1.6.4.jar;C:\Users\ducuy\.m2\repository\io\grpc\grpc-protobuf-lite\1.50.1\grpc-protobuf-lite-1.50.1.jar;C:\Users\ducuy\.m2\repository\com\google\cloud\google-cloud-firestore\3.7.0\google-cloud-firestore-3.7.0.jar;C:\Users\ducuy\.m2\repository\commons-logging\commons-logging\1.2\commons-logging-1.2.jar;C:\Users\ducuy\.m2\repository\commons-codec\commons-codec\1.16.1\commons-codec-1.16.1.jar;C:\Users\ducuy\.m2\repository\com\google\api\grpc\proto-google-cloud-firestore-v1\3.7.0\proto-google-cloud-firestore-v1-3.7.0.jar;C:\Users\ducuy\.m2\repository\com\google\cloud\proto-google-cloud-firestore-bundle-v1\3.7.0\proto-google-cloud-firestore-bundle-v1-3.7.0.jar;C:\Users\ducuy\.m2\repository\io\opencensus\opencensus-contrib-grpc-util\0.31.1\opencensus-contrib-grpc-util-0.31.1.jar;C:\Users\ducuy\.m2\repository\com\google\errorprone\error_prone_annotations\2.16\error_prone_annotations-2.16.jar;C:\Users\ducuy\.m2\repository\com\google\guava\guava\31.1-jre\guava-31.1-jre.jar;C:\Users\ducuy\.m2\repository\org\apache\poi\poi-ooxml\5.2.5\poi-ooxml-5.2.5.jar;C:\Users\ducuy\.m2\repository\org\apache\poi\poi\5.2.5\poi-5.2.5.jar;C:\Users\ducuy\.m2\repository\org\apache\commons\commons-math3\3.6.1\commons-math3-3.6.1.jar;C:\Users\ducuy\.m2\repository\com\zaxxer\SparseBitSet\1.3\SparseBitSet-1.3.jar;C:\Users\ducuy\.m2\repository\org\apache\poi\poi-ooxml-lite\5.2.5\poi-ooxml-lite-5.2.5.jar;C:\Users\ducuy\.m2\repository\org\apache\xmlbeans\xmlbeans\5.2.0\xmlbeans-5.2.0.jar;C:\Users\ducuy\.m2\repository\org\apache\commons\commons-compress\1.25.0\commons-compress-1.25.0.jar;C:\Users\ducuy\.m2\repository\commons-io\commons-io\2.15.0\commons-io-2.15.0.jar;C:\Users\ducuy\.m2\repository\com\github\virtuald\curvesapi\1.08\curvesapi-1.08.jar;C:\Users\ducuy\.m2\repository\org\apache\logging\log4j\log4j-api\2.23.1\log4j-api-2.23.1.jar;C:\Users\ducuy\.m2\repository\org\apache\commons\commons-collections4\4.4\commons-collections4-4.4.jar
+Launcher Type: SUN_STANDARD
+
+[Global flags]
+     intx CICompilerCount                          = 4                                         {product} {ergonomic}
+     uint ConcGCThreads                            = 2                                         {product} {ergonomic}
+     uint G1ConcRefinementThreads                  = 8                                         {product} {ergonomic}
+   size_t G1HeapRegionSize                         = 2097152                                   {product} {ergonomic}
+    uintx GCDrainStackTargetSize                   = 64                                        {product} {ergonomic}
+   size_t InitialHeapSize                          = 199229440                                 {product} {ergonomic}
+     bool ManagementServer                         = true                                      {product} {command line}
+   size_t MarkStackSize                            = 4194304                                   {product} {ergonomic}
+   size_t MaxHeapSize                              = 3187671040                                {product} {ergonomic}
+   size_t MinHeapDeltaBytes                        = 2097152                                   {product} {ergonomic}
+   size_t MinHeapSize                              = 8388608                                   {product} {ergonomic}
+    uintx NonNMethodCodeHeapSize                   = 5839372                                {pd product} {ergonomic}
+    uintx NonProfiledCodeHeapSize                  = 122909434                              {pd product} {ergonomic}
+    uintx ProfiledCodeHeapSize                     = 122909434                              {pd product} {ergonomic}
+    uintx ReservedCodeCacheSize                    = 251658240                              {pd product} {ergonomic}
+     bool SegmentedCodeCache                       = true                                      {product} {ergonomic}
+     bool ShowCodeDetailsInExceptionMessages       = true                                   {manageable} {command line}
+   size_t SoftMaxHeapSize                          = 3187671040                             {manageable} {ergonomic}
+     bool UseCompressedOops                        = true                           {product lp64_product} {ergonomic}
+     bool UseG1GC                                  = true                                      {product} {ergonomic}
+     bool UseLargePagesIndividualAllocation        = false                                  {pd product} {ergonomic}
+
+Logging:
+Log output configuration:
+ #0: stdout all=warning uptime,level,tags foldmultilines=false
+ #1: stderr all=off uptime,level,tags foldmultilines=false
+
+Environment Variables:
+JAVA_HOME=C:\Program Files\Java\jdk-17
+PATH=c:\Users\ducuy\AppData\Roaming\Code\User\globalStorage\github.copilot-chat\debugCommand;c:\Users\ducuy\AppData\Roaming\Code\User\globalStorage\github.copilot-chat\copilotCli;C:\Program Files\Common Files\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\Git\cmd;C:\Program Files\Microsoft SQL Server\150\Tools\Binn\;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\170\Tools\Binn\;C:\Program Files\dotnet\;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\110\Tools\Binn\;C:\Program Files (x86)\Microsoft SQL Server\120\Tools\Binn\;C:\Program Files\Microsoft SQL Server\120\Tools\Binn\;C:\Program Files\Microsoft SQL Server\120\DTS\Binn\;C:\Program Files (x86)\Microsoft SQL Server\120\Tools\Binn\ManagementStudio\;C:\Program Files (x86)\Microsoft SQL Server\120\DTS\Binn\;C:\Program Files\Cloudflare\Cloudflare WARP\;C:\Program Files\nodejs\;C:\Program Files\Docker\Docker\resources\bin;C:\Users\ducuy\AppData\Local\Microsoft\WindowsApps;C:\src\flutter_windows_3.35.4-stable\flutter\bin;C:\Program Files\Java\jdk-17\bin;C:\apache-maven-3.9.11\bin;C:\Users\ducuy\.dotnet\tools;C:\Users\ducuy\AppData\Roaming\npm;C:\Users\ducuy\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\ducuy\AppData\Local\Programs\cursor\resources\app\bin;c:\Users\ducuy\.vscode\extensions\vscjava.vscode-java-debug-0.59.0\bundled\scripts\noConfigScripts
+USERNAME=ducuy
+LANG=en_US.UTF-8
+OS=Windows_NT
+PROCESSOR_IDENTIFIER=Intel64 Family 6 Model 142 Stepping 10, GenuineIntel
+TMP=C:\Users\ducuy\AppData\Local\Temp
+TEMP=C:\Users\ducuy\AppData\Local\Temp
+
+
+
+
+Periodic native trim disabled
+
+---------------  S Y S T E M  ---------------
+
+OS:
+ Windows 11 , 64 bit Build 22621 (10.0.22621.5415)
+OS uptime: 0 days 6:35 hours
+Hyper-V role detected
+
+CPU: total 8 (initial active 8) (4 cores per cpu, 2 threads per core) family 6 model 142 stepping 10 microcode 0xea, cx8, cmov, fxsr, ht, mmx, 3dnowpref, sse, sse2, sse3, ssse3, sse4.1, sse4.2, popcnt, lzcnt, tsc, tscinvbit, avx, avx2, aes, erms, clmul, bmi1, bmi2, adx, fma, vzeroupper, clflush, clflushopt, hv, rdtscp, f16c
+Processor Information for all 8 processors :
+  Max Mhz: 1800, Current Mhz: 1600, Mhz Limit: 1584
+
+Memory: 4k page, system-wide physical 12152M (593M free)
+TotalPageFile size 18827M (AvailPageFile size 4M)
+current process WorkingSet (physical memory assigned to process): 11M, peak: 11M
+current process commit charge ("private bytes"): 254M, peak: 254M
+
+vm_info: Java HotSpot(TM) 64-Bit Server VM (21.0.7+8-LTS-245) for windows-amd64 JRE (21.0.7+8-LTS-245), built on 2025-02-21T05:11:27Z by "mach5one" with MS VC++ 17.6 (VS2022)
+
+END.
