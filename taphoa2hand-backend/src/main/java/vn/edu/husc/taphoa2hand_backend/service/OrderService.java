@@ -627,7 +627,7 @@ public class OrderService {
             cancelOtherPendingOrdersForSamePost(order);
             String orderLink = "/order/myOrder/" + order.getId();
             notificationService.createNotification(NotificationRequest.builder()
-                    .content("Đơn hàng " + order.getId() + " đã được xác nhận bởi người bán"
+                    .content("Đơn hàng " + order.getId() + " đã được xác nhận bởi người bán "
                             + order.getBuyer().getUsername())
                     .userIds(List.of(order.getBuyer().getId()))
                     .link(orderLink)
@@ -920,7 +920,11 @@ public class OrderService {
         if (order.getStatus() != OrderStatusEnum.CONFIRMED) {
             throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
         }
-
+        Posts post = getFirstPostFromOrder(order);
+        if (post != null && post.getPostType() == PostTypeEnum.BUY) {
+            throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+        }
+        post.setStatus(PostStatusEnum.SOLD);
         // Chuyển sang trạng thái PAID_WAITING_PICKUP
         order.setStatus(OrderStatusEnum.PAID_WAITING_PICKUP);
         Order saved = orderRepository.save(order);
