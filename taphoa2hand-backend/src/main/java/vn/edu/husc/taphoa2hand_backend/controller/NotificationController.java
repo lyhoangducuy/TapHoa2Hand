@@ -80,5 +80,4 @@
                     .result("Đã xóa thông báo thành công")
                     .build();
         }
-        
     }

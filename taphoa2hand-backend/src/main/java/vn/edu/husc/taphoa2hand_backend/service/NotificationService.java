@@ -49,6 +49,7 @@ public class NotificationService {
         notification.setUserIds(userIds);
 
         // 3. LƯU VÀO DATABASE TRƯỚC để lấy ID và thời gian tạo
+        notification.setCreatedBy(request.getCreatedBy());
         var notiSave = notificationRepository.save(notification);
 
         // 4. CHUYỂN SANG DTO RESPONSE

@@ -9,6 +9,7 @@ import { cilPeople } from '@coreui/icons';
 
 import { getUserAdmin } from '../../../../services/userService'; 
 import { createNotification } from '../../../../services/notificationService';
+import { getMyInfo } from '../../../../services/userService';
 
 const CreateNotificationModal = ({ visible, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({ content: '', link: '' });
@@ -17,12 +18,26 @@ const CreateNotificationModal = ({ visible, onClose, onSuccess }) => {
   const [userSearchTerm, setUserSearchTerm] = useState('');
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   useEffect(() => {
     if (visible && allUsers.length === 0) {
       fetchAllUsersForSelection();
     }
+    fetchCurrentUser();
   }, [visible]);
+
+  const fetchCurrentUser = async () => {
+    try {
+      const res = await getMyInfo();
+      const user = res?.data?.result || res?.result || res;
+      if (user?.id) {
+        setCurrentUserId(String(user.id));
+      }
+    } catch (error) {
+      console.error("Lỗi lấy thông tin user hiện tại:", error);
+    }
+  };
 
   const fetchAllUsersForSelection = async () => {
     setLoadingUsers(true);
@@ -49,7 +64,8 @@ const CreateNotificationModal = ({ visible, onClose, onSuccess }) => {
     const payload = {
       userIds: selectedUsers, // Backend dùng getUserId()
       content: formData.content,
-      link: formData.link
+      link: formData.link,
+      createdBy: currentUserId
     };
 
     try {

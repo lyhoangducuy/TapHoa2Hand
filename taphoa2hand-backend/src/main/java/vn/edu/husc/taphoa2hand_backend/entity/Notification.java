@@ -40,4 +40,5 @@ public class Notification {
 
     @Builder.Default
     LocalDateTime createdAt = LocalDateTime.now();
+    String createdBy;
 }

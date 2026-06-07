@@ -14,4 +14,5 @@ public class NotificationRequest {
     List<String> userIds;
     String content;
     String link;
+    String createdBy;
 }
