@@ -29,6 +29,19 @@ public class AdminStatisticsController {
     private final AdminStatisticsService statisticsService;
     private final ExcelExportService excelExportService;
 
+    // ============== DASHBOARD OVERVIEW ==============
+
+    @GetMapping("/overview")
+    public ApiResponse<DashboardOverviewResponse> getDashboardOverview() {
+        log.info("Getting dashboard overview");
+        DashboardOverviewResponse overview = statisticsService.getDashboardOverview();
+        return ApiResponse.<DashboardOverviewResponse>builder()
+                .code(1000)
+                .message("Dashboard overview")
+                .result(overview)
+                .build();
+    }
+
     // ============== SUMMARY ==============
 
     @GetMapping("/summary")
@@ -60,6 +73,111 @@ public class AdminStatisticsController {
                 .code(1000)
                 .message("Biểu đồ doanh thu")
                 .result(chartData)
+                .build();
+    }
+
+    @GetMapping("/revenue-by-month")
+    public ApiResponse<List<RevenueChartItem>> getRevenueByMonth(
+            @RequestParam(defaultValue = "2026") int year) {
+        
+        log.info("Getting revenue by month for year {}", year);
+        List<RevenueChartItem> chartData = statisticsService.getRevenueByMonth(year);
+        
+        return ApiResponse.<List<RevenueChartItem>>builder()
+                .code(1000)
+                .message("Doanh thu theo tháng")
+                .result(chartData)
+                .build();
+    }
+
+    @GetMapping("/order-status-distribution")
+    public ApiResponse<List<OrderStatusCount>> getOrderStatusDistribution() {
+        log.info("Getting order status distribution");
+        List<OrderStatusCount> data = statisticsService.getOrderStatusDistribution();
+        return ApiResponse.<List<OrderStatusCount>>builder()
+                .code(1000)
+                .message("Phân bố trạng thái đơn hàng")
+                .result(data)
+                .build();
+    }
+
+    @GetMapping("/posts-by-category")
+    public ApiResponse<List<CategoryPostCount>> getPostsByCategory() {
+        log.info("Getting posts by category");
+        List<CategoryPostCount> data = statisticsService.getPostsByCategory();
+        return ApiResponse.<List<CategoryPostCount>>builder()
+                .code(1000)
+                .message("Bài đăng theo danh mục")
+                .result(data)
+                .build();
+    }
+
+    @GetMapping("/report-reasons")
+    public ApiResponse<List<ReportReasonCount>> getReportReasonsDistribution() {
+        log.info("Getting report reasons distribution");
+        List<ReportReasonCount> data = statisticsService.getReportReasonsDistribution();
+        return ApiResponse.<List<ReportReasonCount>>builder()
+                .code(1000)
+                .message("Lý do báo cáo")
+                .result(data)
+                .build();
+    }
+
+    @GetMapping("/top-sellers")
+    public ApiResponse<List<TopSellerResponse>> getTopSellers(
+            @RequestParam(defaultValue = "5") int limit) {
+        log.info("Getting top {} sellers", limit);
+        List<TopSellerResponse> data = statisticsService.getTopSellers(limit);
+        return ApiResponse.<List<TopSellerResponse>>builder()
+                .code(1000)
+                .message("Top người bán")
+                .result(data)
+                .build();
+    }
+
+    @GetMapping("/top-reported-users")
+    public ApiResponse<List<TopReportedUserResponse>> getTopReportedUsers(
+            @RequestParam(defaultValue = "5") int limit) {
+        log.info("Getting top {} reported users", limit);
+        List<TopReportedUserResponse> data = statisticsService.getTopReportedUsers(limit);
+        return ApiResponse.<List<TopReportedUserResponse>>builder()
+                .code(1000)
+                .message("Top người dùng bị báo cáo")
+                .result(data)
+                .build();
+    }
+
+    @GetMapping("/rating-distribution")
+    public ApiResponse<List<RatingDistribution>> getRatingDistribution() {
+        log.info("Getting rating distribution");
+        List<RatingDistribution> data = statisticsService.getRatingDistribution();
+        return ApiResponse.<List<RatingDistribution>>builder()
+                .code(1000)
+                .message("Phân bố đánh giá")
+                .result(data)
+                .build();
+    }
+
+    @GetMapping("/ai-assessment-distribution")
+    public ApiResponse<List<AiAssessmentCount>> getAiAssessmentDistribution() {
+        log.info("Getting AI assessment distribution");
+        List<AiAssessmentCount> data = statisticsService.getAiAssessmentDistribution();
+        return ApiResponse.<List<AiAssessmentCount>>builder()
+                .code(1000)
+                .message("Kết quả kiểm định AI")
+                .result(data)
+                .build();
+    }
+
+    @GetMapping("/recent-activities")
+    public ApiResponse<List<RecentActivity>> getRecentActivities(
+            @RequestParam(defaultValue = "10") int limit) {
+        log.info("Getting recent activities, limit={}", limit);
+        List<RecentActivity> data = statisticsService.getRecentActivities(limit);
+        return ApiResponse.<List<RecentActivity>>builder()
+                .code(1000)
+                .message("Hoạt động gần đây")
+                .result(data)
                 .build();
     }
 

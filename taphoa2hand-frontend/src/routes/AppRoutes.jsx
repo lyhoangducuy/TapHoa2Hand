@@ -33,6 +33,7 @@ import ReportAdminPage from '../pages/Admin/Reports';
 import MyReportsPage from '../pages/Users/MyReportsPage';
 import NoSearchLayout from '../components/Layouts/NoSearchLayout';
 import AdminStatisticsPage from '../pages/Admin/Dashboard/AdminStatisticsPage';
+import AdminDashboardPage from '../pages/Admin/Dashboard/AdminDashboardPage';
 import { ForgotPasswordPage } from '../pages/Authe/ForgotPassword';
 const publicRoutes = [
     { path: '/', component: HomePage },
@@ -87,6 +88,7 @@ const adminRoutes = [
     {path:'/admin/reports', component: ReportAdminPage, layout: AdminLayout},
     //statistics
     {path:'/admin/statistics', component: AdminStatisticsPage, layout: AdminLayout},
+    {path:'/admin/dashboard', component: AdminDashboardPage, layout: AdminLayout},
     //noti
     {path:"/admin/notifications",component:Notificationpage,layout:AdminLayout}
 ];

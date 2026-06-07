@@ -1,5 +1,6 @@
 package vn.edu.husc.taphoa2hand_backend.repository;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -90,5 +91,7 @@ public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecif
     // Đếm đơn COMPLETED của seller
     @Query("SELECT COUNT(o) FROM Order o WHERE o.seller.id = :sellerId AND o.status = 'COMPLETED'")
     long countCompletedBySellerId(@Param("sellerId") String sellerId);
+
+    Long countByCreatedAtBetween(LocalDateTime startOfMonth, LocalDateTime now);
 
 }

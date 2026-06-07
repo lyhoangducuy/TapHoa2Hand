@@ -133,4 +133,50 @@ public interface AdminStatisticsRepository extends JpaRepository<Order, String>,
         @Param("toDate") LocalDateTime toDate,
         Pageable pageable
     );
+
+    // === ORDER STATUS DISTRIBUTION ===
+    
+    @Query(value = """
+        SELECT o.status as status, COUNT(*) as count
+        FROM orders o
+        WHERE (:fromDate IS NULL OR o.created_at >= :fromDate)
+        AND (:toDate IS NULL OR o.created_at <= :toDate)
+        GROUP BY o.status
+        ORDER BY count DESC
+        """, nativeQuery = true)
+    List<Object[]> getOrderStatusDistribution(
+        @Param("fromDate") LocalDateTime fromDate,
+        @Param("toDate") LocalDateTime toDate
+    );
+
+    // === TOP SELLERS ===
+    
+    @Query(value = """
+        SELECT o.seller_id as sellerId, COUNT(*) as totalOrders,
+               SUM(CASE WHEN o.status = 'COMPLETED' THEN 1 ELSE 0 END) as completedOrders
+        FROM orders o
+        WHERE o.seller_id IS NOT NULL
+        AND (:fromDate IS NULL OR o.created_at >= :fromDate)
+        AND (:toDate IS NULL OR o.created_at <= :toDate)
+        GROUP BY o.seller_id
+        ORDER BY totalOrders DESC
+        LIMIT :limit
+        """, nativeQuery = true)
+    List<Object[]> getTopSellers(
+        @Param("fromDate") LocalDateTime fromDate,
+        @Param("toDate") LocalDateTime toDate,
+        @Param("limit") int limit
+    );
+
+    // === RECENT ORDERS ===
+    
+    @Query(value = """
+        SELECT o.id, o.created_at, o.status, 'ORDER' as type
+        FROM orders o
+        ORDER BY o.created_at DESC
+        LIMIT :limit
+        """, nativeQuery = true)
+    List<Object[]> getRecentOrders(
+        @Param("limit") int limit
+    );
 }

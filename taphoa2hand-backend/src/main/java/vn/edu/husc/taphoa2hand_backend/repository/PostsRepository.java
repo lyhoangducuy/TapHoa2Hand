@@ -89,4 +89,34 @@ public interface PostsRepository extends JpaRepository<Posts, String> {
         Long countByCreatedAtBetween(LocalDateTime fromDate, LocalDateTime toDate);
 
         Long countByUser(Users user);
+
+        // Posts by category count
+        @Query(value = """
+            SELECT c.id as categoryId, c.name as categoryName, COUNT(p.id) as count
+            FROM posts p
+            JOIN posts_category pc ON p.id = pc.post_id
+            JOIN categories c ON pc.categories_id = c.id
+            WHERE p.active = true AND p.status NOT IN ('HIDDEN', 'DELETED')
+            AND (:fromDate IS NULL OR p.created_at >= :fromDate)
+            AND (:toDate IS NULL OR p.created_at <= :toDate)
+            GROUP BY c.id, c.name
+            ORDER BY count DESC
+            """, nativeQuery = true)
+        List<Object[]> getPostsCountByCategory(
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate
+        );
+
+        // Recent posts
+        @Query(value = """
+            SELECT p.id, p.title, p.created_at, 'POST' as type
+            FROM posts p
+            WHERE p.active = true
+            ORDER BY p.created_at DESC
+            LIMIT :limit
+            """, nativeQuery = true)
+        List<Object[]> getRecentPosts(@Param("limit") int limit);
+
+        // Find posts by status not in list
+        List<Posts> findByStatusNotIn(List<PostStatusEnum> statuses);
 }

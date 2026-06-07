@@ -16,7 +16,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,8 +34,50 @@ public class AdminStatisticsService {
     private final UsersRepository usersRepository;
     private final PostsRepository postsRepository;
     private final ReportRepository reportRepository;
+    private final FeedbackStatisticsRepository feedbackStatisticsRepository;
+    private final PostAiAssessmentRepository postAiAssessmentRepository;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter DISPLAY_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+    // ============== DASHBOARD OVERVIEW ==============
+
+    public DashboardOverviewResponse getDashboardOverview() {
+        // Total counts
+        Long totalUsers = usersRepository.count();
+        Long totalPosts = postsRepository.count();
+        Long totalOrders = orderRepository.count();
+        Long totalReports = reportRepository.count();
+        Long pendingReports = reportRepository.countByStatus(ReportStatusEnum.PENDING);
+
+        // Active posts (not SOLD, HIDDEN, DELETED)
+        Long activePosts = Long.parseLong(String.valueOf(postsRepository.findByStatusNotIn(List.of(PostStatusEnum.SOLD, PostStatusEnum.HIDDEN)).size()));
+
+        // This month stats
+        LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+        LocalDateTime now = LocalDateTime.now();
+        
+        Long newUsersThisMonth = usersRepository.countByCreatedAtBetween(startOfMonth, now);
+        Long newPostsThisMonth = postsRepository.countByCreatedAtBetween(startOfMonth, now);
+        Long newOrdersThisMonth = orderRepository.countByCreatedAtBetween(startOfMonth, now);
+        
+        // Revenue this month
+        BigDecimal revenueThisMonth = adminStatisticsRepository.getTotalRevenue(startOfMonth, now);
+        if (revenueThisMonth == null) revenueThisMonth = BigDecimal.ZERO;
+
+        return DashboardOverviewResponse.builder()
+                .totalUsers(totalUsers != null ? totalUsers : 0L)
+                .totalPosts(totalPosts != null ? totalPosts : 0L)
+                .activePosts(activePosts != null ? activePosts : 0L)
+                .totalOrders(totalOrders != null ? totalOrders : 0L)
+                .totalReports(totalReports != null ? totalReports : 0L)
+                .pendingReports(pendingReports)
+                .newUsersThisMonth(newUsersThisMonth != null ? newUsersThisMonth : 0L)
+                .newPostsThisMonth(newPostsThisMonth != null ? newPostsThisMonth : 0L)
+                .newOrdersThisMonth(newOrdersThisMonth != null ? newOrdersThisMonth : 0L)
+                .revenueThisMonth(revenueThisMonth)
+                .build();
+    }
 
     // ============== SUMMARY ==============
 
@@ -83,6 +128,246 @@ public class AdminStatisticsService {
         }).collect(Collectors.toList());
     }
 
+    // ============== REVENUE BY MONTH ==============
+
+    public List<RevenueChartItem> getRevenueByMonth(int year) {
+        List<RevenueChartItem> result = new ArrayList<>();
+        for (int month = 1; month <= 12; month++) {
+            LocalDateTime start = LocalDate.of(year, month, 1).atStartOfDay();
+            LocalDateTime end = start.plusMonths(1).minusSeconds(1);
+            
+            BigDecimal revenue = adminStatisticsRepository.getTotalRevenue(start, end);
+            Long orderCount = adminStatisticsRepository.countCompletedOrders(start, end);
+            
+            result.add(RevenueChartItem.builder()
+                    .date(year + "-" + String.format("%02d", month))
+                    .revenue(revenue != null ? revenue : BigDecimal.ZERO)
+                    .orderCount(orderCount != null ? orderCount : 0L)
+                    .build());
+        }
+        return result;
+    }
+
+    // ============== ORDER STATUS DISTRIBUTION ==============
+
+    public List<OrderStatusCount> getOrderStatusDistribution() {
+        List<Object[]> data = adminStatisticsRepository.getOrderStatusDistribution(null, null);
+        long total = data.stream().mapToLong(row -> Long.parseLong(row[1].toString())).sum();
+        
+        return data.stream().map(row -> {
+            String status = row[0].toString();
+            Long count = Long.parseLong(row[1].toString());
+            Double percentage = total > 0 ? (count * 100.0 / total) : 0.0;
+            
+            OrderStatusEnum statusEnum = null;
+            try {
+                statusEnum = OrderStatusEnum.valueOf(status);
+            } catch (Exception e) {}
+            
+            return OrderStatusCount.builder()
+                    .status(status)
+                    .statusDisplayName(statusEnum != null ? statusEnum.getDisplayName() : status)
+                    .count(count)
+                    .percentage(Math.round(percentage * 100.0) / 100.0)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    // ============== POSTS BY CATEGORY ==============
+
+    public List<CategoryPostCount> getPostsByCategory() {
+        List<Object[]> data = postsRepository.getPostsCountByCategory(null, null);
+        
+        return data.stream().map(row -> {
+            String categoryId = row[0] != null ? row[0].toString() : "";
+            String categoryName = row[1] != null ? row[1].toString() : "Khác";
+            Long count = Long.parseLong(row[2].toString());
+            
+            return CategoryPostCount.builder()
+                    .categoryId(categoryId)
+                    .categoryName(categoryName)
+                    .count(count)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    // ============== REPORT REASONS DISTRIBUTION ==============
+
+    public List<ReportReasonCount> getReportReasonsDistribution() {
+        List<Object[]> data = reportRepository.getReportsCountByReason(null, null);
+        
+        return data.stream().map(row -> {
+            String reason = row[0].toString();
+            Long count = Long.parseLong(row[1].toString());
+            
+            ReportReasonEnum reasonEnum = null;
+            try {
+                reasonEnum = ReportReasonEnum.valueOf(reason);
+            } catch (Exception e) {}
+            
+            return ReportReasonCount.builder()
+                    .reason(reason)
+                    .reasonDisplayName(reasonEnum != null ? reasonEnum.getDisplayName() : reason)
+                    .count(count)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    // ============== TOP SELLERS ==============
+
+    public List<TopSellerResponse> getTopSellers(int limit) {
+        List<Object[]> data = adminStatisticsRepository.getTopSellers(null, null, limit);
+        
+        return data.stream().map(row -> {
+            String sellerId = row[0] != null ? row[0].toString() : "";
+            Long totalOrders = Long.parseLong(row[1].toString());
+            Long completedOrders = Long.parseLong(row[2].toString());
+            
+            Users seller = usersRepository.findById(sellerId).orElse(null);
+            
+            return TopSellerResponse.builder()
+                    .userId(sellerId)
+                    .fullName(seller != null ? seller.getFullName() : "N/A")
+                    .avatar(seller != null ? seller.getAvatar() : null)
+                    .totalOrders(totalOrders)
+                    .completedOrders(completedOrders)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    // ============== TOP REPORTED USERS ==============
+
+    public List<TopReportedUserResponse> getTopReportedUsers(int limit) {
+        List<Object[]> data = reportRepository.getTopReportedUsers(null, null, limit);
+        
+        return data.stream().map(row -> {
+            String oderId = row[0] != null ? row[0].toString() : "";
+            Long totalReports = Long.parseLong(row[1].toString());
+            
+            Users user = usersRepository.findById(oderId).orElse(null);
+            
+            return TopReportedUserResponse.builder()
+                    .userId(oderId)
+                    .fullName(user != null ? user.getFullName() : "N/A")
+                    .avatar(user != null ? user.getAvatar() : null)
+                    .totalReports(totalReports)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    // ============== RATING DISTRIBUTION ==============
+
+    public List<RatingDistribution> getRatingDistribution() {
+        List<Object[]> data = feedbackStatisticsRepository.getRatingDistribution();
+        long total = data.stream().mapToLong(row -> Long.parseLong(row[1].toString())).sum();
+        
+        // Ensure all 5 stars are present
+        Map<Integer, Long> ratingCounts = data.stream()
+                .collect(Collectors.toMap(
+                        row -> Integer.parseInt(row[0].toString()),
+                        row -> Long.parseLong(row[1].toString())
+                ));
+        
+        List<RatingDistribution> result = new ArrayList<>();
+        for (int i = 5; i >= 1; i--) {
+            long count = ratingCounts.getOrDefault(i, 0L);
+            double percentage = total > 0 ? (count * 100.0 / total) : 0.0;
+            result.add(RatingDistribution.builder()
+                    .rating(i)
+                    .count(count)
+                    .percentage(Math.round(percentage * 100.0) / 100.0)
+                    .build());
+        }
+        return result;
+    }
+
+    // ============== AI ASSESSMENT DISTRIBUTION ==============
+
+    public List<AiAssessmentCount> getAiAssessmentDistribution() {
+        List<Object[]> data = postAiAssessmentRepository.getAssessmentDistribution();
+        long total = data.stream().mapToLong(row -> Long.parseLong(row[1].toString())).sum();
+        
+        return data.stream().map(row -> {
+            String assessment = row[0].toString();
+            Long count = Long.parseLong(row[1].toString());
+            Double percentage = total > 0 ? (count * 100.0 / total) : 0.0;
+            
+            String displayName = "SUSPICIOUS".equals(assessment) ? "Nghi ngờ gian lận" : "Bình thường";
+            
+            return AiAssessmentCount.builder()
+                    .assessment(assessment)
+                    .displayName(displayName)
+                    .count(count)
+                    .percentage(Math.round(percentage * 100.0) / 100.0)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    // ============== RECENT ACTIVITIES ==============
+
+    public List<RecentActivity> getRecentActivities(int limit) {
+        List<RecentActivity> activities = new ArrayList<>();
+        
+        // Recent orders
+        List<Object[]> recentOrders = adminStatisticsRepository.getRecentOrders(limit / 3);
+        for (Object[] row : recentOrders) {
+            String oderId = row[0] != null ? row[0].toString() : "";
+            String time = row[1] != null ? row[1].toString() : "";
+            String status = row[2] != null ? row[2].toString() : "";
+            
+            activities.add(RecentActivity.builder()
+                    .type("ORDER")
+                    .description("Đơn hàng mới: " + status)
+                    .targetId(oderId)
+                    .icon("shopping-cart")
+                    .time(time)
+                    .build());
+        }
+        
+        // Recent posts
+        List<Object[]> recentPosts = postsRepository.getRecentPosts(limit / 3);
+        for (Object[] row : recentPosts) {
+            String postId = row[0] != null ? row[0].toString() : "";
+            String title = row[1] != null ? row[1].toString() : "";
+            String time = row[2] != null ? row[2].toString() : "";
+            
+            if (title.length() > 40) title = title.substring(0, 40) + "...";
+            
+            activities.add(RecentActivity.builder()
+                    .type("POST")
+                    .description("Bài đăng mới: " + title)
+                    .targetId(postId)
+                    .icon("box")
+                    .time(time)
+                    .build());
+        }
+        
+        // Recent reports
+        List<Object[]> recentReports = reportRepository.getRecentReports(limit / 3);
+        for (Object[] row : recentReports) {
+            String reportId = row[0] != null ? row[0].toString() : "";
+            String time = row[1] != null ? row[1].toString() : "";
+            
+            activities.add(RecentActivity.builder()
+                    .type("REPORT")
+                    .description("Báo cáo mới #" + reportId.substring(0, Math.min(8, reportId.length())))
+                    .targetId(reportId)
+                    .icon("flag")
+                    .time(time)
+                    .build());
+        }
+        
+        // Sort by time descending and limit
+        return activities.stream()
+                .sorted((a, b) -> {
+                    if (a.getTime() == null) return 1;
+                    if (b.getTime() == null) return -1;
+                    return b.getTime().compareTo(a.getTime());
+                })
+                .limit(limit)
+                .collect(Collectors.toList());
+    }
+
     // ============== ORDERS STATISTICS ==============
 
     public Page<OrderStatisticsResponse> getOrdersStatistics(LocalDate fromDate, LocalDate toDate, int page, int size) {
@@ -99,7 +384,6 @@ public class AdminStatisticsService {
         LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
         LocalDateTime toDateTime = toDate != null ? toDate.atTime(LocalTime.MAX) : null;
 
-        // Get all orders without pagination for export
         List<Order> orders = adminStatisticsRepository.findOrdersWithDateRange(
                 fromDateTime, toDateTime, Pageable.unpaged()).getContent();
         
