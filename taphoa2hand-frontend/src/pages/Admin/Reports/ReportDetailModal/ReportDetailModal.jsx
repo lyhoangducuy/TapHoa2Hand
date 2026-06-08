@@ -1,41 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ReportDetailModal.module.scss';
+import {
+    CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter,
+    CButton, CBadge, CSpinner, CFormTextarea,
+    CNav, CNavItem, CNavLink,
+    CTable, CTableHead, CTableRow, CTableHeaderCell, CTableBody, CTableDataCell,
+} from '@coreui/react';
+import CIcon from '@coreui/icons-react';
+import {
+    cilCheck, cilX, cilWarning, cilDollar, cilUser,
+    cilFile, cilInfo, cilCheckCircle, cilLink,
+} from '@coreui/icons';
 import { updateReportStatus } from '../../../../services/reportAdminService';
 import { updateOrderStatus } from '../../../../services/orderService';
 import { toast } from 'react-toastify';
-import {
-    FiAlertTriangle, FiTrash2, FiEyeOff, FiLock, FiKey,
-    FiSlash, FiXCircle, FiDollarSign, FiCheck, FiX,
-    FiUser, FiFileText, FiPackage, FiCheckCircle,
-} from 'react-icons/fi';
 
 const cx = classNames.bind(styles);
 
 const ALL_PENALTIES = [
-    { value: 'WARNING', label: 'Cảnh cáo', icon: FiAlertTriangle, desc: 'Gửi cảnh báo đến tài khoản' },
-    { value: 'PERMANENT_BAN', label: 'Khóa vĩnh viễn', icon: FiSlash, desc: 'Cấm vĩnh viễn khỏi nền tảng' },
-    { value: 'REFUND_BUYER', label: 'Hoàn tiền người mua', icon: FiDollarSign, desc: 'Hoàn tiền cho người mua' },
-    { value: 'REFUND_REPORTER', label: 'Hoàn tiền người tố', icon: FiDollarSign, desc: 'Hoàn tiền cho người tố cáo' },
+    { value: 'WARNING', label: 'Cảnh cáo', icon: cilWarning, desc: 'Gửi cảnh báo đến tài khoản' },
+    { value: 'PERMANENT_BAN', label: 'Khóa vĩnh viễn', icon: cilLink, desc: 'Cấm vĩnh viễn khỏi nền tảng' },
+    { value: 'REFUND_BUYER', label: 'Hoàn tiền người mua', icon: cilDollar, desc: 'Hoàn tiền cho người mua' },
+    { value: 'REFUND_REPORTER', label: 'Hoàn tiền người tố cáo', icon: cilDollar, desc: 'Hoàn tiền cho người tố cáo' },
 ];
 
 const STATUS_CONFIG = {
-    PENDING: { label: 'Chờ xử lý', bg: '#fff9e6', color: '#b45309', dot: '#f59e0b' },
-    APPROVED: { label: 'Đã duyệt', bg: '#eff6ff', color: '#1d4ed8', dot: '#3b82f6' },
-    PROCESSED: { label: 'Đã xử lý', bg: '#f0fdf4', color: '#166534', dot: '#22c55e' },
-    REJECTED: { label: 'Bị từ chối', bg: '#fef2f2', color: '#991b1b', dot: '#ef4444' },
+    PENDING:    { color: 'warning', label: 'Chờ xử lý' },
+    APPROVED:   { color: 'info',    label: 'Đã duyệt' },
+    PROCESSED:  { color: 'success', label: 'Đã xử lý' },
+    REJECTED:   { color: 'danger',  label: 'Bị từ chối' },
 };
 
 const TYPE_CONFIG = {
-    USER: 'Báo cáo người dùng',
-    POST: 'Báo cáo bài đăng',
-    ORDER: 'Báo cáo đơn hàng',
-};
-
-const TYPE_ICON = {
-    USER: FiUser,
-    POST: FiFileText,
-    ORDER: FiPackage,
+    USER: { label: 'Báo cáo người dùng', icon: cilUser },
+    POST: { label: 'Báo cáo bài đăng', icon: cilFile },
+    ORDER: { label: 'Báo cáo đơn hàng', icon: cilInfo },
 };
 
 const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate }) => {
@@ -43,18 +43,17 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [selectedPenalties, setSelectedPenalties] = useState([]);
     const [resolutionNote, setResolutionNote] = useState('');
-    const [confirmModal, setConfirmModal] = useState(false);
-    const [confirmModalStatus, setConfirmModalStatus] = useState('');
+    const [confirmAction, setConfirmAction] = useState(null);
+    const [showConfirm, setShowConfirm] = useState(false);
 
     useEffect(() => {
         if (report) {
             setResolutionNote(report.resolutionNote || '');
-            setSelectedPenalties(
-                (report.penalties || []).map(p => p.action)
-            );
+            setSelectedPenalties((report.penalties || []).map(p => p.action));
+            setActiveTab('detail');
+            setShowConfirm(false);
+            setConfirmAction(null);
         }
-        setActiveTab('detail');
-        setConfirmModal(false);
     }, [report]);
 
     if (!isOpen || !report) return null;
@@ -64,30 +63,23 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate }) => {
 
     const togglePenalty = (value) => {
         setSelectedPenalties(prev =>
-            prev.includes(value)
-                ? prev.filter(p => p !== value)
-                : [...prev, value]
+            prev.includes(value) ? prev.filter(p => p !== value) : [...prev, value]
         );
     };
 
-    const handleReview = async (targetStatus) => {
-        setConfirmModal(true);
-        setConfirmModalStatus(targetStatus);
+    const handleReview = (targetStatus) => {
+        setConfirmAction(targetStatus);
+        setShowConfirm(true);
     };
 
     const handleConfirmSubmit = async () => {
-        setConfirmModal(false);
+        setShowConfirm(false);
         try {
             setIsLoading(true);
-
-            // Nếu có orderId và chọn REFUND_BUYER → update order sang RETURNED
             if (report.orderId && selectedPenalties.includes('REFUND_BUYER')) {
                 await updateOrderStatus(report.orderId, 'RETURNED');
             }
-
-            // Luôn update report status
-            await updateReportStatus(report.id, confirmModalStatus);
-
+            await updateReportStatus(report.id, confirmAction);
             toast.success('Xử lý báo cáo thành công!');
             onStatusUpdate?.();
             onClose();
@@ -104,119 +96,146 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate }) => {
         return new Date(dateStr).toLocaleString('vi-VN');
     };
 
-    const getTypeLabel = (type) => TYPE_CONFIG[type] || type;
+    const typeInfo = TYPE_CONFIG[report.type?.name] || { label: report.type?.name, icon: cilInfo };
+    const TypeIcon = typeInfo.icon;
 
     return (
-        <div className={cx('modal')} onClick={onClose}>
-            <div className={cx('modalContent')} onClick={e => e.stopPropagation()}>
-                {/* Header */}
-                <div className={cx('header')}>
-                    <div className={cx('header-left')}>
-                        <h2>Chi tiết báo cáo</h2>
-                        <div className={cx('header-meta')}>
-                            <span className={cx('report-id')}>{report.id?.slice(0, 12)}...</span>
-                            <span className={cx('type-pill')}>
-                                {(() => {
-                                    const Icon = TYPE_ICON[report.type?.name];
-                                    return Icon ? <><Icon size={12} style={{ marginRight: 4 }} />{getTypeLabel(report.type?.name)}</> : getTypeLabel(report.type?.name);
-                                })()}
-                            </span>
-                            <span className={cx('status-pill')} style={{ background: sc.bg, color: sc.color }}>
-                                <span className={cx('status-dot')} style={{ background: sc.dot }} />
-                                {sc.label}
-                            </span>
+        <>
+            <CModal size="lg" visible={isOpen} onClose={onClose} backdrop="static">
+                <CModalHeader>
+                    <CModalTitle>
+                        <CIcon icon={cilInfo} className="me-2" />
+                        Chi tiết báo cáo
+                    </CModalTitle>
+                </CModalHeader>
+                <CModalBody>
+                    {/* Meta info bar */}
+                    <div className="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded">
+                        <div className="d-flex gap-2 align-items-center">
+                            <small className="text-muted text-truncate" style={{ maxWidth: '150px' }}>
+                                ID: {report.id?.slice(0, 12)}...
+                            </small>
+                            <CBadge color="secondary" shape="rounded-pill">
+                                <CIcon icon={TypeIcon} className="me-1" />
+                                {typeInfo.label}
+                            </CBadge>
                         </div>
+                        <CBadge color={sc.color} shape="rounded-pill" className="px-3 py-2">
+                            {sc.label}
+                        </CBadge>
                     </div>
-                    <button className={cx('closeBtn')} onClick={onClose}><FiX /></button>
-                </div>
 
-                {/* Tabs */}
-                <div className={cx('tabs')}>
-                    <button
-                        className={cx('tab', { active: activeTab === 'detail' })}
-                        onClick={() => setActiveTab('detail')}
-                    >Chi tiết</button>
-                    <button
-                        className={cx('tab', { active: activeTab === 'review' })}
-                        onClick={() => setActiveTab('review')}
-                    >Xử lý & Phạt</button>
-                </div>
+                    {/* Tabs */}
+                    <CNav variant="tabs" className="mb-3">
+                        <CNavItem>
+                            <CNavLink
+                                active={activeTab === 'detail'}
+                                onClick={() => setActiveTab('detail')}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                <CIcon icon={cilInfo} className="me-1" /> Chi tiết
+                            </CNavLink>
+                        </CNavItem>
+                        <CNavItem>
+                            <CNavLink
+                                active={activeTab === 'review'}
+                                onClick={() => setActiveTab('review')}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                <CIcon icon={cilCheckCircle} className="me-1" /> Xử lý & Phạt
+                            </CNavLink>
+                        </CNavItem>
+                    </CNav>
 
-                {/* Body */}
-                <div className={cx('body')}>
-                    {activeTab === 'detail' ? (
-                        <div className={cx('detail-view')}>
+                    {/* Tab: Detail */}
+                    {activeTab === 'detail' && (
+                        <div>
                             {/* Reporter & Reported */}
-                            <div className={cx('info-grid')}>
-                                <div className={cx('info-card')}>
-                                    <span className={cx('info-label')}>Người báo cáo</span>
-                                    <span className={cx('info-value')}>{report.reporterName || '—'}</span>
-                                    <span className={cx('info-sub')}>{report.reporterId?.slice(0, 8)}...</span>
+                            <div className="row g-3 mb-3">
+                                <div className="col-md-6">
+                                    <div className="p-3 border rounded bg-white">
+                                        <div className="text-muted small mb-1">Người báo cáo</div>
+                                        <div className="fw-semibold">{report.reporterName || '—'}</div>
+                                        <small className="text-muted">{report.reporterId?.slice(0, 8)}...</small>
+                                    </div>
                                 </div>
-                                <div className={cx('info-card')}>
-                                    <span className={cx('info-label')}>Người bị báo cáo</span>
-                                    <span className={cx('info-value', 'warn')}>{report.reportedUserName || '—'}</span>
-                                    <span className={cx('info-sub')}>{report.reportedUserId?.slice(0, 8)}...</span>
+                                <div className="col-md-6">
+                                    <div className="p-3 border rounded bg-white">
+                                        <div className="text-muted small mb-1">Người bị báo cáo</div>
+                                        <div className="fw-semibold text-danger">{report.reportedUserName || '—'}</div>
+                                        <small className="text-muted">{report.reportedUserId?.slice(0, 8)}...</small>
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Target */}
                             {(report.postTitle || report.orderId) && (
-                                <div className={cx('target-card')}>
-                                    <span className={cx('info-label')}>
+                                <div className="mb-3 p-3 border rounded bg-white">
+                                    <div className="text-muted small mb-1">
                                         {report.postTitle ? 'Bài đăng bị báo cáo' : 'Đơn hàng bị báo cáo'}
-                                    </span>
-                                    <span className={cx('info-value')}>
-                                        {report.postTitle || `#${report.orderId}`}
-                                    </span>
+                                    </div>
+                                    <div className="fw-semibold">{report.postTitle || `#${report.orderId}`}</div>
                                 </div>
                             )}
 
                             {/* Reason */}
-                            <div className={cx('section')}>
-                                <span className={cx('section-label')}>Lý do báo cáo</span>
-                                <div className={cx('reason-chip')}>
-                                    {report.reason?.displayName || report.reason?.name || '—'}
+                            <div className="mb-3">
+                                <label className="form-label text-muted small fw-bold">Lý do báo cáo</label>
+                                <div>
+                                    <CBadge color="warning" shape="rounded-pill" className="px-3 py-2">
+                                        {report.reason?.displayName || report.reason?.name || '—'}
+                                    </CBadge>
                                 </div>
                             </div>
 
                             {/* Detail */}
-                            <div className={cx('section')}>
-                                <span className={cx('section-label')}>Mô tả chi tiết</span>
-                                <p className={cx('detail-text')}>{report.detail || '—'}</p>
+                            <div className="mb-3">
+                                <label className="form-label text-muted small fw-bold">Mô tả chi tiết</label>
+                                <div
+                                    className="p-3 bg-light rounded border"
+                                    style={{ whiteSpace: 'pre-wrap', minHeight: '60px' }}
+                                >
+                                    {report.detail || '—'}
+                                </div>
                             </div>
 
                             {/* Evidences */}
                             {report.evidences?.length > 0 && (
-                                <div className={cx('section')}>
-                                    <span className={cx('section-label')}>
+                                <div className="mb-3">
+                                    <label className="form-label text-muted small fw-bold">
                                         Ảnh minh chứng ({report.evidences.length})
-                                    </span>
-                                    <div className={cx('evidence-grid')}>
+                                    </label>
+                                    <div className="d-flex gap-2 flex-wrap">
                                         {report.evidences.map((ev, i) => (
                                             <a key={i} href={ev.imageUrl} target="_blank" rel="noreferrer">
-                                                <img src={ev.imageUrl} alt={`Minh chứng ${i + 1}`} />
+                                                <img
+                                                    src={ev.imageUrl}
+                                                    alt={`Minh chứng ${i + 1}`}
+                                                    style={{
+                                                        width: '80px', height: '80px',
+                                                        objectFit: 'cover', borderRadius: '8px',
+                                                        border: '1px solid #dee2e6',
+                                                    }}
+                                                />
                                             </a>
                                         ))}
                                     </div>
                                 </div>
                             )}
 
-                            {/* Applied penalties */}
+                            {/* Penalties */}
                             {report.penalties?.length > 0 && (
-                                <div className={cx('section')}>
-                                    <span className={cx('section-label')}>Hình phạt đã áp dụng</span>
-                                    <div className={cx('penalty-chips')}>
+                                <div className="mb-3">
+                                    <label className="form-label text-muted small fw-bold">Hình phạt đã áp dụng</label>
+                                    <div className="d-flex gap-2 flex-wrap">
                                         {report.penalties.map((p, i) => {
                                             const info = ALL_PENALTIES.find(x => x.value === p.action);
+                                            const PenaltyIcon = info?.icon || cilWarning;
                                             return (
-                                                <span key={i} className={cx('penalty-chip', 'applied')}>
-                                                    {(() => {
-                                                        const Icon = info?.icon;
-                                                        return Icon ? <Icon size={14} style={{ marginRight: 4 }} /> : null;
-                                                    })()}
+                                                <CBadge key={i} color="danger" shape="rounded-pill" className="px-3 py-2">
+                                                    <CIcon icon={PenaltyIcon} className="me-1" />
                                                     {info?.label || p.action}
-                                                </span>
+                                                </CBadge>
                                             );
                                         })}
                                     </div>
@@ -225,75 +244,91 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate }) => {
 
                             {/* Resolution */}
                             {report.resolutionNote && (
-                                <div className={cx('section')}>
-                                    <span className={cx('section-label')}>Ghi chú xử lý</span>
-                                    <p className={cx('resolution-text')}>{report.resolutionNote}</p>
+                                <div className="mb-3">
+                                    <label className="form-label text-muted small fw-bold">Ghi chú xử lý</label>
+                                    <div className="p-3 bg-light rounded border">
+                                        {report.resolutionNote}
+                                    </div>
                                 </div>
                             )}
 
                             {/* Timestamps */}
-                            <div className={cx('timestamps')}>
+                            <div className="d-flex gap-3 text-muted small">
                                 <span>Tạo: {formatDate(report.createdAt)}</span>
-                                {report.reviewedByName && (
-                                    <span>• Xử lý bởi: {report.reviewedByName}</span>
-                                )}
+                                {report.reviewedByName && <span>• Xử lý bởi: {report.reviewedByName}</span>}
                             </div>
                         </div>
-                    ) : (
-                        <div className={cx('review-view')}>
-                            {/* PENDING: chỉ hiện nút Duyệt/Từ chối */}
+                    )}
+
+                    {/* Tab: Review */}
+                    {activeTab === 'review' && (
+                        <div>
                             {currentStatus === 'PENDING' && (
-                                <>
-                                    <div className={cx('action-buttons')}>
-                                        <button
-                                            className={cx('btn-approve')}
-                                            onClick={() => handleReview('APPROVED')}
-                                            disabled={isLoading}
-                                        >
-                                            <FiCheckCircle size={16} style={{ marginRight: 6 }} />
-                                            Duyệt báo cáo
-                                        </button>
-                                        <button
-                                            className={cx('btn-reject')}
-                                            onClick={() => handleReview('REJECTED')}
-                                            disabled={isLoading}
-                                        >
-                                            <FiX size={16} style={{ marginRight: 6 }} />
-                                            Từ chối
-                                        </button>
+                                <div className="mb-3 p-3 border border-warning rounded bg-warning bg-opacity-10">
+                                    <div className="d-flex align-items-center mb-2">
+                                        <CIcon icon={cilWarning} className="text-warning me-2" />
+                                        <strong>Báo cáo đang chờ xử lý</strong>
                                     </div>
-                                </>
+                                    <p className="mb-0 text-muted small">
+                                        Bạn có thể duyệt báo cáo để tiếp tục xử lý, hoặc từ chối nếu báo cáo không hợp lệ.
+                                    </p>
+                                </div>
                             )}
 
-                            {/* APPROVED: hiện penalty grid + ghi chú + nút Xử lý xong */}
+                            {currentStatus === 'PENDING' && (
+                                <div className="d-flex gap-2 mb-3">
+                                    <CButton
+                                        color="success"
+                                        onClick={() => handleReview('APPROVED')}
+                                        disabled={isLoading}
+                                    >
+                                        <CIcon icon={cilCheckCircle} className="me-2" />
+                                        Duyệt báo cáo
+                                    </CButton>
+                                    <CButton
+                                        color="danger"
+                                        variant="outline"
+                                        onClick={() => handleReview('REJECTED')}
+                                        disabled={isLoading}
+                                    >
+                                        <CIcon icon={cilX} className="me-2" />
+                                        Từ chối
+                                    </CButton>
+                                </div>
+                            )}
+
                             {currentStatus === 'APPROVED' && (
-                                <>
-                                    <div className={cx('confirm-notice')}>
-                                        Báo cáo đã được duyệt. Vui lòng chọn hình phạt (nếu có) và bấm "Xử lý xong" để hoàn tất.
+                                <div>
+                                    <div className="alert alert-info d-flex align-items-center mb-3" role="alert">
+                                        <CIcon icon={cilInfo} className="me-2" />
+                                        Báo cáo đã được duyệt. Chọn hình phạt (nếu có) và bấm "Xử lý xong" để hoàn tất.
                                     </div>
 
-                                    <div className={cx('section')}>
-                                        <span className={cx('section-label')}>
+                                    <div className="mb-3">
+                                        <div className="form-label text-muted small fw-bold">
                                             Chọn hình phạt ({selectedPenalties.length} đã chọn)
-                                        </span>
-                                        <div className={cx('penalty-grid')}>
+                                        </div>
+                                        <div className="row g-2">
                                             {ALL_PENALTIES.map((p) => {
                                                 const selected = selectedPenalties.includes(p.value);
+                                                const PenaltyIcon = p.icon;
                                                 return (
-                                                    <div
-                                                        key={p.value}
-                                                        className={cx('penalty-item', { selected })}
-                                                        onClick={() => togglePenalty(p.value)}
-                                                    >
-                                                        <div className={cx('penalty-icon')}>
-                                                            <p.icon size={18} />
-                                                        </div>
-                                                        <div className={cx('penalty-info')}>
-                                                            <span className={cx('penalty-label')}>{p.label}</span>
-                                                            <span className={cx('penalty-desc')}>{p.desc}</span>
-                                                        </div>
-                                                        <div className={cx('penalty-check')}>
-                                                            {selected ? <FiCheck size={14} /> : null}
+                                                    <div key={p.value} className="col-md-6">
+                                                        <div
+                                                            className={`p-3 border rounded cursor-pointer ${selected ? 'border-primary bg-primary bg-opacity-5' : ''}`}
+                                                            onClick={() => togglePenalty(p.value)}
+                                                            style={{ cursor: 'pointer' }}
+                                                        >
+                                                            <div className="d-flex align-items-center justify-content-between">
+                                                                <div className="d-flex align-items-center gap-2">
+                                                                    <CIcon icon={PenaltyIcon} className="text-primary" />
+                                                                    <div>
+                                                                        <div className="fw-semibold small">{p.label}</div>
+                                                                        <div className="text-muted" style={{ fontSize: '0.75rem' }}>{p.desc}</div>
+                                                                    </div>
+                                                                </div>
+                                                                {selected && <CIcon icon={cilCheck} className="text-success" />}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 );
@@ -301,94 +336,94 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate }) => {
                                         </div>
                                     </div>
 
-                                    <div className={cx('section')}>
-                                        <span className={cx('section-label')}>Ghi chú xử lý</span>
-                                        <textarea
-                                            className={cx('resolution-input')}
-                                            value={resolutionNote}
-                                            onChange={e => setResolutionNote(e.target.value)}
-                                            placeholder="Nhập ghi chú về kết quả xử lý (sẽ được thông báo đến người báo cáo)..."
+                                    <div className="mb-3">
+                                        <label className="form-label text-muted small fw-bold">Ghi chú xử lý</label>
+                                        <CFormTextarea
                                             rows={3}
+                                            value={resolutionNote}
+                                            onChange={(e) => setResolutionNote(e.target.value)}
+                                            placeholder="Nhập ghi chú về kết quả xử lý (sẽ được thông báo đến người báo cáo)..."
                                         />
                                     </div>
 
-                                    <div className={cx('action-buttons')}>
-                                        <button
-                                            className={cx('btn-process')}
+                                    <div className="d-flex gap-2">
+                                        <CButton
+                                            color="success"
                                             onClick={() => handleReview('PROCESSED')}
                                             disabled={isLoading}
                                         >
-                                            <FiCheckCircle size={16} style={{ marginRight: 6 }} />
+                                            <CIcon icon={cilCheckCircle} className="me-2" />
                                             Xử lý xong
-                                        </button>
-                                        <button
-                                            className={cx('btn-reject')}
+                                        </CButton>
+                                        <CButton
+                                            color="danger"
+                                            variant="outline"
                                             onClick={() => handleReview('REJECTED')}
                                             disabled={isLoading}
                                         >
-                                            <FiX size={16} style={{ marginRight: 6 }} />
+                                            <CIcon icon={cilX} className="me-2" />
                                             Từ chối
-                                        </button>
+                                        </CButton>
                                     </div>
-                                </>
+                                </div>
                             )}
 
-                            {/* PROCESSED hoặc REJECTED: hiện thông báo đã xử lý */}
                             {(currentStatus === 'PROCESSED' || currentStatus === 'REJECTED') && (
-                                <div className={cx('already-done')}>
-                                    <span>Báo cáo đã được xử lý với trạng thái: </span>
-                                    <strong style={{ color: sc.color }}>{sc.label}</strong>
+                                <div className="alert alert-secondary d-flex align-items-center" role="alert">
+                                    <CIcon icon={cilLink} className="me-2" />
+                                    Báo cáo đã được xử lý với trạng thái:{' '}
+                                    <CBadge color={sc.color} className="ms-2">{sc.label}</CBadge>
                                 </div>
                             )}
                         </div>
                     )}
-                </div>
+                </CModalBody>
+                <CModalFooter>
+                    <CButton color="secondary" variant="ghost" onClick={onClose} disabled={isLoading}>
+                        Đóng
+                    </CButton>
+                </CModalFooter>
+            </CModal>
 
-                {/* Confirm Modal */}
-                {confirmModal && (
-                    <div className={cx('confirm-overlay')} onClick={() => setConfirmModal(false)}>
-                        <div className={cx('confirm-box')} onClick={e => e.stopPropagation()}>
-                            <h3>Xác nhận xử lý</h3>
-                            <p>Bạn sắp thực hiện:</p>
-                            <ul>
-                                <li><strong>Trạng thái:</strong> {STATUS_CONFIG[confirmModalStatus]?.label}</li>
-                                {selectedPenalties.length > 0 && (
-                                    <li>
-                                        <strong>Hình phạt ({selectedPenalties.length}):</strong>
-                                        <ul>
-                                            {selectedPenalties.map(p => {
-                                                const info = ALL_PENALTIES.find(x => x.value === p);
-                                                const Icon = info?.icon;
-                                                return (
-                                                    <li key={p}>
-                                                        {Icon && <Icon size={14} style={{ marginRight: 4 }} />}
-                                                        {info?.label}
-                                                    </li>
-                                                );
-                                            })}
-                                        </ul>
-                                    </li>
-                                )}
-                                {resolutionNote && (
-                                    <li><strong>Note:</strong> {resolutionNote}</li>
-                                )}
-                            </ul>
-                            <p className={cx('confirm-warning')}>Hành động này sẽ được áp dụng ngay. Tiếp tục?</p>
-                            <div className={cx('confirm-actions')}>
-                                <button className={cx('btn-cancel')} onClick={() => setConfirmModal(false)}>
-                                    <FiX size={14} style={{ marginRight: 4 }} />
-                                    Hủy
-                                </button>
-                                <button className={cx('btn-confirm')} onClick={handleConfirmSubmit}>
-                                    <FiCheck size={14} style={{ marginRight: 4 }} />
-                                    Xác nhận
-                                </button>
-                            </div>
+            {/* Confirm sub-modal */}
+            {showConfirm && (
+                <CModal visible={showConfirm} onClose={() => setShowConfirm(false)} centered size="sm" backdrop="static">
+                    <CModalHeader>
+                        <CModalTitle>Xác nhận xử lý</CModalTitle>
+                    </CModalHeader>
+                    <CModalBody>
+                        <p className="mb-2">Bạn sắp thực hiện:</p>
+                        <ul className="mb-2">
+                            <li><strong>Trạng thái:</strong> {STATUS_CONFIG[confirmAction]?.label}</li>
+                            {selectedPenalties.length > 0 && (
+                                <li>
+                                    <strong>Hình phạt ({selectedPenalties.length}):</strong>
+                                    <ul>
+                                        {selectedPenalties.map(p => {
+                                            const info = ALL_PENALTIES.find(x => x.value === p);
+                                            return <li key={p}>{info?.label || p}</li>;
+                                        })}
+                                    </ul>
+                                </li>
+                            )}
+                            {resolutionNote && <li><strong>Ghi chú:</strong> {resolutionNote}</li>}
+                        </ul>
+                        <div className="alert alert-warning py-2 small mb-0">
+                            <CIcon icon={cilLink} className="me-1" />
+                            Hành động này sẽ được áp dụng ngay.
                         </div>
-                    </div>
-                )}
-            </div>
-        </div>
+                    </CModalBody>
+                    <CModalFooter>
+                        <CButton color="secondary" variant="ghost" onClick={() => setShowConfirm(false)} disabled={isLoading}>
+                            Hủy
+                        </CButton>
+                        <CButton color="primary" onClick={handleConfirmSubmit} disabled={isLoading}>
+                            {isLoading ? <CSpinner size="sm" /> : <><CIcon icon={cilCheck} className="me-1" /> Xác nhận</>}
+                        </CButton>
+                    </CModalFooter>
+                </CModal>
+            )}
+        </>
     );
 };
 

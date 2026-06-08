@@ -2,17 +2,17 @@ import React, { useState, useEffect, useCallback } from 'react';
 import classNames from 'classnames/bind';
 import { toast } from 'react-toastify';
 import {
-    CCard, CCardBody, CCardHeader, CButton, CFormInput,
-    CInputGroup, CInputGroupText, CPagination, CPaginationItem,
-    CModal, CModalHeader, CModalBody, CModalFooter, CSpinner
+    CCard, CCardBody, CCardHeader,
+    CButton, CFormInput, CInputGroup, CInputGroupText,
+    CPagination, CPaginationItem, CSpinner,
+    CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { cilSearch, cilTrash, cilPencil } from '@coreui/icons';
+import { cilSearch, cilPencil } from '@coreui/icons';
 
 import FeedbackTable from './FeedbackTable/FeedbackTable';
 import * as feedbackService from '../../../services/feedbackService';
 import FeedbackPopup from '../../../components/Feedback/FeedbackPopup';
-import RatingDisplay from '../../../components/Feedback/RatingDisplay';
 import styles from './AdminFeedbackPage.module.scss';
 
 const cx = classNames.bind(styles);
@@ -50,7 +50,6 @@ function AdminFeedbackPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentPage, debouncedSearch, fetchFeedbacks]);
 
-    // Debounce search
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearch(searchTerm);
@@ -83,29 +82,18 @@ function AdminFeedbackPage() {
 
     const renderPaginationItems = () => {
         const pages = [];
-        const start = Math.max(0, currentPage - 2);
-        const end = Math.min(totalPages - 1, currentPage + 2);
-
-        if (start > 0) {
+        const windowSize = 5;
+        let start = Math.max(0, currentPage - Math.floor(windowSize / 2));
+        let end = Math.min(totalPages, start + windowSize);
+        start = Math.max(0, end - windowSize);
+        for (let i = start; i < end; i++) {
             pages.push(
-                <CPaginationItem key={0} onClick={() => setCurrentPage(0)}>1</CPaginationItem>,
-            );
-            if (start > 1) pages.push(<CPaginationItem key="ellipsis1" disabled>…</CPaginationItem>);
-        }
-
-        for (let i = start; i <= end; i++) {
-            pages.push(
-                <CPaginationItem key={i} active={i === currentPage} onClick={() => setCurrentPage(i)}>
+                <CPaginationItem
+                    key={i}
+                    active={i === currentPage}
+                    onClick={() => setCurrentPage(i)}
+                >
                     {i + 1}
-                </CPaginationItem>
-            );
-        }
-
-        if (end < totalPages - 1) {
-            if (end < totalPages - 2) pages.push(<CPaginationItem key="ellipsis2" disabled>…</CPaginationItem>);
-            pages.push(
-                <CPaginationItem key={totalPages - 1} onClick={() => setCurrentPage(totalPages - 1)}>
-                    {totalPages}
                 </CPaginationItem>
             );
         }
@@ -115,18 +103,12 @@ function AdminFeedbackPage() {
     return (
         <div className={cx('feedback-page')}>
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h3 className="fw-bold m-0">📋 Quản lý đánh giá</h3>
-                <span className={cx('total-badge')}>
-                    Tổng: <strong>{totalElements}</strong> đánh giá
-                </span>
-            </div>
-
-            <CCard className="mb-4 shadow-sm border-0">
-                <CCardHeader className="bg-white py-3">
-                    <CInputGroup className="w-50">
+                <h3 className="fw-bold m-0">Quản lý đánh giá</h3>
+                <div className="d-flex align-items-center gap-2">
+                    <CInputGroup style={{ maxWidth: '300px' }}>
                         <CInputGroupText><CIcon icon={cilSearch} /></CInputGroupText>
                         <CFormInput
-                            placeholder="Tìm kiếm theo tên người đánh giá, bình luận..."
+                            placeholder="Tìm kiếm (người đánh giá, bình luận)..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -136,11 +118,22 @@ function AdminFeedbackPage() {
                             </CButton>
                         )}
                     </CInputGroup>
+                </div>
+            </div>
+
+            <CCard className="mb-4 shadow-sm border-0">
+                <CCardHeader className="bg-white py-3">
+                    <div className="d-flex justify-content-between align-items-center">
+                        <span className="text-muted small">
+                            Tổng: <strong>{totalElements}</strong> đánh giá
+                        </span>
+                    </div>
                 </CCardHeader>
                 <CCardBody>
                     {loading ? (
                         <div className="text-center py-5">
                             <CSpinner color="primary" />
+                            <div className="mt-2 text-muted small">Đang tải dữ liệu...</div>
                         </div>
                     ) : (
                         <FeedbackTable
@@ -155,18 +148,23 @@ function AdminFeedbackPage() {
                             <CPagination>
                                 <CPaginationItem
                                     disabled={currentPage === 0}
-                                    onClick={() => setCurrentPage(currentPage - 1)}
+                                    onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
                                 >
-                                    ← Trước
+                                    Trước
                                 </CPaginationItem>
                                 {renderPaginationItems()}
                                 <CPaginationItem
                                     disabled={currentPage >= totalPages - 1}
-                                    onClick={() => setCurrentPage(currentPage + 1)}
+                                    onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
                                 >
-                                    Sau →
+                                    Sau
                                 </CPaginationItem>
                             </CPagination>
+                        </div>
+                    )}
+                    {totalPages > 1 && (
+                        <div className="text-center mt-1">
+                            <small className="text-muted">Trang {currentPage + 1} / {totalPages}</small>
                         </div>
                     )}
                 </CCardBody>
@@ -177,11 +175,13 @@ function AdminFeedbackPage() {
                 visible={editModal.open}
                 onClose={() => setEditModal({ open: false, feedback: null })}
                 size="lg"
-                centered
+                backdrop="static"
             >
-                <CModalHeader closeButton>
-                    <CIcon icon={cilPencil} className="me-2" />
-                    Chỉnh sửa đánh giá
+                <CModalHeader>
+                    <CModalTitle>
+                        <CIcon icon={cilPencil} className="me-2" />
+                        Chỉnh sửa đánh giá
+                    </CModalTitle>
                 </CModalHeader>
                 <CModalBody>
                     {editModal.feedback && (

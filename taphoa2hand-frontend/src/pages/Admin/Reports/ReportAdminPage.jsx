@@ -1,8 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import styles from './ReportAdminPage.module.scss';
+import React, { useState, useEffect, useCallback } from 'react';
+import classNames from 'classnames/bind';
+import {
+    CCard, CCardBody, CCardHeader,
+    CButton, CFormInput, CFormSelect,
+    CInputGroup, CInputGroupText,
+    CPagination, CPaginationItem, CSpinner,
+    CBadge, CTable, CTableHead, CTableRow,
+    CTableHeaderCell, CTableBody, CTableDataCell,
+    CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter,
+} from '@coreui/react';
+import CIcon from '@coreui/icons-react';
+import { cilFilter, cilSearch } from '@coreui/icons';
+
 import ReportTable from './ReportTable/ReportTable';
 import ReportDetailModal from './ReportDetailModal';
 import { getAllReports } from '../../../services/reportAdminService';
+import styles from './ReportAdminPage.module.scss';
+
+const cx = classNames.bind(styles);
+
+const REPORT_TYPES = [
+    { value: 'ALL', label: 'Tất cả loại' },
+    { value: 'USER', label: 'Người dùng' },
+    { value: 'POST', label: 'Bài đăng' },
+    { value: 'ORDER', label: 'Đơn hàng' },
+];
+
+const REPORT_STATUSES = [
+    { value: 'ALL', label: 'Tất cả trạng thái' },
+    { value: 'PENDING', label: 'Chờ xử lý' },
+    { value: 'APPROVED', label: 'Đã duyệt' },
+    { value: 'PROCESSED', label: 'Đã xử lý' },
+    { value: 'REJECTED', label: 'Bị từ chối' },
+];
 
 const ReportAdminPage = () => {
     const [reports, setReports] = useState([]);
@@ -11,6 +41,12 @@ const ReportAdminPage = () => {
     const [selectedReport, setSelectedReport] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(0);
+    const [pageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalElements, setTotalElements] = useState(0);
+
     // Filter states
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [typeFilter, setTypeFilter] = useState('ALL');
@@ -18,29 +54,21 @@ const ReportAdminPage = () => {
     const [dateToFilter, setDateToFilter] = useState('');
     const [searchFilter, setSearchFilter] = useState('');
 
-    // Load all reports
     useEffect(() => {
         fetchReports();
     }, []);
 
-    // Apply filters whenever filter values change
     useEffect(() => {
         applyFilters();
-    }, [reports, statusFilter, typeFilter, dateFromFilter, dateToFilter, searchFilter]);
+    }, [reports, statusFilter, typeFilter, dateFromFilter, dateToFilter, searchFilter, currentPage]);
 
     const fetchReports = async () => {
         try {
             setIsLoading(true);
-
             const data = await getAllReports();
-            console.log('Reports from API:', data);
-
-            // data đã là array
             setReports(Array.isArray(data) ? data : []);
-
         } catch (error) {
             console.error('Error fetching reports:', error);
-            alert('Lỗi khi tải danh sách báo cáo');
         } finally {
             setIsLoading(false);
         }
@@ -49,72 +77,40 @@ const ReportAdminPage = () => {
     const applyFilters = () => {
         let filtered = [...reports];
 
-        // Filter by type
         if (typeFilter !== 'ALL') {
-            filtered = filtered.filter(
-                (r) => r.type?.name === typeFilter
-            );
+            filtered = filtered.filter((r) => r.type?.name === typeFilter);
         }
 
-        // Filter by status
         if (statusFilter !== 'ALL') {
-            filtered = filtered.filter(
-                (r) => r.status?.name === statusFilter
-            );
+            filtered = filtered.filter((r) => r.status?.name === statusFilter);
         }
 
-        // Filter by date range
         if (dateFromFilter) {
             const fromDate = new Date(dateFromFilter);
-
-            filtered = filtered.filter(
-                (r) => new Date(r.createdAt) >= fromDate
-            );
+            filtered = filtered.filter((r) => new Date(r.createdAt) >= fromDate);
         }
 
         if (dateToFilter) {
             const toDate = new Date(dateToFilter);
             toDate.setHours(23, 59, 59, 999);
+            filtered = filtered.filter((r) => new Date(r.createdAt) <= toDate);
+        }
 
-            filtered = filtered.filter(
-                (r) => new Date(r.createdAt) <= toDate
+        if (searchFilter.trim()) {
+            const search = searchFilter.toLowerCase();
+            filtered = filtered.filter((r) =>
+                r.reason?.displayName?.toLowerCase().includes(search) ||
+                r.detail?.toLowerCase().includes(search) ||
+                r.reporterName?.toLowerCase().includes(search) ||
+                r.reportedUserName?.toLowerCase().includes(search) ||
+                r.postTitle?.toLowerCase().includes(search) ||
+                r.id?.toLowerCase().includes(search)
             );
         }
 
-        // Filter by search
-        if (searchFilter.trim()) {
-            const search = searchFilter.toLowerCase();
-
-            filtered = filtered.filter((r) => {
-                return (
-                    r.reason?.displayName
-                        ?.toLowerCase()
-                        .includes(search) ||
-
-                    r.detail
-                        ?.toLowerCase()
-                        .includes(search) ||
-
-                    r.reporterName
-                        ?.toLowerCase()
-                        .includes(search) ||
-
-                    r.reportedUserName
-                        ?.toLowerCase()
-                        .includes(search) ||
-
-                    r.postTitle
-                        ?.toLowerCase()
-                        .includes(search) ||
-
-                    r.id
-                        ?.toLowerCase()
-                        .includes(search)
-                );
-            });
-        }
-
         setFilteredReports(filtered);
+        setTotalElements(filtered.length);
+        setTotalPages(Math.max(1, Math.ceil(filtered.length / pageSize)));
     };
 
     const handleViewDetail = (report) => {
@@ -127,8 +123,8 @@ const ReportAdminPage = () => {
         setSelectedReport(null);
     };
 
-    const handleStatusUpdate = async () => {
-        await fetchReports();
+    const handleStatusUpdate = () => {
+        fetchReports();
         handleModalClose();
     };
 
@@ -138,155 +134,159 @@ const ReportAdminPage = () => {
         setDateFromFilter('');
         setDateToFilter('');
         setSearchFilter('');
+        setCurrentPage(0);
+    };
+
+    const handleFilterChange = (setter) => (e) => {
+        setter(e.target.value);
+        setCurrentPage(0);
+    };
+
+    const paginatedReports = filteredReports.slice(
+        currentPage * pageSize,
+        (currentPage + 1) * pageSize
+    );
+
+    const renderPaginationItems = () => {
+        const items = [];
+        const windowSize = 5;
+        let start = Math.max(0, currentPage - Math.floor(windowSize / 2));
+        let end = Math.min(totalPages, start + windowSize);
+        start = Math.max(0, end - windowSize);
+        for (let i = start; i < end; i++) {
+            items.push(
+                <CPaginationItem
+                    key={i}
+                    active={i === currentPage}
+                    onClick={() => setCurrentPage(i)}
+                >
+                    {i + 1}
+                </CPaginationItem>
+            );
+        }
+        return items;
     };
 
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <h1>Quản lý báo cáo</h1>
-                <p>
-                    Xem, lọc và xử lý các báo cáo từ người dùng
-                </p>
+        <div className={cx('report-page')}>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <h3 className="fw-bold m-0">Quản lý báo cáo</h3>
+                <CInputGroup style={{ maxWidth: '320px' }}>
+                    <CInputGroupText><CIcon icon={cilSearch} /></CInputGroupText>
+                    <CFormInput
+                        placeholder="Tìm kiếm (ID, lý do, người báo cáo)..."
+                        value={searchFilter}
+                        onChange={(e) => {
+                            setSearchFilter(e.target.value);
+                            setCurrentPage(0);
+                        }}
+                    />
+                    {searchFilter && (
+                        <CButton color="secondary" variant="outline" onClick={() => { setSearchFilter(''); setCurrentPage(0); }}>
+                            ✕
+                        </CButton>
+                    )}
+                </CInputGroup>
             </div>
 
-            {/* Filter Section */}
-            <div className={styles.filterSection}>
-                <div className={styles.filterGroup}>
-
-                    {/* Status Filter */}
-                    <div className={styles.filterItem}>
-                        <label>Trạng thái:</label>
-
-                        <select
-                            value={statusFilter}
-                            onChange={(e) =>
-                                setStatusFilter(e.target.value)
-                            }
-                            className={styles.filterInput}
-                        >
-                            <option value="ALL">
-                                Tất cả
-                            </option>
-
-                            <option value="PENDING">
-                                Chờ xử lý
-                            </option>
-
-                            <option value="APPROVED">
-                                Đã duyệt
-                            </option>
-
-                            <option value="PROCESSED">
-                                Đã xử lý
-                            </option>
-
-                            <option value="REJECTED">
-                                Bị từ chối
-                            </option>
-                        </select>
+            <CCard className="mb-4 shadow-sm border-0">
+                <CCardHeader className="bg-white py-3">
+                    <div className="d-flex justify-content-between align-items-center">
+                        <div className="d-flex gap-2 flex-wrap align-items-center">
+                            <CFormSelect
+                                size="sm"
+                                style={{ width: '160px' }}
+                                value={statusFilter}
+                                onChange={handleFilterChange(setStatusFilter)}
+                            >
+                                {REPORT_STATUSES.map((s) => (
+                                    <option key={s.value} value={s.value}>{s.label}</option>
+                                ))}
+                            </CFormSelect>
+                            <CFormSelect
+                                size="sm"
+                                style={{ width: '150px' }}
+                                value={typeFilter}
+                                onChange={handleFilterChange(setTypeFilter)}
+                            >
+                                {REPORT_TYPES.map((t) => (
+                                    <option key={t.value} value={t.value}>{t.label}</option>
+                                ))}
+                            </CFormSelect>
+                            <CFormInput
+                                type="date"
+                                size="sm"
+                                style={{ width: '140px' }}
+                                value={dateFromFilter}
+                                onChange={handleFilterChange(setDateFromFilter)}
+                                title="Từ ngày"
+                            />
+                            <CFormInput
+                                type="date"
+                                size="sm"
+                                style={{ width: '140px' }}
+                                value={dateToFilter}
+                                onChange={handleFilterChange(setDateToFilter)}
+                                title="Đến ngày"
+                            />
+                            <CButton
+                                color="secondary"
+                                variant="outline"
+                                size="sm"
+                                onClick={handleResetFilters}
+                                title="Đặt lại bộ lọc"
+                            >
+                                <CIcon icon={cilFilter} className="me-1" /> Đặt lại
+                            </CButton>
+                        </div>
+                        <small className="text-muted">
+                            Kết quả: <strong>{totalElements}</strong> báo cáo
+                        </small>
                     </div>
+                </CCardHeader>
+                <CCardBody>
+                    {isLoading ? (
+                        <div className="text-center py-5">
+                            <CSpinner color="primary" />
+                            <div className="mt-2 text-muted small">Đang tải dữ liệu...</div>
+                        </div>
+                    ) : (
+                        <>
+                            <ReportTable
+                                reports={paginatedReports}
+                                onViewDetail={handleViewDetail}
+                            />
+                            {totalPages > 1 && (
+                                <div className="d-flex justify-content-end mt-4">
+                                    <CPagination>
+                                        <CPaginationItem
+                                            disabled={currentPage === 0}
+                                            onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+                                        >
+                                            Trước
+                                        </CPaginationItem>
+                                        {renderPaginationItems()}
+                                        <CPaginationItem
+                                            disabled={currentPage >= totalPages - 1}
+                                            onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+                                        >
+                                            Sau
+                                        </CPaginationItem>
+                                    </CPagination>
+                                </div>
+                            )}
+                            {totalPages > 1 && (
+                                <div className="text-center mt-1">
+                                    <small className="text-muted">
+                                        Trang {currentPage + 1} / {totalPages}
+                                    </small>
+                                </div>
+                            )}
+                        </>
+                    )}
+                </CCardBody>
+            </CCard>
 
-                    {/* Type Filter */}
-                    <div className={styles.filterItem}>
-                        <label>Loại báo cáo:</label>
-
-                        <select
-                            value={typeFilter}
-                            onChange={(e) =>
-                                setTypeFilter(e.target.value)
-                            }
-                            className={styles.filterInput}
-                        >
-                            <option value="ALL">
-                                Tất cả
-                            </option>
-
-                            <option value="USER">
-                                Người dùng
-                            </option>
-
-                            <option value="POST">
-                                Bài đăng
-                            </option>
-
-                            <option value="ORDER">
-                                Đơn hàng
-                            </option>
-                        </select>
-                    </div>
-
-                    {/* Date From */}
-                    <div className={styles.filterItem}>
-                        <label>Từ ngày:</label>
-
-                        <input
-                            type="date"
-                            value={dateFromFilter}
-                            onChange={(e) =>
-                                setDateFromFilter(e.target.value)
-                            }
-                            className={styles.filterInput}
-                        />
-                    </div>
-
-                    {/* Date To */}
-                    <div className={styles.filterItem}>
-                        <label>Đến ngày:</label>
-
-                        <input
-                            type="date"
-                            value={dateToFilter}
-                            onChange={(e) =>
-                                setDateToFilter(e.target.value)
-                            }
-                            className={styles.filterInput}
-                        />
-                    </div>
-
-                    {/* Search */}
-                    <div className={styles.filterItem}>
-                        <label>Tìm kiếm:</label>
-
-                        <input
-                            type="text"
-                            placeholder="Lý do, người báo cáo, ID..."
-                            value={searchFilter}
-                            onChange={(e) =>
-                                setSearchFilter(e.target.value)
-                            }
-                            className={styles.filterInput}
-                        />
-                    </div>
-
-                    {/* Reset */}
-                    <button
-                        className={styles.resetBtn}
-                        onClick={handleResetFilters}
-                    >
-                        Đặt lại
-                    </button>
-                </div>
-
-                {/* Results */}
-                <div className={styles.resultsInfo}>
-                    <span>
-                        Kết quả:{' '}
-                        <strong>
-                            {filteredReports.length}
-                        </strong>{' '}
-                        báo cáo
-                    </span>
-                </div>
-            </div>
-
-            {/* Report Table */}
-            <ReportTable
-                reports={filteredReports}
-                onViewDetail={handleViewDetail}
-                isLoading={isLoading}
-            />
-
-            {/* Detail Modal */}
             <ReportDetailModal
                 report={selectedReport}
                 isOpen={isModalOpen}

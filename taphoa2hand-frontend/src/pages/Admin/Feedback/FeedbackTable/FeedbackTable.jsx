@@ -1,117 +1,110 @@
 import React from 'react';
-import classNames from 'classnames/bind';
 import {
-    CTable, CTableHead, CTableBody, CTableHeaderCell,
-    CTableDataCell, CTableRow, CButton, CImage
+    CTable, CTableHead, CTableBody, CTableRow,
+    CTableHeaderCell, CTableDataCell,
+    CButton, CBadge,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { cilTrash, cilPencil } from '@coreui/icons';
-import styles from './FeedbackTable.module.scss';
+import { cilPencil, cilTrash } from '@coreui/icons';
 import RatingDisplay from '../../../../components/Feedback/RatingDisplay';
-
-const cx = classNames.bind(styles);
 
 const FeedbackTable = ({ feedbacks = [], onDelete, onEdit }) => {
     const formatDate = (dateString) => {
         if (!dateString) return '—';
         const date = new Date(dateString);
-        return new Intl.DateTimeFormat('vi-VN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-        }).format(date);
+        if (Number.isNaN(date.getTime())) return '—';
+        return date.toLocaleString('vi-VN', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit',
+        });
     };
 
     if (!feedbacks || feedbacks.length === 0) {
         return (
-            <div className={cx('empty')}>
-                <p>Chưa có đánh giá nào</p>
+            <div className="text-center py-5 text-muted">
+                Chưa có đánh giá nào
             </div>
         );
     }
 
     return (
-        <div className={cx('feedback-table')}>
-            <CTable hover responsive>
-                <CTableHead>
-                    <CTableRow>
-                        <CTableHeaderCell scope="col" style={{ width: '10%' }}>#</CTableHeaderCell>
-                        <CTableHeaderCell scope="col" style={{ width: '10%' }}>Người đánh giá</CTableHeaderCell>
-                        <CTableHeaderCell scope="col" style={{ width: '10%' }}>Người được đánh giá</CTableHeaderCell>
-                        <CTableHeaderCell scope="col" style={{ width: '10%' }}>Sao</CTableHeaderCell>
-                        <CTableHeaderCell scope="col" style={{ width: '22%' }}>Bình luận</CTableHeaderCell>
-                        <CTableHeaderCell scope="col" style={{ width: '8%' }}>Ngày tạo</CTableHeaderCell>
-                        <CTableHeaderCell scope="col" style={{ width: '15%' }}>Thao tác</CTableHeaderCell>
+        <CTable hover responsive align="middle" className="mb-0 border">
+            <CTableHead color="light">
+                <CTableRow>
+                    <CTableHeaderCell style={{ width: '80px' }} className="text-center">#</CTableHeaderCell>
+                    <CTableHeaderCell style={{ width: '140px' }}>Người đánh giá</CTableHeaderCell>
+                    <CTableHeaderCell style={{ width: '140px' }}>Người được đánh giá</CTableHeaderCell>
+                    <CTableHeaderCell style={{ width: '100px' }} className="text-center">Sao</CTableHeaderCell>
+                    <CTableHeaderCell>Bình luận</CTableHeaderCell>
+                    <CTableHeaderCell style={{ width: '160px' }}>Ngày tạo</CTableHeaderCell>
+                    <CTableHeaderCell style={{ width: '120px' }} className="text-center">Thao tác</CTableHeaderCell>
+                </CTableRow>
+            </CTableHead>
+            <CTableBody>
+                {feedbacks.map((feedback, index) => (
+                    <CTableRow key={feedback.id}>
+                        <CTableDataCell className="text-center text-muted">
+                            #{String(feedback.orderId || feedback.id || '').substring(0, 6).toUpperCase()}
+                        </CTableDataCell>
+                        <CTableDataCell>
+                            <div className="fw-semibold text-dark">
+                                {feedback.reviewerName || '—'}
+                            </div>
+                        </CTableDataCell>
+                        <CTableDataCell>
+                            <div className="fw-semibold text-dark">
+                                {feedback.targetUserName || '—'}
+                            </div>
+                        </CTableDataCell>
+                        <CTableDataCell className="text-center">
+                            <div className="d-flex align-items-center justify-content-center gap-1">
+                                <RatingDisplay rating={feedback.rating} showText={false} />
+                                <span className="fw-bold text-warning">{feedback.rating}/5</span>
+                            </div>
+                        </CTableDataCell>
+                        <CTableDataCell>
+                            <div
+                                className="text-truncate text-muted"
+                                style={{ maxWidth: '200px' }}
+                                title={feedback.comment}
+                            >
+                                {feedback.comment
+                                    ? feedback.comment.length > 80
+                                        ? feedback.comment.substring(0, 80) + '…'
+                                        : feedback.comment
+                                    : <span className="fst-italic">Không có bình luận</span>
+                                }
+                            </div>
+                        </CTableDataCell>
+                        <CTableDataCell className="text-muted small">
+                            {formatDate(feedback.createdAt)}
+                        </CTableDataCell>
+                        <CTableDataCell className="text-center">
+                            <div className="d-flex justify-content-center gap-2">
+                                <CButton
+                                    color="info"
+                                    variant="ghost"
+                                    size="sm"
+                                    title="Sửa"
+                                    onClick={() => onEdit?.(feedback)}
+                                >
+                                    <CIcon icon={cilPencil} />
+                                </CButton>
+                                <CButton
+                                    color="danger"
+                                    variant="ghost"
+                                    size="sm"
+                                    title="Xóa"
+                                    onClick={() => onDelete?.(feedback.id)}
+                                >
+                                    <CIcon icon={cilTrash} />
+                                </CButton>
+                            </div>
+                        </CTableDataCell>
                     </CTableRow>
-                </CTableHead>
-                <CTableBody>
-                    {feedbacks.map((feedback, index) => (
-                        <CTableRow key={feedback.id}>
-                            <CTableDataCell>
-                                <span className={cx('order-id')}>
-                                    #{String(feedback.orderId || feedback.id || '').substring(0, 6).toUpperCase()}
-                                </span>
-                            </CTableDataCell>
-                            <CTableDataCell>
-                                <div className={cx('user-cell')}>
-                                    <span className={cx('user-name')}>{feedback.reviewerName || '—'}</span>
-                                </div>
-                            </CTableDataCell>
-                            <CTableDataCell>
-                                <div className={cx('user-cell')}>
-                                    <span className={cx('user-name')}>{feedback.targetUserName || '—'}</span>
-                                </div>
-                            </CTableDataCell>
-                            <CTableDataCell>
-                                <div className={cx('rating-cell')}>
-                                    <RatingDisplay rating={feedback.rating} showText={false} />
-                                    <span className={cx('rating-value')}>{feedback.rating}/5</span>
-                                </div>
-                            </CTableDataCell>
-                            <CTableDataCell>
-                                <span className={cx('comment')}>
-                                    {feedback.comment
-                                        ? feedback.comment.length > 80
-                                            ? feedback.comment.substring(0, 80) + '…'
-                                            : feedback.comment
-                                        : <span className={cx('no-comment')}>Không có bình luận</span>
-                                    }
-                                </span>
-                            </CTableDataCell>
-                            <CTableDataCell>
-                                <span className={cx('date')}>{formatDate(feedback.createdAt)}</span>
-                            </CTableDataCell>
-                            <CTableDataCell>
-                                <div className={cx('action-buttons')}>
-                                    <CButton
-                                        color="primary"
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => onEdit?.(feedback)}
-                                        className={cx('edit-btn')}
-                                        title="Sửa"
-                                    >
-                                        <CIcon icon={cilPencil} size="sm" />
-                                    </CButton>
-                                    <CButton
-                                        color="danger"
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => onDelete?.(feedback.id)}
-                                        className={cx('delete-btn')}
-                                        title="Xóa"
-                                    >
-                                        <CIcon icon={cilTrash} size="sm" />
-                                    </CButton>
-                                </div>
-                            </CTableDataCell>
-                        </CTableRow>
-                    ))}
-                </CTableBody>
-            </CTable>
-        </div>
+                ))}
+            </CTableBody>
+        </CTable>
     );
 };
 

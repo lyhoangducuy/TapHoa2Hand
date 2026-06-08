@@ -63,3 +63,29 @@ export const getUnreadNotificationCount = async (userId) => {
         throw error;
     }
 };
+
+// Lấy danh sách thông báo do Admin tạo (phân trang)
+export const getAdminNotifications = async (page = 0, size = 10, sort = 'createdAt,desc') => {
+    try {
+        const response = await httpClient.get(`/notification/admin/page?page=${page}&size=${size}&sort=${sort}`, {
+            headers: { Authorization: `Bearer ${getToken()}` }
+        });
+        return response.data.result;
+    } catch (error) {
+        console.error("Lỗi khi lấy danh sách thông báo admin:", error);
+        throw error;
+    }
+};
+
+// Lấy tất cả thông báo do Admin tạo (không phân trang)
+export const getAllAdminNotifications = async () => {
+    try {
+        const response = await httpClient.get(`/notification/admin/all`, {
+            headers: { Authorization: `Bearer ${getToken()}` }
+        });
+        return response.data.result;
+    } catch (error) {
+        console.error("Lỗi khi lấy tất cả thông báo admin:", error);
+        throw error;
+    }
+};
