@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
-import styles from '../PostAdminPage.module.scss'; // Giữ lại import style của bạn
+import styles from '../PostAdminPage.module.scss';
 import {
     CCard, CCardBody, CCardHeader, CButton, CForm, CFormInput,
     CRow, CCol, CFormCheck, CSpinner, CFormLabel, CFormSelect
@@ -9,7 +9,6 @@ import {
 import CIcon from '@coreui/icons-react';
 import { cilArrowLeft, cilSave } from '@coreui/icons';
 
-// Import các service lấy dữ liệu động
 import { getAllCategories } from "../../../../services/categoryService";
 import { getAllPayments } from '../../../../services/paymentsService';
 import { createPost } from "../../../../services/postService";
@@ -21,22 +20,19 @@ function PostCreatePage() {
     const [isLoading, setIsLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
 
-    // State lưu dữ liệu nền (Lấy động từ API)
     const [categories, setCategories] = useState([]);
     const [payments, setPayments] = useState([]);
     const [statuses, setStatuses] = useState([]);
 
-    // State file ảnh
     const [images, setImages] = useState([]);
 
-    // Form Data (Chuẩn cấu trúc bạn cung cấp + thêm status)
     const [formData, setFormData] = useState({
         title: "",
         price: "",
         postTypeName: "SELL",
         status: "",
         listCategoriesId: [],
-        acceptedPaymentMethods: [], // Chứa mảy object { value, label }
+        acceptedPaymentMethods: [],
         postDetail: {
             description: "",
             brand: "",
@@ -52,7 +48,6 @@ function PostCreatePage() {
         }
     });
 
-    // GỌI API LẤY DỮ LIỆU ĐỘNG
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -68,14 +63,10 @@ function PostCreatePage() {
                 const fetchedStatuses = statusRes.result || statusRes || [];
                 setStatuses(fetchedStatuses);
 
-                // Đặt trạng thái mặc định
-                // Đặt trạng thái mặc định
                 if (fetchedStatuses.length > 0) {
                     const firstStatus = fetchedStatuses[0];
-                    // Ưu tiên lấy trường 'code', nếu không có thì lấy 'value', nếu là mảng chuỗi thì lấy chính nó
                     const firstVal = firstStatus.code || firstStatus.value || firstStatus;
 
-                    // Kiểm tra an toàn đề phòng firstVal vẫn là object
                     setFormData(prev => ({
                         ...prev,
                         status: typeof firstVal === 'object' ? '' : firstVal
@@ -89,7 +80,6 @@ function PostCreatePage() {
         fetchData();
     }, []);
 
-    // --- CÁC HÀM XỬ LÝ SỰ KIỆN (Logic của bạn) ---
     const handleBasicChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
@@ -124,7 +114,6 @@ function PostCreatePage() {
     const handlePaymentToggle = (payment) => {
         const currentList = [...formData.acceptedPaymentMethods];
 
-        // Dùng 'value' để kiểm tra (logic theo code bạn cung cấp)
         const index = currentList.findIndex((p) => p.value === (payment.value || payment));
 
         if (index > -1) {
@@ -143,23 +132,26 @@ function PostCreatePage() {
         setImages(e.target.files);
     };
 
-    // --- SUBMIT FORM ---
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         setErrorMsg("");
 
         try {
-            // Map mảng object payment thành mảng value chuỗi
             const mappedPayments = formData.acceptedPaymentMethods.map(pay => pay.value);
+
+            const isSellPost = formData.postTypeName === 'SELL';
 
             const payload = {
                 ...formData,
                 listAcceptedPaymentMethodsValue: mappedPayments,
-                price: Number(formData.price)
+                price: Number(formData.price),
+                postDetail: {
+                    ...formData.postDetail,
+                    ...(isSellPost ? {} : { reasonForSelling: null })
+                }
             };
 
-            // Xóa trường cũ đi cho sạch request
             delete payload.acceptedPaymentMethods;
 
             await createPost(payload, images);
@@ -174,7 +166,8 @@ function PostCreatePage() {
         }
     };
 
-    // --- GIAO DIỆN COREUI ---
+    const isSellPost = formData.postTypeName === 'SELL';
+
     return (
         <div className={cx('wrapper', 'user-page')}>
             <div className="d-flex justify-content-between align-items-center mb-4">
@@ -209,11 +202,9 @@ function PostCreatePage() {
                                 <CFormLabel>Trạng thái</CFormLabel>
                                 <CFormSelect name="status" value={formData.status} onChange={handleBasicChange}>
                                     {statuses.map((st, idx) => {
-                                        // Lấy đúng key từ Backend (code và displayName)
                                         const val = st.code || st.value || st;
                                         const lbl = st.displayName || st.label || st.name || st;
 
-                                        // Chuyển về String để đảm bảo React không bao giờ bị crash vì nhận nhầm Object
                                         const safeValue = typeof val === 'object' ? JSON.stringify(val) : String(val);
                                         const safeLabel = typeof lbl === 'object' ? 'Lỗi hiển thị' : String(lbl);
 
@@ -246,7 +237,6 @@ function PostCreatePage() {
                                         return (
                                             <CFormCheck
                                                 key={idx} inline label={payLabel}
-                                                // Kiểm tra xem value có nằm trong mảng object đang lưu không
                                                 checked={formData.acceptedPaymentMethods.findIndex(p => p.value === payValue) > -1}
                                                 onChange={() => handlePaymentToggle(pay)}
                                             />
@@ -265,9 +255,11 @@ function PostCreatePage() {
                             <CCol md={3}><CFormInput label="Thời gian đã dùng" name="usedDuration" placeholder="Ví dụ: 6 tháng" value={formData.postDetail.usedDuration} onChange={handleDetailChange} /></CCol>
                         </CRow>
                         <CRow className="mb-4">
-                            <CCol md={12} className="mb-3">
-                                <CFormInput label="Lý do bán" name="reasonForSelling" value={formData.postDetail.reasonForSelling} onChange={handleDetailChange} />
-                            </CCol>
+                            {isSellPost && (
+                                <CCol md={12} className="mb-3">
+                                    <CFormInput label="Lý do bán" name="reasonForSelling" value={formData.postDetail.reasonForSelling} onChange={handleDetailChange} />
+                                </CCol>
+                            )}
                             <CCol md={12}>
                                 <CFormLabel>Mô tả chi tiết</CFormLabel>
                                 <textarea

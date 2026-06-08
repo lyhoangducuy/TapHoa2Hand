@@ -36,7 +36,7 @@ public class PostDetail {
     // Trong file PostDetail.java
     
     @Column(name = "item_condition") // Ánh xạ xuống DB thành cột item_condition
-    String condition;
+    String itemCondition;
     String usedDuration;
     String reasonForSelling;
 

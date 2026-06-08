@@ -36,6 +36,7 @@ function PostEditPage() {
     const [formData, setFormData] = useState({
         title: "",
         price: "",
+        postTypeName: "SELL",
         status: "",
         retainedImageUrls: [], 
         listCategoriesId: [],
@@ -74,21 +75,20 @@ function PostEditPage() {
                 if (postRes.result) {
                     const data = postRes.result;
                     
-                    // FIX LỖI ẢNH: Quét rộng các trường hợp trả về của API
                     let oldImages = [];
-                    const apiImages = data.imageUrls || data.images || data.postImages || []; // Bắt nhiều tên biến
+                    const apiImages = data.imageUrls || data.images || data.postImages || [];
                     
                     if (apiImages.length > 0) {
                         oldImages = apiImages.map(img => {
-                            if (typeof img === 'string') return img; // Nếu là mảng string
-                            // Nếu là mảng Object, quét các key phổ biến chứa link ảnh
+                            if (typeof img === 'string') return img;
                             return img.url || img.imageUrl || img.path || img.link || "";
-                        }).filter(url => url !== ""); // Lọc bỏ các URL rỗng
+                        }).filter(url => url !== "");
                     }
 
                     setFormData({
                         title: data.title || "",
                         price: data.price || "",
+                        postTypeName: data.postType?.name || data.postType || "SELL",
                         status: data.status || "",
                         retainedImageUrls: oldImages, 
                         listCategoriesId: data.categories?.map(c => c.id.toString()) || [],
@@ -189,6 +189,8 @@ function PostEditPage() {
         }
     };
 
+    const isSellPost = formData.postTypeName === 'SELL';
+
     return (
         <div className={cx('edit-container')}>
             <header className={cx('edit-header')}>
@@ -238,10 +240,12 @@ function PostEditPage() {
                             </div>
                         </div>
 
-                        <div className={cx('input-group')}>
-                            <label>Lý do bán</label>
-                            <input placeholder="Ví dụ: Lên đời máy mới, kẹt tiền..." name="reasonForSelling" value={formData.postDetail.reasonForSelling} onChange={(e) => handleNestedChange(e, 'postDetail')} />
-                        </div>
+                        {isSellPost && (
+                            <div className={cx('input-group')}>
+                                <label>Lý do bán</label>
+                                <input placeholder="Ví dụ: Lên đời máy mới, kẹt tiền..." name="reasonForSelling" value={formData.postDetail.reasonForSelling} onChange={(e) => handleNestedChange(e, 'postDetail')} />
+                            </div>
+                        )}
 
                         <div className={cx('input-group')}>
                             <label>Mô tả chi tiết</label>

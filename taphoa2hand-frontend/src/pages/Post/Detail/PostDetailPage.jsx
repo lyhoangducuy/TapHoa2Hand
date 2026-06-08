@@ -65,7 +65,8 @@ useEffect(() => {
     const seller = post.user || {};
     const categoryName = post.categories?.length > 0 ? (post.categories[0].name || post.categories[0]) : null;
     const postTypeName = post.postType?.name || post.postType || 'SELL';
-    const postTypeDisplay = postTypeName === 'BUY' ? 'Cần mua' : 'Cần bán';
+    const isSellPost = postTypeName === 'SELL';
+    const postTypeDisplay = isSellPost ? 'Cần bán' : 'Cần mua';
 
     return (
         <div className={cx('wrapper')}>
@@ -84,7 +85,7 @@ useEffect(() => {
             <div className={cx('container')}>
                 <div className={cx('left-column')}>
 
-                    {/* Ảnh sản phẩm */}
+                    {/* ���nh sản phẩm */}
                     <ImageGallery images={post.postImages || []} status={post.status} postType={post.postType} />
 
                     {/* Mô tả */}
@@ -101,7 +102,9 @@ useEffect(() => {
                             <div className={cx('spec-row')}><span>Dòng sản phẩm</span><strong>{detail.model || 'Đang cập nhật'}</strong></div>
                             <div className={cx('spec-row')}><span>Tình trạng</span><strong>{detail.itemCondition || 'Đang cập nhật'}</strong></div>
                             <div className={cx('spec-row')}><span>Thời gian sử dụng</span><strong>{detail.usedDuration || 'Không rõ'}</strong></div>
-                            <div className={cx('spec-row')}><span>Lý do bán</span><strong>{detail.reasonForSelling || 'Không rõ'}</strong></div>
+                            {isSellPost && (
+                                <div className={cx('spec-row')}><span>Lý do bán</span><strong>{detail.reasonForSelling || 'Không rõ'}</strong></div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -116,8 +119,8 @@ useEffect(() => {
                     currentUser={currentUser}
                     postId={postId}
                     onReportSuccess={() => {
-                        fetchInitialData(); // Tải lại dữ liệu bài đăng để cập nhật số lượng báo cáo
-                }}
+                        fetchInitialData();
+                    }}
                 />
                 
             </div>

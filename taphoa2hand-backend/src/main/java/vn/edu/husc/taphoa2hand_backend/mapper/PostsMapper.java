@@ -152,7 +152,7 @@ public interface PostsMapper {
         // 2. Khởi tạo các giá trị mặc định cho PostDetail
         String brand = "Không rõ";
         String model = "Không rõ";
-        String condition = "Không rõ";
+        String itemCondition = "Không rõ";
         String usedDuration = "Không rõ";
         String reasonForSelling = "Không có";
         String description = "Không có mô tả";
@@ -162,7 +162,7 @@ public interface PostsMapper {
         if (detail != null) {
             brand = detail.getBrand() != null ? detail.getBrand() : brand;
             model = detail.getModel() != null ? detail.getModel() : model;
-            condition = detail.getCondition() != null ? detail.getCondition() : condition;
+            itemCondition = detail.getItemCondition() != null ? detail.getItemCondition(): itemCondition;
             usedDuration = detail.getUsedDuration() != null ? detail.getUsedDuration() : usedDuration;
             reasonForSelling = detail.getReasonForSelling() != null ? detail.getReasonForSelling() : reasonForSelling;
             description = detail.getDescription() != null ? detail.getDescription() : description;
@@ -175,7 +175,7 @@ public interface PostsMapper {
                 post.getPrice(),
                 brand,
                 model,
-                condition,
+                itemCondition,
                 usedDuration,
                 reasonForSelling,
                 description,

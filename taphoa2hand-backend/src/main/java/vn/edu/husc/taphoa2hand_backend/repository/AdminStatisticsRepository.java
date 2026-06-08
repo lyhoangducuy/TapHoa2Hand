@@ -174,7 +174,7 @@ public interface AdminStatisticsRepository extends JpaRepository<Order, String>,
         SELECT o.id, o.created_at, o.status, 'ORDER' as type
         FROM orders o
         ORDER BY o.created_at DESC
-        LIMIT :limit
+        LIMIT : limit
         """, nativeQuery = true)
     List<Object[]> getRecentOrders(
         @Param("limit") int limit

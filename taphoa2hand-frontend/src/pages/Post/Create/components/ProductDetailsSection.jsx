@@ -4,7 +4,9 @@ import styles from '../CreatePostPage.module.scss';
 
 const cx = classNames.bind(styles);
 
-function ProductDetailsSection({ postDetail, fieldErrors, onDetailChange }) {
+function ProductDetailsSection({ postDetail, fieldErrors, onDetailChange, postTypeName = 'SELL' }) {
+    const isSellPost = postTypeName === 'SELL';
+
     return (
         <section className={cx('card')}>
             <div className={cx('card-header')}>
@@ -61,16 +63,18 @@ function ProductDetailsSection({ postDetail, fieldErrors, onDetailChange }) {
                     </div>
                 </div>
 
-                <div className={cx('formGroup')}>
-                    <label className={cx('label')}>Lý do bán<span className={cx('required')}>*</span></label>
-                    <input
-                        className={cx('inputControl')}
-                        name="reasonForSelling"
-                        value={postDetail.reasonForSelling}
-                        onChange={onDetailChange}
-                        placeholder="Ví dụ: Không sử dụng nữa, chuyển sang model mới..."
-                    />
-                </div>
+                {isSellPost && (
+                    <div className={cx('formGroup')}>
+                        <label className={cx('label')}>Lý do bán<span className={cx('required')}>*</span></label>
+                        <input
+                            className={cx('inputControl')}
+                            name="reasonForSelling"
+                            value={postDetail.reasonForSelling}
+                            onChange={onDetailChange}
+                            placeholder="Ví dụ: Không sử dụng nữa, chuyển sang model mới..."
+                        />
+                    </div>
+                )}
 
                 <div className={cx('formGroup')}>
                     <label className={cx('label')}>Mô tả chi tiết <span className={cx('required')}>*</span></label>

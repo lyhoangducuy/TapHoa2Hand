@@ -162,6 +162,7 @@ function CreatePostPage() {
         setFieldErrors({});
         setIsLoading(true);
         try {
+            const isSellPost = formData.postTypeName === 'SELL';
             const payload = {
                 title: formData.title,
                 price: Number(formData.price),
@@ -174,7 +175,7 @@ function CreatePostPage() {
                     model: formData.postDetail.model,
                     itemCondition: formData.postDetail.itemCondition,
                     usedDuration: formData.postDetail.usedDuration,
-                    reasonForSelling: formData.postDetail.reasonForSelling
+                    ...(isSellPost ? { reasonForSelling: formData.postDetail.reasonForSelling } : {})
                 },
                 postAddress: {
                     city: formData.postAddress.city,
@@ -287,6 +288,7 @@ function CreatePostPage() {
                         postDetail={formData.postDetail}
                         fieldErrors={fieldErrors}
                         onDetailChange={handleDetailChange}
+                        postTypeName={formData.postTypeName}
                     />
 
                     {/* 5. Địa chỉ */}
