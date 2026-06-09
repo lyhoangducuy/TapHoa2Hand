@@ -29,7 +29,7 @@ const Sidebar = ({ visible, onVisibleChange }) => {
 
         {/* Tách CNavItem và Link ra riêng biệt để không bị lồng thẻ <a> */}
         <CNavItem>
-          <Link to="/admin/statistics" className={`nav-link ${location.pathname === '/admin/statistics' ? 'active' : ''}`}>
+          <Link to="/admin" className={`nav-link ${location.pathname === '/admin' ? 'active' : ''}`}>
             <CIcon icon={cilSpeedometer} customClassName="nav-icon" /> Dashboard
           </Link>
         </CNavItem>

@@ -38,6 +38,7 @@ const parseMessageData = (data) => {
 const dispatchToMessageListeners = (data) => {
     const parsed = parseMessageData(data);
     if (!parsed) return;
+    console.log(`📡 [socket] Dispatching to ${messageListeners.length} message listener(s)`, parsed.id || parsed);
     messageListeners.forEach(callback => {
         try {
             callback(parsed);
@@ -48,8 +49,10 @@ const dispatchToMessageListeners = (data) => {
 };
 
 const dispatchToNotificationListeners = (data) => {
-    notificationListeners.forEach(callback => {
+    console.log(`📡 [socket] new_notification event received. Listeners: ${notificationListeners.length}`, data);
+    notificationListeners.forEach((callback, idx) => {
         try {
+            console.log(`  → Calling notification listener[${idx}]`);
             callback(data);
         } catch (e) {
             console.error('Error in notification listener:', e);
@@ -58,6 +61,7 @@ const dispatchToNotificationListeners = (data) => {
 };
 
 const dispatchToUserStatusListeners = (data) => {
+    console.log(`📡 [socket] user_status event received. Listeners: ${userStatusListeners.length}`, data);
     userStatusListeners.forEach(callback => {
         try {
             callback(data);
@@ -77,18 +81,18 @@ const dispatchToUserStatusListeners = (data) => {
 export const initiateSocketConnection = (token) => {
     // Already connected - just return
     if (socket && isConnected) {
-        console.log('Socket already connected:', socket.id);
+        console.log('[socket] Already connected:', socket.id);
         return socket;
     }
 
     // Currently connecting - wait
     if (isConnecting) {
-        console.log('Socket is connecting...');
+        console.log('[socket] Is connecting, waiting...');
         return socket;
     }
 
     isConnecting = true;
-    console.log('Initiating socket connection...');
+    console.log('[socket] Initiating connection...');
 
     socket = io(CONFIG.SOCKET_URL, {
         query: { token: token },
@@ -99,36 +103,36 @@ export const initiateSocketConnection = (token) => {
     });
 
     socket.on('connect', () => {
-        console.log('✅ Socket connected:', socket.id);
+        console.log('✅ [socket] Connected:', socket.id);
         isConnected = true;
         isConnecting = false;
     });
 
     socket.on('disconnect', (reason) => {
-        console.log('❌ Socket disconnected:', reason);
+        console.log('❌ [socket] Disconnected:', reason);
         isConnected = false;
     });
 
     socket.on('connect_error', (error) => {
-        console.error('❌ Socket connection error:', error);
+        console.error('❌ [socket] Connection error:', error);
         isConnecting = false;
     });
 
     // === GLOBAL MESSAGE LISTENER (Only once!) ===
     socket.on('receive_new_message', (data) => {
-        console.log('📩 Socket receive_new_message:', data);
+        console.log('📩 [socket] receive_new_message:', data.id || data);
         dispatchToMessageListeners(data);
     });
 
     // === GLOBAL NOTIFICATION LISTENER ===
     socket.on('new_notification', (data) => {
-        console.log('🔔 Socket new_notification:', data);
+        console.log('🔔 [socket] new_notification event:', data.id || data);
         dispatchToNotificationListeners(data);
     });
 
     // === USER STATUS LISTENER ===
     socket.on('user_status', (userId, status) => {
-        console.log('👤 Socket user_status:', userId, status);
+        console.log('👤 [socket] user_status:', userId, status);
         dispatchToUserStatusListeners({ userId, status });
     });
 
@@ -165,7 +169,7 @@ export const disconnectSocket = () => {
         notificationListeners.length = 0;
         userStatusListeners.length = 0;
         
-        console.log('Socket disconnected and cleaned up');
+        console.log('[socket] Disconnected and cleaned up');
     }
 };
 
@@ -175,14 +179,14 @@ export const disconnectSocket = () => {
 export const joinConversation = (conversationId) => {
     if (socket && isConnected) {
         socket.emit('join_conversation', conversationId);
-        console.log('Joined conversation:', conversationId);
+        console.log('[socket] Joined conversation:', conversationId);
     }
 };
 
 export const leaveConversation = (conversationId) => {
     if (socket && isConnected) {
         socket.emit('leave_conversation', conversationId);
-        console.log('Left conversation:', conversationId);
+        console.log('[socket] Left conversation:', conversationId);
     }
 };
 
@@ -198,7 +202,7 @@ export const leaveConversation = (conversationId) => {
 export const subscribeToNewMessages = (callback) => {
     if (!messageListeners.includes(callback)) {
         messageListeners.push(callback);
-        console.log('📝 Subscribed to new messages. Total:', messageListeners.length);
+        console.log(`📝 [socket] Subscribed to messages. Total: ${messageListeners.length}`);
     }
     
     // Return unsubscribe function
@@ -206,7 +210,7 @@ export const subscribeToNewMessages = (callback) => {
         const index = messageListeners.indexOf(callback);
         if (index > -1) {
             messageListeners.splice(index, 1);
-            console.log('📝 Unsubscribed from new messages. Total:', messageListeners.length);
+            console.log(`📝 [socket] Unsubscribed from messages. Remaining: ${messageListeners.length}`);
         }
     };
 };
@@ -215,6 +219,7 @@ export const subscribeToNewMessages = (callback) => {
  * Remove all message listeners (for cleanup)
  */
 export const removeAllMessageListeners = () => {
+    console.log(`📝 [socket] Removing all ${messageListeners.length} message listeners`);
     messageListeners.length = 0;
 };
 
@@ -225,26 +230,29 @@ export const removeAllMessageListeners = () => {
 /**
  * Subscribe to notifications
  * @param {Function} callback
- * @returns {Function} Unsubscribe function
+ * @returns {Function} Unsubscribe function — USE THIS for cleanup in useEffect
  */
 export const subscribeToNotifications = (callback) => {
     if (!notificationListeners.includes(callback)) {
         notificationListeners.push(callback);
-        console.log('🔔 Subscribed to notifications. Total:', notificationListeners.length);
+        console.log(`🔔 [socket] Subscribed to notifications. Total: ${notificationListeners.length}`);
     }
     
+    // Return unsubscribe function — THIS is the proper cleanup
     return () => {
         const index = notificationListeners.indexOf(callback);
         if (index > -1) {
             notificationListeners.splice(index, 1);
+            console.log(`🔔 [socket] Unsubscribed from notifications. Remaining: ${notificationListeners.length}`);
         }
     };
 };
 
 /**
- * Remove all notification listeners
+ * Remove all notification listeners (emergency cleanup)
  */
 export const removeAllNotificationListeners = () => {
+    console.log(`🔔 [socket] Removing all ${notificationListeners.length} notification listeners`);
     notificationListeners.length = 0;
 };
 
@@ -260,38 +268,41 @@ export const removeAllNotificationListeners = () => {
 export const subscribeToUserStatus = (callback) => {
     if (!userStatusListeners.includes(callback)) {
         userStatusListeners.push(callback);
-        console.log('👤 Subscribed to user status. Total:', userStatusListeners.length);
+        console.log(`👤 [socket] Subscribed to user status. Total: ${userStatusListeners.length}`);
     }
     
     return () => {
         const index = userStatusListeners.indexOf(callback);
         if (index > -1) {
             userStatusListeners.splice(index, 1);
+            console.log(`👤 [socket] Unsubscribed from user status. Remaining: ${userStatusListeners.length}`);
         }
     };
 };
 
 /**
- * Remove all user status listeners
+ * Remove all user status listeners (emergency cleanup)
  */
 export const removeAllUserStatusListeners = () => {
+    console.log(`👤 [socket] Removing all ${userStatusListeners.length} user status listeners`);
     userStatusListeners.length = 0;
 };
 
 // ==========================================
-// LEGACY UNSUBSCRIBE FUNCTIONS (for compatibility)
+// LEGACY UNSUBSCRIBE FUNCTIONS — DEPRECATED
+// These are NO-OP stubs kept for source compatibility.
+// USE the returned unsubscribe function from subscribe* instead.
 // ==========================================
 export const unsubscribeFromMessages = () => {
-    // Legacy - kept for backward compatibility
-    // Use the returned unsubscribe function instead
+    console.warn('[socket] DEPRECATED: unsubscribeFromMessages is a no-op. Use the unsubscribe function returned by subscribeToNewMessages().');
 };
 
 export const unsubscribeFromNotifications = () => {
-    // Legacy - kept for backward compatibility
+    console.warn('[socket] DEPRECATED: unsubscribeFromNotifications is a no-op. Use the unsubscribe function returned by subscribeToNotifications().');
 };
 
 export const unsubscribeFromUserStatus = () => {
-    // Legacy - kept for backward compatibility
+    console.warn('[socket] DEPRECATED: unsubscribeFromUserStatus is a no-op. Use the unsubscribe function returned by subscribeToUserStatus().');
 };
 
 // ==========================================
@@ -300,3 +311,10 @@ export const unsubscribeFromUserStatus = () => {
 export const getSocket = () => socket;
 
 export const isSocketConnected = () => isConnected;
+
+// Debug helper — expose listener counts for debugging
+export const getListenerCounts = () => ({
+    messages: messageListeners.length,
+    notifications: notificationListeners.length,
+    userStatus: userStatusListeners.length,
+});

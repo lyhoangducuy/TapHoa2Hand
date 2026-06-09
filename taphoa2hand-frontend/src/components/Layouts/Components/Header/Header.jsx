@@ -16,18 +16,18 @@ import {
     markNotificationAsRead
 } from "../../../../services/notificationService";
 import { getSearchHistory } from "../../../../services/historySearchService";
-// Import các hàm socket từ service của bạn
 import {
     disconnectSocket,
     subscribeToNotifications,
-    unsubscribeFromNotifications,
     subscribeToNewMessages,
-    unsubscribeFromMessages
+    getListenerCounts,
 } from "../../../../services/socketService";
 
 const cx = classNames.bind(styles);
 
-// Play notification sound
+// ============================================================
+// PURE HELPERS (stable, outside component)
+// ============================================================
 const playNotificationSound = () => {
     try {
         const audio = new Audio('/sounds/notification.mp3');
@@ -36,7 +36,9 @@ const playNotificationSound = () => {
     } catch (e) { }
 };
 
-// --- 1. COMPONENT USER DROPDOWN ---
+// ============================================================
+// COMPONENT 1: USER DROPDOWN
+// ============================================================
 const UserDropdown = ({ user, onLogout, onNavigate }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
@@ -91,7 +93,9 @@ const UserDropdown = ({ user, onLogout, onNavigate }) => {
     );
 };
 
-// --- 2. COMPONENT NOTIFICATION DROPDOWN (REALTIME) ---
+// ============================================================
+// COMPONENT 2: SEARCH HISTORY DROPDOWN
+// ============================================================
 const SearchHistoryDropdown = ({ userId, onSelect, visible }) => {
     const [history, setHistory] = useState([]);
 
@@ -104,7 +108,7 @@ const SearchHistoryDropdown = ({ userId, onSelect, visible }) => {
                 const data = res?.result || [];
                 setHistory(Array.isArray(data) ? data.slice(0, 10) : []);
             } catch (err) {
-                console.error(err);
+                console.error('[Header] SearchHistory error:', err);
                 setHistory([]);
             }
         };
@@ -117,16 +121,10 @@ const SearchHistoryDropdown = ({ userId, onSelect, visible }) => {
     return (
         <div className={cx("search-history-dropdown")}>
             {history.length === 0 ? (
-                <div className={cx("search-history-empty")}>
-                    Chưa có lịch sử tìm kiếm
-                </div>
+                <div className={cx("search-history-empty")}>Chưa có lịch sử tìm kiếm</div>
             ) : (
                 history.map((item, index) => (
-                    <div
-                        key={index}
-                        className={cx("search-history-item")}
-                        onClick={() => onSelect(item)}
-                    >
+                    <div key={index} className={cx("search-history-item")} onClick={() => onSelect(item)}>
                         <FiSearch className={cx("icon")} />
                         <span>{item}</span>
                     </div>
@@ -135,7 +133,10 @@ const SearchHistoryDropdown = ({ userId, onSelect, visible }) => {
         </div>
     );
 };
-// --- 2. COMPONENT NOTIFICATION DROPDOWN (REALTIME) ---
+
+// ============================================================
+// COMPONENT 3: NOTIFICATION DROPDOWN (REALTIME)
+// ============================================================
 const NotificationDropdown = ({ user }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
@@ -143,79 +144,93 @@ const NotificationDropdown = ({ user }) => {
     const dropdownRef = useRef(null);
     const navigate = useNavigate();
 
-    // Lấy dữ liệu ban đầu từ API
-    const fetchNotificationsData = async () => {
-        try {
-            console.log("1. Đang gọi API lấy thông báo ban đầu cho User ID:", user.id);
-            const [notiRes, countRes] = await Promise.all([
-                getUserNotifications(user.id),
-                getUnreadNotificationCount(user.id)
-            ]);
+    // Store unsubscribe function and callback across re-renders
+    const unsubscribeRef = useRef(null);
+    const notiCallbackRef = useRef(null);
 
-            console.log("2. Kết quả API Danh sách thông báo:", notiRes);
-            console.log("3. Kết quả API Số lượng chưa đọc:", countRes);
-
-            // Bóc tách dữ liệu API
-            let notiData = notiRes.data?.result || notiRes.result || [];
-
-            // ĐỀ PHÒNG: Nếu backend trả về 1 Object thay vì Array, ta phải nhét nó vào Array
-            if (!Array.isArray(notiData) && notiData.id) {
-                notiData = [notiData];
-            } else if (!Array.isArray(notiData)) {
-                notiData = []; // Khắc phục lỗi map() nếu dữ liệu rác
+    // ── Phase 1: Define stable callback (no deps — only depends on React closures) ──
+    // This function is kept stable across renders via the ref
+    useEffect(() => {
+        notiCallbackRef.current = (payload) => {
+            let parsed = payload;
+            if (payload && payload.body) {
+                try { parsed = JSON.parse(payload.body); }
+                catch (e) { console.error('[Header] Parse error:', e); return; }
+            } else if (typeof payload === 'string') {
+                try { parsed = JSON.parse(payload); }
+                catch (e) { console.error('[Header] Parse string error:', e); return; }
             }
 
-            setNotifications(notiData);
+            const newNoti = parsed.result ? parsed.result : parsed;
 
-            let countData = countRes.data?.result ?? countRes.result ?? 0;
-            setUnreadCount(Number(countData));
+            if (!newNoti || !newNoti.id) {
+                console.error('[Header] Invalid notification payload:', newNoti);
+                return;
+            }
 
-        } catch (error) {
-            console.error("❌ Lỗi lấy thông báo API ban đầu:", error);
-        }
-    };
+            console.log('[Header] 🔔 Notification received:', newNoti.id);
 
-    useEffect(() => {
-        if (user && user.id) {
-            fetchNotificationsData();
-
-            subscribeToNotifications((payload) => {
-                console.log("🔥 4. CÓ TÍN HIỆU REALTIME TỪ SOCKET! Payload gốc:", payload);
-
-                let parsedData = payload;
-
-                // XỬ LÝ TRƯỜNG HỢP: Nếu dùng STOMP/SockJS, data thường nằm trong payload.body
-                if (payload && payload.body) {
-                    try { parsedData = JSON.parse(payload.body); }
-                    catch (e) { console.error("Lỗi parse STOMP body", e); }
+            // Guard: duplicate ID check is done atomically inside setState
+            setNotifications(prev => {
+                if (prev.some(n => n.id === newNoti.id)) {
+                    console.log('[Header] ⏭️ Duplicate ID, skipping:', newNoti.id);
+                    return prev;
                 }
-                // XỬ LÝ TRƯỜNG HỢP: Socket trả về chuỗi String (chưa thành JSON)
-                else if (typeof payload === 'string') {
-                    try { parsedData = JSON.parse(payload); }
-                    catch (e) { console.error("Lỗi parse JSON string", e); }
-                }
-
-                // Lấy data cuối cùng
-                const newNoti = parsedData.result ? parsedData.result : parsedData;
-                console.log("✅ 5. DỮ LIỆU SAU KHI BÓC TÁCH ĐỂ LƯU VÀO STATE:", newNoti);
-
-                // Nếu mất ID thì ngưng, tránh làm sập React
-                if (!newNoti || !newNoti.id) {
-                    console.error("❌ Dữ liệu realtime thiếu ID, không thể cập nhật UI!", newNoti);
-                    return;
-                }
-
-                setNotifications(prev => {
-                    const isExist = prev.some(n => n.id === newNoti.id);
-                    return isExist ? prev : [newNoti, ...prev];
-                });
-                setUnreadCount(prev => prev + 1);
+                // Only increment when truly new
+                setUnreadCount(c => c + 1);
+                return [newNoti, ...prev];
             });
-        }
+        };
+    }); // No deps — re-assigns .current on every render safely
 
-        return () => unsubscribeFromNotifications();
-    }, [user?.id]);
+    // ── Phase 2: Subscribe once, store cleanup function ──
+    useEffect(() => {
+        if (!user?.id) return;
 
+        // Fetch initial data from API
+        const fetchNotificationsData = async (userId) => {
+            try {
+                const [notiRes, countRes] = await Promise.all([
+                    getUserNotifications(userId),
+                    getUnreadNotificationCount(userId)
+                ]);
+
+                let notiData = notiRes?.data?.result || notiRes?.result || [];
+                if (!Array.isArray(notiData) && notiData?.id) {
+                    notiData = [notiData];
+                } else if (!Array.isArray(notiData)) {
+                    notiData = [];
+                }
+
+                setNotifications(notiData);
+
+                const countData = countRes?.data?.result ?? countRes?.result ?? 0;
+                setUnreadCount(Number(countData));
+            } catch (error) {
+                console.error('[Header] NotificationDropdown fetch error:', error);
+            }
+        };
+
+        fetchNotificationsData(user.id);
+
+        // Subscribe — pass the stable callback from ref
+        const unsub = subscribeToNotifications((data) => {
+            if (notiCallbackRef.current) notiCallbackRef.current(data);
+        });
+        unsubscribeRef.current = unsub;
+        console.log('[Header] 🔔 Subscribed. Listeners:', getListenerCounts().notifications);
+
+        // Cleanup: always calls the stored unsubscribe
+        return () => {
+            if (unsubscribeRef.current) {
+                unsubscribeRef.current();
+                unsubscribeRef.current = null;
+                console.log('[Header] 🔔 Unsubscribed. Listeners:', getListenerCounts().notifications);
+            }
+        };
+    }, [user?.id]); // Only re-runs when user.id truly changes
+
+    // Close dropdown on outside click
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false);
@@ -225,18 +240,17 @@ const NotificationDropdown = ({ user }) => {
     }, []);
 
     const handleNotificationClick = async (noti) => {
-        // Đánh dấu đã đọc (chỉ khi chưa đọc)
         if (!noti.read) {
             try {
                 await markNotificationAsRead(noti.id);
-                // Re-fetch count từ API để đảm bảo đồng bộ
+                // Re-sync count from API
                 const countRes = await getUnreadNotificationCount(user.id);
-                let countData = countRes.data?.result ?? countRes.result ?? 0;
+                const countData = countRes?.data?.result ?? countRes?.result ?? 0;
                 setUnreadCount(Number(countData));
-                // Cập nhật local state
+                // Update local read state
                 setNotifications(prev => prev.map(n => n.id === noti.id ? { ...n, read: true } : n));
             } catch (error) {
-                console.error("Lỗi đánh dấu đã đọc:", error);
+                console.error('[Header] Mark as read error:', error);
             }
         }
         setIsOpen(false);
@@ -287,17 +301,14 @@ const NotificationDropdown = ({ user }) => {
     );
 };
 
-// --- CHAT NOTIFICATION POPUP ---
+// ============================================================
+// COMPONENT 4: CHAT NOTIFICATION POPUP
+// ============================================================
 const ChatNotificationPopup = ({ chatPopup, onClose, onNavigate }) => {
     if (!chatPopup) return null;
 
-    const handleClick = () => {
-        onNavigate(`/chat?activeId=${chatPopup.conversationId}`);
-        onClose();
-    };
-
     return (
-        <div className={cx("chat-popup-dropdown")} onClick={handleClick}>
+        <div className={cx("chat-popup-dropdown")} onClick={() => { onNavigate(`/chat?activeId=${chatPopup.conversationId}`); onClose(); }}>
             <div className={cx("chat-popup-content")}>
                 <div className={cx("chat-popup-header")}>
                     <FiMessageSquare />
@@ -319,7 +330,9 @@ const ChatNotificationPopup = ({ chatPopup, onClose, onNavigate }) => {
     );
 };
 
-// --- 3. COMPONENT HEADER CHÍNH ---
+// ============================================================
+// COMPONENT 5: HEADER CHÍNH
+// ============================================================
 function Header() {
     const [isMobile, setIsMobile] = useState(false);
     const [user, setUser] = useState(null);
@@ -327,90 +340,90 @@ function Header() {
     const navigate = useNavigate();
     const [showHistory, setShowHistory] = useState(false);
 
-    // Chat notification popup state
+    // Chat notification state
     const [chatPopup, setChatPopup] = useState(null);
     const [unreadChatCount, setUnreadChatCount] = useState(0);
     const chatPopupTimerRef = useRef(null);
+    const chatUnsubscribeRef = useRef(null);
 
-    // Get current chat conversation ID from URL to avoid showing popup for current chat
-    const getCurrentChatId = () => {
-        const params = new URLSearchParams(window.location.search);
-        return params.get('activeId');
-    };
+    // ─────────────────────────────────────────────────────────
+    // Chat: stable handler ref + proper subscribe/unsubscribe
+    // ─────────────────────────────────────────────────────────
+    const handleChatMessageRef = useRef(null);
 
-    // Handle new chat message notification - stable callback ref
-    const handleNewChatMessageRef = useRef(null);
-
-    // Create the handler once
     useEffect(() => {
-        handleNewChatMessageRef.current = (messageData) => {
+        handleChatMessageRef.current = (messageData) => {
             try {
-                // Parse if string
                 const parsedMessage = typeof messageData === 'string'
                     ? JSON.parse(messageData)
                     : messageData;
-                
-                console.log("📩 SOCKET MESSAGE:", parsedMessage);
-                console.log("👤 CURRENT USER ID:", user?.id);
-                
+
+                console.log('[Header] 📩 Chat message received:', parsedMessage.id || parsedMessage);
+
                 if (!parsedMessage) return;
 
-                // Skip if this is my own message - check sender.userId
+                // Skip my own messages
                 if (String(parsedMessage.sender?.userId) === String(user?.id)) {
-                    console.log("⏭️ Skip - message from myself");
+                    console.log('[Header] ⏭️ Skipping own message');
                     return;
                 }
 
-                // Skip if currently viewing this conversation
-                const currentChatId = getCurrentChatId();
+                // Skip if viewing this conversation
+                const params = new URLSearchParams(window.location.search);
+                const currentChatId = params.get('activeId');
                 if (currentChatId && String(parsedMessage.conversationId) === String(currentChatId)) {
-                    console.log("⏭️ Skip - currently viewing this conversation");
+                    console.log('[Header] ⏭️ Skipping — viewing this conversation');
                     return;
                 }
 
-                // Play sound
                 playNotificationSound();
 
-                // Show popup with new message data
                 setChatPopup({
                     conversationId: parsedMessage.conversationId,
                     senderName: parsedMessage.sender?.fullName || parsedMessage.sender?.username || 'Người dùng',
-                    message: parsedMessage.message || ''
+                    message: parsedMessage.message || '',
                 });
 
-                // Increment unread count
-                setUnreadChatCount(prev => prev + 1);
+                setUnreadChatCount(prev => {
+                    console.log('[Header] 📈 Chat unread count:', prev, '→', prev + 1);
+                    return prev + 1;
+                });
 
-                // Clear existing timer
-                if (chatPopupTimerRef.current) {
-                    clearTimeout(chatPopupTimerRef.current);
-                }
-
-                // Auto hide after 3 seconds
-                chatPopupTimerRef.current = setTimeout(() => {
-                    setChatPopup(null);
-                }, 3000);
+                if (chatPopupTimerRef.current) clearTimeout(chatPopupTimerRef.current);
+                chatPopupTimerRef.current = setTimeout(() => setChatPopup(null), 3000);
             } catch (e) {
-                console.error('Error handling chat message:', e);
+                console.error('[Header] Error handling chat message:', e);
             }
         };
     }, [user]);
 
-    // Subscribe to new chat messages (global listener - only once)
+    // Subscribe once, store unsubscribe in ref
     useEffect(() => {
-        const unsubscribe = subscribeToNewMessages((data) => {
-            if (handleNewChatMessageRef.current) {
-                handleNewChatMessageRef.current(data);
-            }
+        const unsub = subscribeToNewMessages((data) => {
+            if (handleChatMessageRef.current) handleChatMessageRef.current(data);
         });
 
+        chatUnsubscribeRef.current = unsub;
+        console.log('[Header] 📩 Chat subscribed. Listeners:', getListenerCounts().messages);
+
         return () => {
-            if (typeof unsubscribe === 'function') {
-                unsubscribe();
+            if (chatUnsubscribeRef.current) {
+                chatUnsubscribeRef.current();
+                chatUnsubscribeRef.current = null;
+                console.log('[Header] 📩 Chat unsubscribed. Listeners:', getListenerCounts().messages);
             }
         };
-    }, []); // Empty deps - subscribe only once
+    }, []); // Empty deps — subscribe exactly ONCE
 
+    // Reset chat unread when entering chat page
+    useEffect(() => {
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('/chat')) {
+            setUnreadChatCount(0);
+        }
+    }, [window.location.search]);
+
+    // Responsive
     useEffect(() => {
         const checkDevice = () => setIsMobile(window.innerWidth < 768);
         checkDevice();
@@ -418,29 +431,17 @@ function Header() {
         return () => window.removeEventListener("resize", checkDevice);
     }, []);
 
+    // Fetch user
     useEffect(() => {
-        const fetchUser = async () => {
-            const token = getToken();
-            if (token) {
-                try {
-                    const res = await getMyInfo();
-                    if (res.data.code === 1000) setUser(res.data.result);
-                } catch {
-                    removeToken();
-                    setUser(null);
-                }
-            }
-        };
-        fetchUser();
-    }, []);
-
-    // Reset unread count when viewing chat
-    useEffect(() => {
-        const currentPath = window.location.pathname;
-        if (currentPath.includes('/chat')) {
-            setUnreadChatCount(0);
+        const token = getToken();
+        if (token) {
+            getMyInfo()
+                .then(res => {
+                    if (res?.data?.code === 1000) setUser(res.data.result);
+                })
+                .catch(() => { removeToken(); setUser(null); });
         }
-    }, [window.location.search]);
+    }, []);
 
     const handleLogout = () => {
         disconnectSocket();
@@ -461,15 +462,12 @@ function Header() {
     };
 
     const handleChatPopupClose = () => {
-        if (chatPopupTimerRef.current) {
-            clearTimeout(chatPopupTimerRef.current);
-        }
+        if (chatPopupTimerRef.current) clearTimeout(chatPopupTimerRef.current);
         setChatPopup(null);
     };
 
     return (
         <header className={cx("wrapper", { "wrapper-mobile": isMobile })}>
-            {/* Chat Notification Popup */}
             <ChatNotificationPopup
                 chatPopup={chatPopup}
                 onClose={handleChatPopupClose}
@@ -501,7 +499,6 @@ function Header() {
                             <FiSearch />
                         </button>
 
-                        {/* DROPDOWN HISTORY */}
                         {user && (
                             <SearchHistoryDropdown
                                 userId={user?.id}
@@ -525,7 +522,10 @@ function Header() {
                         </div>
                     )}
 
-                    <div className={cx("action-item", "chat-action")} onClick={() => { navigate('/chat'); setUnreadChatCount(0); }}>
+                    <div
+                        className={cx("action-item", "chat-action")}
+                        onClick={() => { navigate('/chat'); setUnreadChatCount(0); }}
+                    >
                         <div className={cx("icon-wrapper")}>
                             <FiMessageSquare className={cx("icon")} />
                             {unreadChatCount > 0 && (

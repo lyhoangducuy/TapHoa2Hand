@@ -45,7 +45,6 @@ public interface OrderMapper {
     @Mapping(target = "sellerId", source = "seller.id")
     @Mapping(target = "status", expression = "java(mapStatus(order.getStatus()))")
     @Mapping(target = "paymentMethod", expression = "java(mapPaymentMethod(order.getPaymentMethod()))")
-    @Mapping(target = "paymentStatus", expression = "java(mapPaymentStatus(order.getPaymentStatus()))")
     @Mapping(target = "postId", ignore = true)
     @Mapping(target = "postTitle", ignore = true)
     @Mapping(target = "postImageUrl", ignore = true)

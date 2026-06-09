@@ -574,17 +574,18 @@ function ChatPage() {
                     setCreatedOrder(newOrder);
                     setIsOrderModalOpen(false);
                     navigate(`/order/myOrder?tab=purchases&orderId=${newOrder.id}`);
-                // Gửi tin nhắn tự động
+                // Gửi tin nhắn tự động qua hệ thống
                 const autoMessage =
                     'Tôi đã gửi yêu cầu giao dịch cho sản phẩm này qua hệ thống. Vui lòng kiểm tra!';
 
                 try {
-                    await createChatMessage({
-                        conversationId: activeChatId,
-                        message: autoMessage
-                    });
+                    const msgFormData = new FormData();
+                    msgFormData.append('conversationId', activeChatId);
+                    msgFormData.append('message', autoMessage);
+                    await createChatMessage(msgFormData);
+                    console.log('[ChatPage] ✅ Auto-confirm message sent');
                 } catch (err) {
-                    console.error('Lỗi gửi tin nhắn tự động:', err);
+                    console.error('[ChatPage] ❌ Auto-confirm message failed:', err);
                 }
             } else {
                 toast.error('Có lỗi xảy ra: ' + (res.message || 'Không xác định'));

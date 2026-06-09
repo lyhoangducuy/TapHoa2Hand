@@ -227,7 +227,7 @@ const OrderCard = ({
                     <FiEye /> Chi tiết
                 </button>
 
-                {hasToken && statusName !== 'REPORTED' && (
+                {hasToken && statusName !== 'REPORTED' || statusName!=='RETURNED' (
                     <button className={cx('btn-report')} onClick={() => setReportOpen(true)}>
                         <FiFlag /> Báo cáo
                     </button>
