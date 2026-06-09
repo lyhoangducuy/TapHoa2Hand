@@ -6,6 +6,7 @@ import java.util.Objects;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -33,6 +34,22 @@ public class GlobalExceptionHandler {
         apiResponse.setMessage(errorCode.getMessage());
         return ResponseEntity.status(errorCode.getHttpStatusCode())
                                 .body(apiResponse);
+    }
+
+    @ExceptionHandler(value = JwtException.class)
+    ResponseEntity<ApiResponse> handleJwtException(JwtException e) {
+        ErrorCode errorCode;
+        String msg = e.getMessage();
+        if (msg != null && msg.contains("khóa")) {
+            errorCode = ErrorCode.USER_BLOCKED;
+        } else {
+            errorCode = ErrorCode.UNAUTHENTICATED;
+        }
+        return ResponseEntity.status(errorCode.getHttpStatusCode())
+                .body(ApiResponse.builder()
+                        .code(errorCode.getCode())
+                        .message(errorCode.getMessage())
+                        .build());
     }
 
     @ExceptionHandler(value = AccessDeniedException.class)

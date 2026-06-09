@@ -103,7 +103,9 @@ public enum ErrorCode {
             2005,
             "Captcha không hợp lệ",
             HttpStatus.BAD_REQUEST),
-            ;
+
+    USER_BLOCKED(2006, "Tài khoản đã bị khóa, vui lòng liên hệ quản trị viên", HttpStatus.FORBIDDEN),
+    ;
 
     private int code;
     private String message;

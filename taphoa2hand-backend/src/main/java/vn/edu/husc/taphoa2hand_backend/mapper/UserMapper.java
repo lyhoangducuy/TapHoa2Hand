@@ -24,6 +24,8 @@ public interface UserMapper {
 
     UsersResponse toUsersResponse(Users user);
     UsersResponse toUsersResponse(String userId);
+
+    @Mapping(target = "blocked", expression = "java(user.getBlockedUntil() != null && user.getBlockedUntil().isAfter(java.time.LocalDateTime.now()))")
     AdminUsersResponse toAdminUsersResponse(Users user);
     
 }

@@ -177,4 +177,75 @@ public class UsersService {
         user.setRoles(new HashSet<>(roles));
         return userMapper.toUserResponse(usersRepository.save(user));
     }
+
+    // =====================================================
+    // BLOCK / UNBLOCK USER
+    // =====================================================
+
+    /**
+     * Block a user (Admin only).
+     * Updates blockedUntil, blockReason, blockedBy.
+     * Invalidates all active sessions via passwordChangedAt.
+     */
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public String blockUser(String userId, String reason) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String adminUsername = auth != null ? auth.getName() : "SYSTEM";
+
+        Users user = usersRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        // Không cho admin block chính mình
+        if (user.getUsername().equals(adminUsername)) {
+            throw new AppException(ErrorCode.CANNOT_DELETE_YOURSELF);
+        }
+
+        // Nếu đã bị block rồi thì bỏ qua
+        if (user.getBlockedUntil() != null && user.getBlockedUntil().isAfter(java.time.LocalDateTime.now())) {
+            return "User '" + user.getUsername() + "' is already blocked.";
+        }
+
+        // Cập nhật trạng thái block vĩnh viễn
+        user.setBlockedUntil(java.time.LocalDateTime.now().plusYears(100));
+        user.setBlockReason(reason != null ? reason : "Vi phạm điều khoản sử dụng");
+        user.setBlockedBy(adminUsername);
+        usersRepository.save(user);
+
+        // Invalidate TẤT CẢ token bằng cách đổi passwordChangedAt
+        // verifyToken() sẽ tự động reject mọi token cũ vì đã đổi pass
+        user.setPasswordChangedAt(java.time.LocalDateTime.now().plusSeconds(1));
+        usersRepository.save(user);
+
+        System.out.println("[ADMIN BLOCK] Admin '" + adminUsername + "' blocked user '" + user.getUsername()
+                + "' (id=" + userId + "). Reason: " + reason
+                + ". All active sessions invalidated.");
+
+        return "User '" + user.getUsername() + "' has been blocked successfully. All active sessions revoked.";
+    }
+
+    /**
+     * Unblock a user (Admin only).
+     */
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public String unblockUser(String userId) {
+        Users user = usersRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        if (user.getBlockedUntil() == null
+                || !user.getBlockedUntil().isAfter(java.time.LocalDateTime.now())) {
+            return "User '" + user.getUsername() + "' is not blocked.";
+        }
+
+        user.setBlockedUntil(null);
+        user.setBlockReason(null);
+        user.setBlockedBy(null);
+        usersRepository.save(user);
+
+        System.out.println("[ADMIN UNBLOCK] User '" + user.getUsername() + "' (id=" + userId
+                + ") unblocked. User can now login normally.");
+
+        return "User '" + user.getUsername() + "' has been unblocked successfully.";
+    }
 }

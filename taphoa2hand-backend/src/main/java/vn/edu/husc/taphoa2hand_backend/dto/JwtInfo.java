@@ -14,8 +14,9 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
-public class JwtInfo  implements Serializable{
+public class JwtInfo implements Serializable {
     String jwtId;
     Date expirationTime;
     Date issueTime;
+    String userId;   // thêm: username/subject
 }

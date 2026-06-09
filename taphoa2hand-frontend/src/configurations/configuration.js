@@ -50,6 +50,8 @@ export const API = {
     ADMIN_UPDATE_AVATAR:(userId)=>`/admin/users/${userId}/update-avatar`,
     ADMIN_DELETE_USER: (userId) => `/admin/users/${userId}/delete`,
     ADMIN_CREATE_USER: "/admin/users/create",
+    ADMIN_BLOCK_USER: (userId) => `/admin/users/${userId}/block`,
+    ADMIN_UNBLOCK_USER: (userId) => `/admin/users/${userId}/unblock`,
 
     //posts
     ADMIN_GET_POSTS:"/admin/posts",

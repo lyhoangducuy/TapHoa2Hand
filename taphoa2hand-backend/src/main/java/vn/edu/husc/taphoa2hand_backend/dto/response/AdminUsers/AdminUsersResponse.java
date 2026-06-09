@@ -1,5 +1,6 @@
 package vn.edu.husc.taphoa2hand_backend.dto.response.AdminUsers;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 
 import lombok.AllArgsConstructor;
@@ -18,4 +19,10 @@ public class AdminUsersResponse {
     String id;
     String username;
     Set<Roles> roles;
+
+    // Block info
+    boolean blocked;
+    LocalDateTime blockedUntil;
+    String blockReason;
+    String blockedBy;
 }

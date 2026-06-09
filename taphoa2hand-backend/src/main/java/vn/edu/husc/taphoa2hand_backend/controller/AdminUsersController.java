@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import vn.edu.husc.taphoa2hand_backend.dto.request.UsersDTO.BlockUserRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.UsersDTO.UserCreateRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.request.UsersDTO.UserUpdateRequest;
 import vn.edu.husc.taphoa2hand_backend.dto.response.ApiResponse;
@@ -42,8 +43,7 @@ public class AdminUsersController {
 
     @GetMapping
     public ApiResponse<Page<AdminUsersResponse>> getUser(
-            // Phép thuật ở đây: Mặc định lấy trang 0, 10 item, mới nhất xếp lên đầu
-            @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC) 
+            @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable
     ) {
         return ApiResponse.<Page<AdminUsersResponse>>builder()
@@ -58,7 +58,7 @@ public class AdminUsersController {
             .result(usersService.getInfo(userId))
             .build();
     }
-    
+
     @PutMapping("/{userId}/update")
     public ApiResponse<UserResponse> updateUser(@PathVariable String userId,@RequestBody UserUpdateRequest request) {
         return ApiResponse.<UserResponse>builder()
@@ -69,7 +69,7 @@ public class AdminUsersController {
     @PostMapping("/{userId}/update-avatar")
     public ApiResponse<UserResponse> updateAvatar(@PathVariable String userId,@RequestParam("file") MultipartFile file) throws IOException {
         var result = usersService.updateAvatarAdmin(userId,file);
-        
+
         return ApiResponse.<UserResponse>builder()
             .message("Update avatar thanh cong")
             .result(result)
@@ -87,5 +87,44 @@ public class AdminUsersController {
                 .result(usersService.createAdminUser(request))
                 .build();
     }
-    
+
+    // =====================================================
+    // BLOCK / UNBLOCK USER
+    // =====================================================
+
+    /**
+     * Block a user.
+     * - Updates blockedUntil, blockReason, blockedBy in DB.
+     * - Invalidates ALL active sessions (tokens) immediately.
+     * - User will be logged out on next request.
+     *
+     * POST /api/admin/users/{userId}/block
+     * Body: { "reason": "Spam" }
+     */
+    @PostMapping("/{userId}/block")
+    public ApiResponse<String> blockUser(
+            @PathVariable String userId,
+            @RequestBody(required = false) BlockUserRequest request
+    ) {
+        String reason = (request != null && request.getReason() != null) ? request.getReason() : null;
+        var result = usersService.blockUser(userId, reason);
+        return ApiResponse.<String>builder()
+                .message(result)
+                .build();
+    }
+
+    /**
+     * Unblock a user.
+     * - Clears blockedUntil, blockReason, blockedBy.
+     * - User can login again manually.
+     *
+     * POST /api/admin/users/{userId}/unblock
+     */
+    @PostMapping("/{userId}/unblock")
+    public ApiResponse<String> unblockUser(@PathVariable String userId) {
+        var result = usersService.unblockUser(userId);
+        return ApiResponse.<String>builder()
+                .message(result)
+                .build();
+    }
 }

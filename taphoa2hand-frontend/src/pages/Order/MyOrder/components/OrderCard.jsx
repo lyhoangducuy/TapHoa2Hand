@@ -160,7 +160,7 @@ const OrderCard = ({
                     <FiX size={14} /> Đơn đã bị hủy
                 </div>
             )}
-            {(statusName === 'RETURNED' )&& (
+            {(statusName === 'RETURNED') && (
                 <div className={cx('returned-banner')}>
                     <FiRepeat size={14} /> Đơn đã bị trả hàng đang hoàn tiền
                 </div>
@@ -227,11 +227,16 @@ const OrderCard = ({
                     <FiEye /> Chi tiết
                 </button>
 
-                {hasToken && statusName !== 'REPORTED' || statusName!=='RETURNED' (
-                    <button className={cx('btn-report')} onClick={() => setReportOpen(true)}>
-                        <FiFlag /> Báo cáo
-                    </button>
-                )}
+                {hasToken &&
+                    statusName !== 'REPORTED' &&
+                    statusName !== 'RETURNED' && (
+                        <button
+                            className={cx('btn-report')}
+                            onClick={() => setReportOpen(true)}
+                        >
+                            <FiFlag /> Báo cáo
+                        </button>
+                    )}
 
                 {canFeedback && (
                     <button

@@ -275,6 +275,15 @@ public class AuthenticationService {
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         var user = usersRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        // Kiểm tra tài khoản có đang bị block không
+        if (user.getBlockedUntil() != null && user.getBlockedUntil().isAfter(LocalDateTime.now())) {
+            System.out.println("[AUTH] Login blocked for user: " + request.getUsername()
+                    + " — blocked until: " + user.getBlockedUntil()
+                    + " — reason: " + user.getBlockReason());
+            throw new AppException(ErrorCode.USER_BLOCKED);
+        }
+
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
         if (!authenticated) {
 
@@ -527,10 +536,12 @@ public class AuthenticationService {
         String jwtId = claimsSet.getJWTID();
         Date expirationTime = claimsSet.getExpirationTime();
         Date issueTime = claimsSet.getIssueTime();
+        String userId = claimsSet.getSubject(); // thêm: trả về username từ subject
         return JwtInfo.builder()
                 .jwtId(jwtId)
                 .expirationTime(expirationTime)
                 .issueTime(issueTime)
+                .userId(userId)
                 .build();
     }
 
@@ -561,5 +572,70 @@ public class AuthenticationService {
                 .refreshToken(generateToken(user, "REFRESH_TOKEN", REFRESH_TOKEN_DURATION_SECONDS)) // RT mới (30 ngày)
                 .authenticated(true)
                 .build();
+    }
+
+    // =====================================================
+    // BLOCK / UNBLOCK USER
+    // =====================================================
+
+    /**
+     * Kiểm tra user có đang bị block không.
+     * Chỉ block khi blockedUntil != null VÀ trong tương lai.
+     */
+    public boolean isUserBlocked(String username) {
+        return usersRepository.findByUsername(username)
+                .map(user -> user.getBlockedUntil() != null
+                        && user.getBlockedUntil().isAfter(java.time.LocalDateTime.now()))
+                .orElse(false);
+    }
+
+    /**
+     * Block user: cập nhật blockedUntil, lý do, người block.
+     * Đồng thời đổi password để invalidate TẤT CẢ token đang hoạt động.
+     * Cách này tận dụng cơ chế verifyToken đã có sẵn kiểm tra passwordChangedAt.
+     */
+    @Transactional
+    public void blockUser(String username, String reason, String adminUsername) {
+        Users user = usersRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        // Nếu đã bị block rồi thì bỏ qua
+        if (user.getBlockedUntil() != null && user.getBlockedUntil().isAfter(LocalDateTime.now())) {
+            return;
+        }
+
+        // Cập nhật trạng thái block
+        user.setBlockedUntil(LocalDateTime.now().plusYears(100)); // block vĩnh viễn (hoặc có thể dùng thời gian cụ thể)
+        user.setBlockReason(reason != null ? reason : "Vi phạm điều khoản sử dụng");
+        user.setBlockedBy(adminUsername);
+
+        usersRepository.save(user);
+
+        // Invalidate TẤT CẢ token hiện có bằng cách đổi passwordChangedAt
+        // verifyToken() sẽ tự động reject mọi token cũ
+        user.setPasswordChangedAt(LocalDateTime.now().plusSeconds(1));
+        usersRepository.save(user);
+
+        System.out.println("[BLOCK] User '" + username + "' blocked by '" + adminUsername
+                + "'. Reason: " + reason
+                + ". All active sessions have been invalidated.");
+    }
+
+    /**
+     * Unblock user: xóa trạng thái block.
+     * KHÔNG tự động đăng nhập — user phải login lại bình thường.
+     */
+    @Transactional
+    public void unblockUser(String username) {
+        Users user = usersRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        user.setBlockedUntil(null);
+        user.setBlockReason(null);
+        user.setBlockedBy(null);
+
+        usersRepository.save(user);
+
+        System.out.println("[UNBLOCK] User '" + username + "' unblocked. User can now login normally.");
     }
 }
