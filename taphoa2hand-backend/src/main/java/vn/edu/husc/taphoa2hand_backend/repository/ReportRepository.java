@@ -51,6 +51,7 @@ public interface ReportRepository extends JpaRepository<Report, String>, JpaSpec
 
     // Statistics queries
     Long countByCreatedAtBetween(LocalDateTime fromDate, LocalDateTime toDate);
+    Long countPendingByCreatedAtBetween(LocalDateTime fromDate, LocalDateTime toDate);
     
     Page<Report> findByCreatedAtBetween(LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
 

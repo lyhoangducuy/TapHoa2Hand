@@ -7,6 +7,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import vn.edu.husc.taphoa2hand_backend.dto.response.Statistics.*;
 import vn.edu.husc.taphoa2hand_backend.entity.*;
 import vn.edu.husc.taphoa2hand_backend.repository.*;
@@ -41,7 +43,7 @@ public class AdminStatisticsService {
     private static final DateTimeFormatter DISPLAY_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     // ============== DASHBOARD OVERVIEW ==============
-
+@Transactional(readOnly = true)
     public DashboardOverviewResponse getDashboardOverview() {
         // Total counts
         Long totalUsers = usersRepository.count();
@@ -80,7 +82,7 @@ public class AdminStatisticsService {
     }
 
     // ============== SUMMARY ==============
-
+@Transactional(readOnly = true)
     public StatisticsSummaryResponse getSummary(LocalDate fromDate, LocalDate toDate) {
         LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
         LocalDateTime toDateTime = toDate != null ? toDate.atTime(LocalTime.MAX) : null;
@@ -92,7 +94,7 @@ public class AdminStatisticsService {
         Long newUsers = usersRepository.countByCreatedAtBetween(fromDateTime, toDateTime);
         Long newPosts = postsRepository.countByCreatedAtBetween(fromDateTime, toDateTime);
         Long totalReports = reportRepository.countByCreatedAtBetween(fromDateTime, toDateTime);
-        Long pendingReports = reportRepository.countByStatus(ReportStatusEnum.PENDING);
+        Long pendingReports = reportRepository.countPendingByCreatedAtBetween(fromDateTime, toDateTime);
         Long refundOrders = adminStatisticsRepository.countRefundOrders(fromDateTime, toDateTime);
 
         return StatisticsSummaryResponse.builder()
@@ -109,7 +111,7 @@ public class AdminStatisticsService {
     }
 
     // ============== REVENUE CHART ==============
-
+@Transactional(readOnly = true)
     public List<RevenueChartItem> getRevenueChart(LocalDate fromDate, LocalDate toDate) {
         LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
         LocalDateTime toDateTime = toDate != null ? toDate.atTime(LocalTime.MAX) : null;
@@ -129,7 +131,7 @@ public class AdminStatisticsService {
     }
 
     // ============== REVENUE BY MONTH ==============
-
+@Transactional(readOnly = true)
     public List<RevenueChartItem> getRevenueByMonth(int year) {
         List<RevenueChartItem> result = new ArrayList<>();
         for (int month = 1; month <= 12; month++) {
@@ -149,7 +151,7 @@ public class AdminStatisticsService {
     }
 
     // ============== ORDER STATUS DISTRIBUTION ==============
-
+@Transactional(readOnly = true)
     public List<OrderStatusCount> getOrderStatusDistribution() {
         List<Object[]> data = adminStatisticsRepository.getOrderStatusDistribution(null, null);
         long total = data.stream().mapToLong(row -> Long.parseLong(row[1].toString())).sum();
@@ -174,7 +176,7 @@ public class AdminStatisticsService {
     }
 
     // ============== POSTS BY CATEGORY ==============
-
+@Transactional(readOnly = true)
     public List<CategoryPostCount> getPostsByCategory() {
         List<Object[]> data = postsRepository.getPostsCountByCategory(null, null);
         
@@ -192,7 +194,7 @@ public class AdminStatisticsService {
     }
 
     // ============== REPORT REASONS DISTRIBUTION ==============
-
+@Transactional(readOnly = true)
     public List<ReportReasonCount> getReportReasonsDistribution() {
         List<Object[]> data = reportRepository.getReportsCountByReason(null, null);
         
@@ -214,7 +216,7 @@ public class AdminStatisticsService {
     }
 
     // ============== TOP SELLERS ==============
-
+@Transactional(readOnly = true)
     public List<TopSellerResponse> getTopSellers(int limit) {
         List<Object[]> data = adminStatisticsRepository.getTopSellers(null, null, limit);
         
@@ -236,7 +238,7 @@ public class AdminStatisticsService {
     }
 
     // ============== TOP REPORTED USERS ==============
-
+@Transactional(readOnly = true)
     public List<TopReportedUserResponse> getTopReportedUsers(int limit) {
         List<Object[]> data = reportRepository.getTopReportedUsers(null, null, limit);
         
@@ -256,7 +258,7 @@ public class AdminStatisticsService {
     }
 
     // ============== RATING DISTRIBUTION ==============
-
+@Transactional(readOnly = true)
     public List<RatingDistribution> getRatingDistribution() {
         List<Object[]> data = feedbackStatisticsRepository.getRatingDistribution();
         long total = data.stream().mapToLong(row -> Long.parseLong(row[1].toString())).sum();
@@ -282,7 +284,7 @@ public class AdminStatisticsService {
     }
 
     // ============== AI ASSESSMENT DISTRIBUTION ==============
-
+@Transactional(readOnly = true)
     public List<AiAssessmentCount> getAiAssessmentDistribution() {
         List<Object[]> data = postAiAssessmentRepository.getAssessmentDistribution();
         long total = data.stream().mapToLong(row -> Long.parseLong(row[1].toString())).sum();
@@ -304,7 +306,7 @@ public class AdminStatisticsService {
     }
 
     // ============== RECENT ACTIVITIES ==============
-
+@Transactional(readOnly = true)
     public List<RecentActivity> getRecentActivities(int limit) {
         List<RecentActivity> activities = new ArrayList<>();
         
@@ -369,7 +371,7 @@ public class AdminStatisticsService {
     }
 
     // ============== ORDERS STATISTICS ==============
-
+@Transactional(readOnly = true)
     public Page<OrderStatisticsResponse> getOrdersStatistics(LocalDate fromDate, LocalDate toDate, int page, int size) {
         LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
         LocalDateTime toDateTime = toDate != null ? toDate.atTime(LocalTime.MAX) : null;
@@ -379,7 +381,7 @@ public class AdminStatisticsService {
 
         return ordersPage.map(this::mapToOrderStatistics);
     }
-
+@Transactional(readOnly = true)
     public List<OrderStatisticsResponse> getAllOrdersForExport(LocalDate fromDate, LocalDate toDate) {
         LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
         LocalDateTime toDateTime = toDate != null ? toDate.atTime(LocalTime.MAX) : null;
@@ -389,7 +391,7 @@ public class AdminStatisticsService {
         
         return orders.stream().map(this::mapToOrderStatistics).collect(Collectors.toList());
     }
-
+@Transactional(readOnly = true)
     private OrderStatisticsResponse mapToOrderStatistics(Order order) {
         return OrderStatisticsResponse.builder()
                 .id(order.getId())
@@ -406,7 +408,7 @@ public class AdminStatisticsService {
     }
 
     // ============== USERS STATISTICS ==============
-
+@Transactional(readOnly = true)
     public Page<UserStatisticsResponse> getUsersStatistics(LocalDate fromDate, LocalDate toDate, int page, int size) {
         LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
         LocalDateTime toDateTime = toDate != null ? toDate.atTime(LocalTime.MAX) : null;
@@ -416,7 +418,7 @@ public class AdminStatisticsService {
 
         return usersPage.map(this::mapToUserStatistics);
     }
-
+@Transactional(readOnly = true)
     public List<UserStatisticsResponse> getAllUsersForExport(LocalDate fromDate, LocalDate toDate) {
         LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
         LocalDateTime toDateTime = toDate != null ? toDate.atTime(LocalTime.MAX) : null;
@@ -426,7 +428,7 @@ public class AdminStatisticsService {
         
         return users.stream().map(this::mapToUserStatistics).collect(Collectors.toList());
     }
-
+@Transactional(readOnly = true)
     private UserStatisticsResponse mapToUserStatistics(Users user) {
         Set<String> roles = user.getRoles() != null 
                 ? user.getRoles().stream().map(Roles::getName).collect(Collectors.toSet())
@@ -453,7 +455,7 @@ public class AdminStatisticsService {
     }
 
     // ============== REPORTS STATISTICS ==============
-
+    @Transactional(readOnly = true)
     public Page<ReportStatisticsResponse> getReportsStatistics(LocalDate fromDate, LocalDate toDate, int page, int size) {
         LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
         LocalDateTime toDateTime = toDate != null ? toDate.atTime(LocalTime.MAX) : null;
@@ -463,7 +465,7 @@ public class AdminStatisticsService {
 
         return reportsPage.map(this::mapToReportStatistics);
     }
-
+@Transactional(readOnly = true)
     public List<ReportStatisticsResponse> getAllReportsForExport(LocalDate fromDate, LocalDate toDate) {
         LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
         LocalDateTime toDateTime = toDate != null ? toDate.atTime(LocalTime.MAX) : null;
@@ -473,7 +475,7 @@ public class AdminStatisticsService {
         
         return reports.stream().map(this::mapToReportStatistics).collect(Collectors.toList());
     }
-
+@Transactional(readOnly = true)
     private ReportStatisticsResponse mapToReportStatistics(Report report) {
         return ReportStatisticsResponse.builder()
                 .id(report.getId())

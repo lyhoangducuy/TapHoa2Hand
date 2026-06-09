@@ -10,17 +10,18 @@ import {
 import CIcon from '@coreui/icons-react';
 import {
     cilCheck, cilX, cilWarning, cilDollar, cilUser,
-    cilFile, cilInfo, cilCheckCircle, cilBan, cilLockLocked, cilLockUnlocked,
+    cilFile, cilInfo, cilCheckCircle, cilBan, cilLockUnlocked,
 } from '@coreui/icons';
 import { updateReportStatus } from '../../../../services/reportAdminService';
 import { updateOrderStatus } from '../../../../services/orderService';
-import { blockUser, unblockUser } from '../../../../services/adminUserService';
+import { blockUser } from '../../../../services/adminUserService';
 import { toast } from 'react-toastify';
 
 const cx = classNames.bind(styles);
 
 const ALL_PENALTIES = [
     { value: 'WARNING', label: 'Cảnh cáo', icon: cilWarning, desc: 'Gửi cảnh báo đến tài khoản' },
+    { value: 'BAN_24H', label: 'Khóa 24 giờ', icon: cilBan, desc: 'Khóa tài khoản trong 24 giờ' },
     { value: 'PERMANENT_BAN', label: 'Khóa vĩnh viễn', icon: cilBan, desc: 'Cấm vĩnh viễn khỏi nền tảng' },
     { value: 'REFUND_BUYER', label: 'Hoàn tiền người mua', icon: cilDollar, desc: 'Hoàn tiền cho người mua' },
     { value: 'REFUND_REPORTER', label: 'Hoàn tiền người tố cáo', icon: cilDollar, desc: 'Hoàn tiền cho người tố cáo' },
@@ -39,6 +40,31 @@ const TYPE_CONFIG = {
     ORDER: { label: 'Báo cáo đơn hàng', icon: cilInfo },
 };
 
+// Determine user lock status from report data (non-hardcoded)
+const getUserLockStatus = (report) => {
+    // Priority: blockedUntil field tells us the actual state
+    const blockedUntil = report.reportedUserBlockedUntil || report.blockedUntil;
+    if (!blockedUntil) return 'ACTIVE';
+
+    const blockedTime = new Date(blockedUntil);
+    if (blockedTime > new Date()) {
+        // Check if it's 24h ban
+        const now = new Date();
+        const diffHours = (blockedTime - now) / (1000 * 60 * 60);
+        if (diffHours <= 25) {
+            return 'LOCKED_24H';
+        }
+        return 'PERMANENTLY_LOCKED';
+    }
+    return 'ACTIVE';
+};
+
+const LOCK_STATUS_CONFIG = {
+    ACTIVE:              { color: 'success', label: 'Đang hoạt động', icon: cilLockUnlocked },
+    LOCKED_24H:         { color: 'warning', label: 'Khóa 24 giờ', icon: cilBan },
+    PERMANENTLY_LOCKED:  { color: 'danger',  label: 'Khóa vĩnh viễn', icon: cilBan },
+};
+
 const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate, onReportProcessed }) => {
     const [activeTab, setActiveTab] = useState('detail');
     const [isLoading, setIsLoading] = useState(false);
@@ -49,12 +75,6 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate, onReportPr
     const [confirmAction, setConfirmAction] = useState(null);
     const [showConfirm, setShowConfirm] = useState(false);
 
-    // Block/Unblock state
-    const [showBlockModal, setShowBlockModal] = useState(false);
-    const [showUnblockModal, setShowUnblockModal] = useState(false);
-    const [blockReason, setBlockReason] = useState('');
-    const [blockLoading, setBlockLoading] = useState(false);
-
     // Reset form when report changes
     useEffect(() => {
         if (report) {
@@ -63,9 +83,6 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate, onReportPr
             setActiveTab('detail');
             setShowConfirm(false);
             setConfirmAction(null);
-            setShowBlockModal(false);
-            setShowUnblockModal(false);
-            setBlockReason('');
         }
     }, [report]);
 
@@ -74,13 +91,10 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate, onReportPr
     const currentStatus = report.status?.name || 'PENDING';
     const sc = STATUS_CONFIG[currentStatus] || STATUS_CONFIG.PENDING;
 
-    // Determine if reported user is blocked
-    // Support multiple possible field names from backend
-    const isUserBlocked =
-        report.reportedUserLocked === true ||
-        report.reportedUserLocked === 'true' ||
-        report.reportedUserStatus === 'BLOCKED' ||
-        report.reportedUserStatus === 'LOCKED';
+    // Compute lock status from data (no hardcoding)
+    const userLockStatus = getUserLockStatus(report);
+    const lockConfig = LOCK_STATUS_CONFIG[userLockStatus] || LOCK_STATUS_CONFIG.ACTIVE;
+    const LockIcon = lockConfig.icon;
 
     const togglePenalty = (value) => {
         setSelectedPenalties(prev =>
@@ -93,7 +107,7 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate, onReportPr
         setShowConfirm(true);
     };
 
-    // ── Submit report processing (approve → penalties) ──────────────────────
+    // ── Submit report processing ──────────────────────────────────────────────
     const handleConfirmSubmit = async () => {
         setShowConfirm(false);
         try {
@@ -103,15 +117,20 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate, onReportPr
                 await updateOrderStatus(report.orderId, 'RETURNED');
             }
 
-            await updateReportStatus(report.id, confirmAction);
+            // Determine if any ban penalty is selected and which duration
+            const hasPermanentBan = selectedPenalties.includes('PERMANENT_BAN');
+            const has24hBan = selectedPenalties.includes('BAN_24H');
 
-            // If PERMANENT_BAN is selected → call blockUser BEFORE marking PROCESSED
-            if (confirmAction === 'PROCESSED' && selectedPenalties.includes('PERMANENT_BAN')) {
+            if ((hasPermanentBan || has24hBan) && report.reportedUserId) {
+                // Block user BEFORE updating report to PROCESSED
+                const durationHours = hasPermanentBan ? null : 24;
                 const reason = resolutionNote || 'Vi phạm nghiêm trọng theo báo cáo';
-                await blockUser(report.reportedUserId, reason);
-                toast.success('Đã khóa tài khoản người vi phạm!');
+                await blockUser(report.reportedUserId, reason, durationHours);
+                const banLabel = hasPermanentBan ? 'vĩnh viễn' : '24 giờ';
+                toast.success(`Đã khóa tài khoản ${banLabel}!`);
             }
 
+            await updateReportStatus(report.id, confirmAction);
             toast.success('Xử lý báo cáo thành công!');
             onReportProcessed?.();
             onStatusUpdate?.();
@@ -124,42 +143,6 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate, onReportPr
         }
     };
 
-    // ── Block user ──────────────────────────────────────────────────────────
-    const handleBlockUser = async () => {
-        if (!report?.reportedUserId) return;
-        try {
-            setBlockLoading(true);
-            const reason = blockReason.trim() || 'Vi phạm điều khoản sử dụng';
-            await blockUser(report.reportedUserId, reason);
-            toast.success('Đã khóa tài khoản thành công!');
-            setShowBlockModal(false);
-            setBlockReason('');
-            onStatusUpdate?.(); // Reload report list
-        } catch (error) {
-            console.error(error);
-            toast.error(error?.response?.data?.message || 'Khóa tài khoản thất bại');
-        } finally {
-            setBlockLoading(false);
-        }
-    };
-
-    // ── Unblock user ────────────────────────────────────────────────────────
-    const handleUnblockUser = async () => {
-        if (!report?.reportedUserId) return;
-        try {
-            setBlockLoading(true);
-            await unblockUser(report.reportedUserId);
-            toast.success('Đã mở khóa tài khoản thành công!');
-            setShowUnblockModal(false);
-            onStatusUpdate?.(); // Reload report list
-        } catch (error) {
-            console.error(error);
-            toast.error(error?.response?.data?.message || 'Mở khóa tài khoản thất bại');
-        } finally {
-            setBlockLoading(false);
-        }
-    };
-
     const formatDate = (dateStr) => {
         if (!dateStr) return '—';
         return new Date(dateStr).toLocaleString('vi-VN');
@@ -167,6 +150,10 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate, onReportPr
 
     const typeInfo = TYPE_CONFIG[report.type?.name] || { label: report.type?.name, icon: cilInfo };
     const TypeIcon = typeInfo.icon;
+
+    // Count penalties by type for confirmation display
+    const hasRefund = selectedPenalties.includes('REFUND_BUYER') || selectedPenalties.includes('REFUND_REPORTER');
+    const hasBan = selectedPenalties.includes('BAN_24H') || selectedPenalties.includes('PERMANENT_BAN');
 
     return (
         <>
@@ -234,41 +221,12 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate, onReportPr
                                         <div className="fw-semibold text-danger">{report.reportedUserName || '—'}</div>
                                         <small className="text-muted">{report.reportedUserId?.slice(0, 8)}...</small>
 
-                                        {/* User lock status */}
+                                        {/* User lock status — read-only, no action buttons */}
                                         <div className="mt-2 d-flex align-items-center gap-2">
-                                            {isUserBlocked ? (
-                                                <>
-                                                    <CBadge color="danger" shape="rounded-pill">
-                                                        <CIcon icon={cilLockLocked} className="me-1" />
-                                                        Đã bị khóa
-                                                    </CBadge>
-                                                    <CButton
-                                                        color="success"
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => setShowUnblockModal(true)}
-                                                        disabled={blockLoading}
-                                                    >
-                                                        {blockLoading ? <CSpinner size="sm" /> : <><CIcon icon={cilLockUnlocked} className="me-1" />Mở khóa</>}
-                                                    </CButton>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <CBadge color="success" shape="rounded-pill">
-                                                        <CIcon icon={cilLockUnlocked} className="me-1" />
-                                                        Đang hoạt động
-                                                    </CBadge>
-                                                    <CButton
-                                                        color="danger"
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => setShowBlockModal(true)}
-                                                        disabled={blockLoading}
-                                                    >
-                                                        {blockLoading ? <CSpinner size="sm" /> : <><CIcon icon={cilLockLocked} className="me-1" />Khóa tài khoản</>}
-                                                    </CButton>
-                                                </>
-                                            )}
+                                            <CBadge color={lockConfig.color} shape="rounded-pill">
+                                                <CIcon icon={LockIcon} className="me-1" />
+                                                {lockConfig.label}
+                                            </CBadge>
                                         </div>
                                     </div>
                                 </div>
@@ -421,8 +379,9 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate, onReportPr
                                                 return (
                                                     <div key={p.value} className="col-md-6">
                                                         <div
-                                                            className={`p-3 border rounded cursor-pointer ${selected ? 'border-primary bg-primary bg-opacity-5' : ''}`}
+                                                            className={`p-3 border rounded ${selected ? 'border-primary bg-primary bg-opacity-5' : ''}`}
                                                             onClick={() => togglePenalty(p.value)}
+                                                            style={{ cursor: 'pointer' }}
                                                         >
                                                             <div className="d-flex align-items-center justify-content-between">
                                                                 <div className="d-flex align-items-center gap-2">
@@ -484,7 +443,7 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate, onReportPr
                     )}
                 </CModalBody>
                 <CModalFooter>
-                    <CButton color="secondary" variant="ghost" onClick={onClose} disabled={isLoading || blockLoading}>
+                    <CButton color="secondary" variant="ghost" onClick={onClose} disabled={isLoading}>
                         Đóng
                     </CButton>
                 </CModalFooter>
@@ -514,17 +473,23 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate, onReportPr
                             {resolutionNote && <li><strong>Ghi chú:</strong> {resolutionNote}</li>}
                         </ul>
 
-                        {selectedPenalties.includes('PERMANENT_BAN') && (
+                        {/* Warning: if ban is selected, show banner */}
+                        {hasBan && (
                             <CAlert color="danger" className="py-2">
                                 <CIcon icon={cilBan} className="me-1" />
-                                <strong>Cảnh báo:</strong> Người dùng sẽ bị khóa tài khoản vĩnh viễn ngay sau khi xác nhận.
+                                <strong>Cảnh báo:</strong>{' '}
+                                {selectedPenalties.includes('PERMANENT_BAN')
+                                    ? 'Người dùng sẽ bị khóa tài khoản vĩnh viễn ngay sau khi xác nhận.'
+                                    : 'Người dùng sẽ bị khóa tài khoản trong 24 giờ ngay sau khi xác nhận.'}
                             </CAlert>
                         )}
 
-                        <div className="alert alert-warning py-2 small mb-0">
-                            <CIcon icon={cilWarning} className="me-1" />
-                            Hành động này sẽ được áp dụng ngay.
-                        </div>
+                        {hasRefund && !hasBan && (
+                            <div className="alert alert-warning py-2 small mb-0">
+                                <CIcon icon={cilDollar} className="me-1" />
+                                Hành động này sẽ được áp dụng ngay.
+                            </div>
+                        )}
                     </CModalBody>
                     <CModalFooter>
                         <CButton color="secondary" variant="ghost" onClick={() => setShowConfirm(false)} disabled={isLoading}>
@@ -532,66 +497,6 @@ const ReportDetailModal = ({ report, isOpen, onClose, onStatusUpdate, onReportPr
                         </CButton>
                         <CButton color="primary" onClick={handleConfirmSubmit} disabled={isLoading}>
                             {isLoading ? <CSpinner size="sm" /> : <><CIcon icon={cilCheck} className="me-1" /> Xác nhận</>}
-                        </CButton>
-                    </CModalFooter>
-                </CModal>
-            )}
-
-            {/* ─── Block user confirm modal ────────────────────────────────────── */}
-            {showBlockModal && (
-                <CModal visible={showBlockModal} onClose={() => { setShowBlockModal(false); setBlockReason(''); }} centered backdrop="static">
-                    <CModalHeader>
-                        <CModalTitle>
-                            <CIcon icon={cilLockLocked} className="me-2 text-danger" />
-                            Xác nhận khóa tài khoản
-                        </CModalTitle>
-                    </CModalHeader>
-                    <CModalBody>
-                        <p>
-                            Bạn có chắc muốn khóa tài khoản <strong>{report.reportedUserName}</strong>?
-                        </p>
-                        <p className="text-muted small mb-2">Người dùng sẽ bị đăng xuất ngay lập tức và không thể đăng nhập lại.</p>
-                        <CFormTextarea
-                            rows={2}
-                            placeholder="Nhập lý do khóa (không bắt buộc)..."
-                            value={blockReason}
-                            onChange={(e) => setBlockReason(e.target.value)}
-                        />
-                    </CModalBody>
-                    <CModalFooter>
-                        <CButton color="secondary" variant="ghost" onClick={() => { setShowBlockModal(false); setBlockReason(''); }} disabled={blockLoading}>
-                            Hủy
-                        </CButton>
-                        <CButton color="danger" onClick={handleBlockUser} disabled={blockLoading}>
-                            {blockLoading ? <CSpinner size="sm" /> : <><CIcon icon={cilLockLocked} className="me-1" /> Khóa tài khoản</>}
-                        </CButton>
-                    </CModalFooter>
-                </CModal>
-            )}
-
-            {/* ─── Unblock user confirm modal ──────────────────────────────────── */}
-            {showUnblockModal && (
-                <CModal visible={showUnblockModal} onClose={() => setShowUnblockModal(false)} centered backdrop="static">
-                    <CModalHeader>
-                        <CModalTitle>
-                            <CIcon icon={cilLockUnlocked} className="me-2 text-success" />
-                            Xác nhận mở khóa tài khoản
-                        </CModalTitle>
-                    </CModalHeader>
-                    <CModalBody>
-                        <p>
-                            Bạn có chắc muốn mở khóa tài khoản <strong>{report.reportedUserName}</strong>?
-                        </p>
-                        <p className="text-muted small">
-                            Người dùng sẽ có thể đăng nhập lại bình thường.
-                        </p>
-                    </CModalBody>
-                    <CModalFooter>
-                        <CButton color="secondary" variant="ghost" onClick={() => setShowUnblockModal(false)} disabled={blockLoading}>
-                            Hủy
-                        </CButton>
-                        <CButton color="success" onClick={handleUnblockUser} disabled={blockLoading}>
-                            {blockLoading ? <CSpinner size="sm" /> : <><CIcon icon={cilLockUnlocked} className="me-1" /> Mở khóa</>}
                         </CButton>
                     </CModalFooter>
                 </CModal>

@@ -97,7 +97,7 @@ const AdminStatisticsPage = () => {
 
             setSummary(summaryRes.result);
             setRevenueChart(chartRes.result || []);
-            
+            console.log(summaryRes);
             if (ordersRes.result) {
                 setOrders(ordersRes.result.content || []);
                 setTotalPages(prev => ({ ...prev, orders: ordersRes.result.totalPages }));
