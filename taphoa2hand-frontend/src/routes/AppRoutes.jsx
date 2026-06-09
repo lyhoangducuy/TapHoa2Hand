@@ -87,8 +87,7 @@ const adminRoutes = [
     //reports
     {path:'/admin/reports', component: ReportAdminPage, layout: AdminLayout},
     //statistics
-    {path:'/admin/statistics', component: AdminStatisticsPage, layout: AdminLayout},
-    {path:'/admin', component: AdminDashboardPage, layout: AdminLayout},
+    {path:'/admin', component: AdminStatisticsPage, layout: AdminLayout},
     //noti
     {path:"/admin/notifications",component:Notificationpage,layout:AdminLayout}
 ];
